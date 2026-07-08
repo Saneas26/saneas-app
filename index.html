@@ -1,0 +1,1378 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#3890a4">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Saneas">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Saneas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{--teal:#3890a4;--dark:#1a2e35;--light:#e8f4f7;--muted:#3a5a64;--bg:#f4f7f8;
+    --white:#fff;--green:#2f9e5f;--red:#d05a4a;--shadow:0 6px 20px rgba(26,46,53,.08)}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Quicksand',sans-serif;background:var(--bg);color:var(--dark)}
+  .app{max-width:480px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;position:relative}
+  .hidden{display:none!important}
+  #splash{position:fixed;inset:0;z-index:80;background:linear-gradient(160deg,#3890a4,#1a2e35);color:#fff;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;opacity:0;transition:opacity .45s}
+  #splash.show{opacity:1}
+  #splash .sp-logo{font-weight:700;font-size:48px;letter-spacing:1px}
+  #splash #splashTxt{font-size:22px;font-weight:300;text-align:center;line-height:1.45}
+  #splash #splashTxt b{font-weight:700}
+  /* ---------- AUTH ---------- */
+  #auth{flex:1;display:flex;flex-direction:column;justify-content:center;padding:40px 24px;
+    background:linear-gradient(160deg,#3890a4,#1a2e35);color:#fff;min-height:100vh;overflow-y:auto}
+  #auth .auth-card{margin-top:20px}
+  .logo{font-weight:700;font-size:40px;text-align:center;letter-spacing:1px}
+  .logo small{display:block;font-weight:300;font-size:12px;letter-spacing:3px;opacity:.85;margin-top:2px}
+  .auth-card{background:#fff;color:var(--dark);border-radius:22px;padding:22px;margin-top:26px;box-shadow:0 20px 50px rgba(0,0,0,.25)}
+  .auth-card h2{font-size:18px;margin-bottom:14px;text-align:center}
+  .field{margin-bottom:12px}
+  .field label{font-size:12px;font-weight:700;color:var(--muted);display:block;margin-bottom:4px}
+  .field input{width:100%;border:2px solid var(--light);border-radius:12px;padding:12px;font-family:inherit;font-size:15px;color:var(--dark)}
+  .field input:focus{outline:none;border-color:var(--teal)}
+  .btn{background:var(--teal);color:#fff;border:none;border-radius:14px;padding:14px;width:100%;
+    font-family:inherit;font-weight:700;font-size:16px;cursor:pointer}
+  .btn:disabled{opacity:.6}
+  .btn.ghost{background:none;color:var(--teal);box-shadow:none}
+  .switch{text-align:center;margin-top:12px;font-size:13px;color:var(--muted)}
+  .switch a{color:var(--teal);font-weight:700;cursor:pointer}
+  .msg{font-size:13px;text-align:center;margin-top:10px;padding:8px;border-radius:10px}
+  .msg.err{background:#fdecea;color:var(--red)}
+  .msg.ok{background:#e8f4ec;color:var(--green)}
+  /* ---------- APP SHELL ---------- */
+  .appbar{background:var(--teal);color:#fff;padding:14px 18px;display:flex;align-items:center;justify-content:space-between}
+  .brand{font-weight:700;font-size:22px;letter-spacing:.5px}
+  .brand small{font-weight:300;font-size:10px;display:block;opacity:.85;letter-spacing:1.5px}
+  .avatar{width:36px;height:36px;border-radius:50%;background:#fff;color:var(--teal);display:flex;align-items:center;justify-content:center;font-weight:700;cursor:pointer}
+  .screen{flex:1;overflow-y:auto;padding:16px 14px 96px}
+  h2.sec{font-size:13px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin:18px 4px 8px;font-weight:700}
+  .card{background:var(--white);border-radius:18px;padding:16px;box-shadow:var(--shadow);margin-bottom:14px}
+  .card h3{font-size:15px;font-weight:700;margin-bottom:8px}
+  .agenda{background:linear-gradient(135deg,var(--teal),#2b7180);color:#fff}
+  .agenda h3{color:#fff}
+  .agenda .row{display:flex;justify-content:space-between;font-size:14px;padding:5px 0;border-top:1px solid rgba(255,255,255,.18)}
+  .agenda .row span:last-child{font-weight:700}
+  .agenda .today{background:rgba(255,255,255,.16);border-radius:10px;padding:8px 10px;margin-top:10px;font-size:13px;text-align:center;font-weight:500}
+  .choices{display:flex;gap:6px;margin-bottom:12px}
+  .choice{flex:1;background:var(--white);border:2px solid var(--light);border-radius:14px;padding:9px 4px;text-align:center;font-size:11px;font-weight:700;color:var(--muted);cursor:pointer;line-height:1.25}
+  .choice .ic{font-size:20px;display:block;margin-bottom:3px}
+  .choice.active{background:var(--teal);color:#fff;border-color:var(--teal)}
+  .meal{display:flex;gap:10px;padding:9px 0;border-bottom:1px dashed #dbe6e9}
+  .meal:last-child{border-bottom:none}
+  .meal .t{font-size:11px;font-weight:700;color:var(--teal);min-width:78px}
+  .meal .d{font-size:13px}
+  .shop li{font-size:13px;padding:5px 0;list-style:none;display:flex;justify-content:space-between;border-bottom:1px dashed #dbe6e9}
+  .evo .lbl{font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase}
+  .evo .stat{display:flex;justify-content:space-around;margin-top:6px}
+  .evo .stat div{display:flex;flex-direction:column;text-align:center}
+  .evo .stat .k{font-size:10px;color:var(--muted)}
+  .evo .stat .v{font-size:16px;font-weight:700}
+  .evo .v.now{color:var(--teal)}.evo .v.goal{color:var(--green)}
+  .hitomsg{background:#eaf6f9;color:var(--dark);font-size:13px;font-weight:600;text-align:center;padding:9px 10px;border-radius:10px;margin-top:12px}
+  .verobj{display:block;width:100%;text-align:center;margin-top:12px;background:none;border:2px solid var(--light);border-radius:12px;padding:10px;font-family:inherit;font-weight:700;font-size:13px;color:var(--teal);cursor:pointer}
+  .orow{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px dashed #dbe6e9;font-size:14px}
+  .orow b{white-space:nowrap}
+  .hgrid{display:grid;grid-template-columns:1fr 1fr;gap:4px 14px}
+  .hm{display:flex;justify-content:space-between;font-size:13px;border-bottom:1px dashed #eef3f4;padding:4px 0;gap:6px}
+  .hm span{color:var(--muted)} .hm b{color:var(--dark);white-space:nowrap}
+  .bar{height:7px;border-radius:6px;background:var(--light);margin:10px 6px 0;overflow:hidden}
+  .bar>span{display:block;height:100%;background:var(--teal)}
+  .water{display:flex;align-items:center;gap:14px;background:#eaf6f9}
+  .water .drop{font-size:34px}.water .big{font-size:26px;font-weight:700;color:var(--teal)}
+  .glasses{display:flex;gap:4px;margin-top:6px;flex-wrap:wrap}
+  .glasses span{width:16px;height:20px;border-radius:0 0 5px 5px;border:2px solid var(--teal)}
+  .glasses span.full{background:var(--teal)}
+  .video{position:relative;border-radius:14px;overflow:hidden;height:170px;background:linear-gradient(135deg,#1a2e35,#3890a4);display:flex;align-items:center;justify-content:center}
+  .video .play{width:56px;height:56px;border-radius:50%;background:rgba(255,255,255,.92);display:flex;align-items:center;justify-content:center;font-size:22px;color:var(--teal);text-decoration:none}
+  .video .cap{position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.4);color:#fff;padding:8px 12px;font-size:13px}
+  .daysel{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:6px}
+  .daysel button{white-space:nowrap;border:none;background:var(--white);color:var(--muted);padding:8px 14px;border-radius:20px;font-family:inherit;font-weight:700;font-size:13px;box-shadow:var(--shadow);cursor:pointer}
+  .daysel button.active{background:var(--teal);color:#fff}
+  .plato h4{font-size:14px;color:var(--teal);font-weight:700;margin-bottom:4px}
+  .plato p{font-size:13px;line-height:1.45}
+  .relh{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);font-weight:700;margin:8px 0 5px}
+  .chips{display:flex;gap:6px;flex-wrap:wrap}
+  .chip{font-size:12px;padding:6px 10px;border-radius:20px;font-weight:500}
+  .chip.shop{background:#fef3e0}.chip.rec{background:#e8f4ec}
+  .tabs{display:flex;gap:6px;margin-bottom:12px}
+  .tabs button{flex:1;border:none;background:#fff;border-radius:12px;padding:9px 4px;font-family:inherit;font-weight:700;font-size:12px;color:var(--muted);box-shadow:var(--shadow);cursor:pointer}
+  .tabs button.active{background:var(--teal);color:#fff}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .note{font-size:12px;color:var(--muted);text-align:center;margin-top:8px}
+  .search{width:100%;border:2px solid var(--light);border-radius:12px;padding:12px 14px;font-family:inherit;font-size:15px;margin-bottom:12px;color:var(--dark)}
+  .search:focus{outline:none;border-color:var(--teal)}
+  .lrow{display:flex;align-items:center;gap:12px;background:#fff;border-radius:14px;padding:10px;box-shadow:var(--shadow);margin-bottom:8px;cursor:pointer}
+  .lrow .th{width:46px;height:46px;border-radius:10px;background:var(--light) center/cover;flex:none;display:flex;align-items:center;justify-content:center;font-size:20px}
+  .lrow .info{flex:1;min-width:0}
+  .lrow .info b{font-size:14px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .lrow .info small{font-size:12px;color:var(--muted)}
+  .lrow .pr{color:var(--teal);font-weight:700;font-size:14px;white-space:nowrap}
+  .cat{margin-bottom:8px}
+  .cathead{display:flex;justify-content:space-between;align-items:center;gap:10px;background:var(--white);border-radius:12px;padding:12px 14px;box-shadow:var(--shadow);cursor:pointer;font-weight:700;font-size:14px}
+  .cathead .cnt{color:var(--muted);font-weight:600;font-size:12px;background:var(--light);border-radius:10px;padding:2px 8px;flex:none}
+  .cathead .arw{margin-left:auto;color:var(--teal);transition:transform .2s}
+  .cat.open .cathead .arw{transform:rotate(90deg)}
+  .catbody{padding:8px 0 2px}
+  .seg2{display:flex;gap:6px;margin-bottom:8px}
+  .seg2 button{flex:1;border:2px solid var(--light);background:#fff;border-radius:12px;padding:9px 4px;font-family:inherit;font-weight:700;font-size:13px;color:var(--muted);cursor:pointer}
+  .seg2 button.active{background:var(--teal);color:#fff;border-color:var(--teal)}
+  .btnmini{border:2px solid var(--light);background:#fff;border-radius:20px;padding:7px 12px;font-family:inherit;font-weight:700;font-size:12px;color:var(--teal);cursor:pointer;white-space:nowrap;flex:none}
+  .exc{cursor:pointer}
+  .exitem{display:flex;gap:12px;align-items:center;background:#fff;border-radius:16px;padding:10px;box-shadow:var(--shadow);margin-bottom:10px;cursor:pointer}
+  .exitem img{width:74px;height:74px;border-radius:12px;object-fit:cover;background:var(--light);flex:none}
+  .exitem .ph{width:74px;height:74px;border-radius:12px;background:var(--light);display:flex;align-items:center;justify-content:center;font-size:28px;flex:none}
+  .exitem .en{flex:1;min-width:0}
+  .exitem .en b{font-size:14px;display:block}
+  .exitem .en small{color:var(--muted);font-size:12px}
+  .exitem .rr{color:var(--teal);font-weight:700;font-size:13px;text-align:right;white-space:nowrap}
+  .nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:#fff;display:flex;padding:8px 4px 12px;box-shadow:0 -4px 18px rgba(26,46,53,.08)}
+  .nav button{flex:1;border:none;background:none;font-family:inherit;font-size:10px;font-weight:700;color:#9bb0b6;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer}
+  .nav button .ic{font-size:20px}.nav button.active{color:var(--teal)}
+  .empty{text-align:center;color:var(--muted);font-size:13px;padding:24px}
+  .chip.link{cursor:pointer;transition:.15s}
+  .chip.link:active{transform:scale(.96)}
+  .detail{position:fixed;inset:0;max-width:480px;margin:0 auto;background:var(--bg);z-index:50;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .25s ease}
+  .detail.open{transform:none}
+  .detail .dbar{background:var(--teal);color:#fff;padding:14px 16px;display:flex;align-items:center;gap:12px;font-weight:700;font-size:16px}
+  .detail .dbar .back{font-size:24px;cursor:pointer;background:none;border:none;color:#fff;line-height:1}
+  .detail .dbody{flex:1;overflow-y:auto;padding:16px}
+  .hero{height:170px;border-radius:16px;background:linear-gradient(135deg,var(--light),#c9e4ea);display:flex;align-items:center;justify-content:center;font-size:64px;margin-bottom:14px;background-size:cover;background-position:center}
+  .price-big{font-size:24px;font-weight:700;color:var(--teal)}
+  .kv{font-size:13px;color:var(--muted);margin-bottom:4px}
+  .dsec{font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);font-weight:700;margin:16px 0 6px}
+  .dtext{font-size:14px;line-height:1.6;white-space:pre-wrap}
+  .spinner{border:3px solid var(--light);border-top-color:var(--teal);border-radius:50%;width:34px;height:34px;animation:spin .8s linear infinite;margin:40px auto}
+  @keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ============ SPLASH ============ -->
+  <div id="splash" class="hidden">
+    <div class="sp-logo">Saneas</div>
+    <div id="splashTxt"></div>
+  </div>
+
+  <!-- ============ AUTH ============ -->
+  <div id="auth">
+    <div class="logo">Saneas</div>
+
+    <!-- LOGIN -->
+    <div class="auth-card" id="loginCard">
+      <h2>Entra en tu app</h2>
+      <div class="field"><label>Email</label><input id="l_email" type="email" autocomplete="email" placeholder="tucorreo@email.com"></div>
+      <div class="field"><label>Teléfono</label><input id="l_tel" type="tel" autocomplete="tel" placeholder="Tu teléfono"></div>
+      <button class="btn" id="btnLogin" onclick="login()">Entrar</button>
+      <div class="switch">¿Ya te registraste? <a onclick="showRegister()">Regístrate</a></div>
+      <div class="switch" style="margin-top:6px">¿Aún no te registraste? <a onclick="showNuevo()">Ver bonos y apuntarte</a></div>
+      <div id="loginMsg"></div>
+    </div>
+
+    <!-- REGISTRO PASO 1: verificación -->
+    <div class="auth-card hidden" id="verifCard">
+      <h2>Regístrate</h2>
+      <p style="font-size:13px;color:var(--muted);text-align:center;margin-bottom:14px">Introduce el email y el teléfono que diste a Saneas para verificar tu acceso.</p>
+      <div class="field"><label>Email</label><input id="v_email" type="email" placeholder="tucorreo@email.com"></div>
+      <div class="field"><label>Teléfono</label><input id="v_tel" type="tel" placeholder="Tu teléfono"></div>
+      <button class="btn" id="btnVerif" onclick="verificar()">Verificar</button>
+      <div class="switch">¿Ya tienes cuenta? <a onclick="showLogin()">Entrar</a></div>
+      <div id="verifMsg"></div>
+    </div>
+
+    <!-- REGISTRO PASO 2: datos de facturación -->
+    <div class="auth-card hidden" id="datosCard">
+      <h2>Completa tus datos</h2>
+      <p style="font-size:13px;color:var(--muted);text-align:center;margin-bottom:14px">Necesarios para tu ficha y tu facturación.</p>
+      <div class="grid2">
+        <div class="field"><label>Nombre</label><input id="d_nombre"></div>
+        <div class="field"><label>Apellido 1</label><input id="d_ap1"></div>
+        <div class="field"><label>Apellido 2</label><input id="d_ap2"></div>
+        <div class="field"><label>DNI</label><input id="d_dni"></div>
+        <div class="field"><label>Altura (cm)</label><input id="d_altura" type="number"></div>
+        <div class="field"><label>Sexo</label>
+          <select id="d_genero" class="search" style="margin:0"><option value="">—</option><option>Mujer</option><option>Hombre</option><option>Otro</option></select></div>
+      </div>
+      <div class="field"><label>Calle y número</label><input id="d_calle"></div>
+      <div class="grid2">
+        <div class="field"><label>Municipio</label><input id="d_muni"></div>
+        <div class="field"><label>Código postal</label><input id="d_cp"></div>
+        <div class="field"><label>Provincia</label><input id="d_prov"></div>
+        <div class="field"><label>País</label><input id="d_pais" value="España"></div>
+      </div>
+      <button class="btn" id="btnCrear" onclick="crearCuenta()">Crear mi cuenta</button>
+      <div class="switch"><a onclick="showLogin()">Cancelar</a></div>
+      <div id="datosMsg"></div>
+    </div>
+
+    <!-- BIENVENIDA CLIENTE NUEVO -->
+    <div class="auth-card hidden" id="nuevoCard">
+      <div id="nuevoBody"></div>
+    </div>
+  </div>
+
+  <!-- ============ BLOQUEO (renovación caducada) ============ -->
+  <div id="bloqueo" class="hidden" style="position:fixed;inset:0;max-width:480px;margin:0 auto;background:var(--bg);z-index:60;overflow-y:auto;padding:24px 16px 40px">
+    <div style="color:var(--teal);text-align:center;font-weight:700;font-size:34px;margin-bottom:10px">Saneas</div>
+    <div class="card" style="text-align:center">
+      <div style="font-size:44px">🔒</div>
+      <h3 style="margin:6px 0">Acceso en pausa</h3>
+      <p style="font-size:13px;color:var(--muted)" id="bloqTxt">Tu renovación ha vencido. Renueva tu cuota para volver a acceder.</p>
+    </div>
+    <div id="bloq-pagos"></div>
+    <button class="btn" style="margin-top:14px;background:none;color:var(--teal);box-shadow:none" onclick="logout()">Cerrar sesión</button>
+  </div>
+
+  <!-- ============ MAIN ============ -->
+  <div id="main" class="hidden" style="flex:1;display:flex;flex-direction:column">
+    <div class="appbar">
+      <div class="brand">Saneas</div>
+      <div class="avatar" id="avatar" onclick="logout()" title="Cerrar sesión">··</div>
+    </div>
+
+    <!-- INICIO -->
+    <div class="screen" id="s-inicio"><div class="spinner"></div></div>
+
+    <!-- DIETA -->
+    <div class="screen hidden" id="s-dieta"></div>
+
+    <!-- GYM -->
+    <div class="screen hidden" id="s-gym"></div>
+
+    <!-- REGISTRO -->
+    <div class="screen hidden" id="s-registro">
+      <p style="font-size:20px;font-weight:700;margin:4px 6px 2px">Registro semanal</p>
+      <p style="font-size:13px;color:var(--muted);margin:0 6px 10px">Tus datos se guardan al instante, sin fallos de sincronización</p>
+      <div class="tabs">
+        <button class="active" onclick="regTab('imp',this)">Impedancia</button>
+        <button onclick="regTab('pli',this)">Plicometría</button>
+        <button onclick="regTab('per',this)">Perímetros</button>
+      </div>
+      <div id="r-imp" class="card">
+        <div class="grid2">
+          <div class="field"><label>Peso (kg)</label><input id="f_peso" type="number" step="0.1"></div>
+          <div class="field"><label>IMC</label><input id="f_imc" type="number" step="0.1"></div>
+          <div class="field"><label>Grasa corporal %</label><input id="f_grasa_corporal" type="number" step="0.1"></div>
+          <div class="field"><label>Grasa visceral</label><input id="f_grasa_visceral" type="number" step="0.1"></div>
+          <div class="field"><label>Agua %</label><input id="f_agua" type="number" step="0.1"></div>
+          <div class="field"><label>Masa muscular (kg)</label><input id="f_masa_muscular" type="number" step="0.1"></div>
+          <div class="field"><label>Proteína %</label><input id="f_proteina" type="number" step="0.1"></div>
+          <div class="field"><label>Edad metabólica</label><input id="f_edad_metabolica" type="number" step="1"></div>
+        </div>
+      </div>
+      <div id="r-pli" class="card hidden">
+        <div class="grid2">
+          <div class="field"><label>Tricipital (mm)</label><input id="f_pli_tricipital" type="number" step="0.1"></div>
+          <div class="field"><label>Subescapular (mm)</label><input id="f_pli_subescapular" type="number" step="0.1"></div>
+          <div class="field"><label>Suprailíaco (mm)</label><input id="f_pli_suprailiaco" type="number" step="0.1"></div>
+          <div class="field"><label>Abdominal (mm)</label><input id="f_pli_abdominal" type="number" step="0.1"></div>
+          <div class="field"><label>Muslo (mm)</label><input id="f_pli_muslo" type="number" step="0.1"></div>
+          <div class="field"><label>Pantorrilla (mm)</label><input id="f_pli_pantorrilla" type="number" step="0.1"></div>
+        </div>
+      </div>
+      <div id="r-per" class="card hidden">
+        <div class="grid2">
+          <div class="field"><label>Cintura (cm)</label><input id="f_per_cintura" type="number" step="0.1"></div>
+          <div class="field"><label>Cadera (cm)</label><input id="f_per_cadera" type="number" step="0.1"></div>
+          <div class="field"><label>Pecho (cm)</label><input id="f_per_pecho" type="number" step="0.1"></div>
+          <div class="field"><label>Brazo (cm)</label><input id="f_per_brazo" type="number" step="0.1"></div>
+          <div class="field"><label>Muslo (cm)</label><input id="f_per_muslo" type="number" step="0.1"></div>
+          <div class="field"><label>Gemelo (cm)</label><input id="f_per_gemelo" type="number" step="0.1"></div>
+        </div>
+      </div>
+      <button class="btn" id="btnReg2" onclick="guardarRegistro()">✅ Enviar mis datos</button>
+      <div id="regSaveMsg"></div>
+    </div>
+
+    <!-- MÁS: Tienda / Recetas / Pagos -->
+    <div class="screen hidden" id="s-mas">
+      <div class="tabs">
+        <button class="active" onclick="masTab('tienda',this)">🛒 Tienda</button>
+        <button onclick="masTab('recetas',this)">👩‍🍳 Recetas</button>
+        <button onclick="masTab('pagos',this)">💳 Pagos</button>
+      </div>
+      <div id="m-tienda">
+        <input class="search" id="q_tienda" oninput="buscarTienda()" placeholder="🔎 Buscar producto...">
+        <div id="tienda-list"><div class="empty">Escribe arriba para buscar en tu tienda.</div></div>
+      </div>
+      <div id="m-recetas" class="hidden">
+        <input class="search" id="q_recetas" oninput="buscarRecetas()" placeholder="🔎 Buscar receta...">
+        <div id="recetas-list"><div class="empty">Escribe arriba para buscar una receta.</div></div>
+      </div>
+      <div id="m-pagos" class="hidden"></div>
+    </div>
+
+    <div class="nav">
+      <button class="active" onclick="go('inicio',this)"><span class="ic">🏠</span>Inicio</button>
+      <button onclick="go('dieta',this)"><span class="ic">🥗</span>Dieta</button>
+      <button onclick="go('gym',this)"><span class="ic">💪</span>Gym</button>
+      <button onclick="go('registro',this)"><span class="ic">📝</span>Registro</button>
+      <button onclick="go('mas',this)"><span class="ic">⋯</span>Más</button>
+    </div>
+  </div>
+
+  <!-- ============ DETALLE (producto / receta) ============ -->
+  <div class="detail" id="detail">
+    <div class="dbar"><button class="back" onclick="cerrarDetalle()">‹</button><span id="detTitle"></span></div>
+    <div class="dbody" id="detBody"></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+// ====== CONFIG ======
+const SUPABASE_URL = 'https://uisrxztowgdpkxeuznfh.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_8ybOGHnn9rsMDf57mx-Igw_AVvWK30D';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// ====== STATE ======
+let CLIENTE=null, ULTIMO=null, PRIMERO=null, DIETA=null, TOMAS_HOY=[], REG_NOMBRE=null, PENDING=null;
+const DIA_MAP={1:'1_Dia1',2:'2_Dia2',3:'3_Dia3',4:'4_Dia4',5:'5_Dia5',6:'6_Dia6',0:'7_Domingo'};
+const DIA_NOMBRE={0:'domingo',1:'lunes',2:'martes',3:'miércoles',4:'jueves',5:'viernes',6:'sábado'};
+const TOMA_INFO={
+  EnPie:['🌅','En pie'],Desayuno:['🍳','Desayuno'],MediaManana:['☕','Media mañana'],
+  Almuerzo:['🍽️','Almuerzo'],Merienda:['🍎','Merienda'],Cena:['🌙','Cena'],AntesDormir:['🌛','Antes de dormir']};
+const num = v => (v===''||v==null)?null:parseFloat(String(v).replace(',','.'));
+const fmt = v => (v==null||v==='')?'—':v;
+function fechaCorta(d){ if(!d) return '—'; const x=new Date(d+'T00:00:00'); return x.toLocaleDateString('es-ES',{day:'numeric',month:'short'}); }
+// Muestra los alimentos (separados por | o comas) como listado con saltos de fila
+function listar(t){ if(!t) return '';
+  const items=String(t).split(/\s*\|\s*|\n+/).map(x=>x.trim()).filter(Boolean);
+  return items.length>1 ? items.map(x=>'· '+x).join('<br>') : (items[0]||''); }
+// Formatea ingredientes/preparación: saltos por barra |, salto de línea, guión o número (1- 2. 3))
+function formatoLista(t){
+  if(!t) return '';
+  let s=' '+String(t).replace(/\r/g,'').trim()+' ';
+  s=s.replace(/\|/g,'\n');                     // barras
+  s=s.replace(/(\d{1,2})[-.)]\s/g,'\n$1- ');   // "1- ", "2.", "3)" → nueva línea
+  s=s.replace(/\s-\s/g,'\n- ');                // " - " → viñeta
+  const items=s.split(/\n+/).map(x=>x.trim()).filter(Boolean);
+  return items.join('<br>');
+}
+
+// ====== AUTH UI ======
+function hideCard(id){document.getElementById(id).classList.add('hidden');}
+function showCard(id){document.getElementById(id).classList.remove('hidden');}
+function showRegister(){hideCard('loginCard');hideCard('datosCard');hideCard('nuevoCard');showCard('verifCard');}
+function showLogin(){hideCard('verifCard');hideCard('datosCard');hideCard('nuevoCard');showCard('loginCard');}
+function setMsg(id,txt,cls){const e=document.getElementById(id);e.innerHTML=txt?`<div class="msg ${cls}">${txt}</div>`:'';}
+
+// ---- Bienvenida cliente nuevo (sin datos aún) ----
+function showNuevo(){hideCard('loginCard');hideCard('verifCard');hideCard('datosCard');showCard('nuevoCard');renderPlanes();}
+const PLAN_NUEVO={
+  prueba:{label:'Prueba · 2 semanas',amount:15},
+  basico:{label:'Básico',amount:30},
+  completo_mensual:{label:'Completo Mensual',amount:60},
+  completo_trimestral:{label:'Completo Trimestral',amount:170},
+  completo_semestral:{label:'Completo Semestral',amount:300},
+  completo_anual:{label:'Completo Anual',amount:600},
+  premium:{label:'Premium VIP',amount:120},
+};
+function planCard(titulo,precio,desc,planId){
+  return `<div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+      <div><b style="font-size:16px">${titulo}</b><div style="font-size:12px;color:var(--muted)">${desc}</div></div>
+      <div style="font-weight:800;color:var(--teal);white-space:nowrap">${precio}</div></div>
+    <button class="btn" style="margin-top:10px;padding:11px" onclick="nuevoDatos('${planId}')">Lo quiero</button></div>`;
+}
+function renderPlanes(){
+  document.getElementById('nuevoBody').innerHTML=`
+    <h2 style="text-align:center">${saludo()}, bombón 🍬</h2>
+    <p style="font-size:13px;color:var(--muted);text-align:center;margin:8px 0 16px">Bienvenido/a a Saneas. Elige el bono que quieres contratar:</p>
+    ${planCard('🌱 Prueba','15€','2 semanas para conocernos','prueba')}
+    ${planCard('Básico','30€/mes','Seguimiento en modo automático','basico')}
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div><b style="font-size:16px">Completo</b><div style="font-size:12px;color:var(--muted)">Seguimiento completo con Oscar</div></div>
+        <div style="font-weight:800;color:var(--teal)">desde 60€</div></div>
+      <div style="margin-top:8px">
+        ${[['completo_mensual','Mensual','60€/mes'],['completo_trimestral','Trimestral','170€'],['completo_semestral','Semestral','300€ · 1 mes gratis'],['completo_anual','Anual','600€ · 2 meses gratis']].map(o=>`<button class="verobj" style="text-align:left;display:flex;justify-content:space-between;margin-top:8px" onclick="nuevoDatos('${o[0]}')"><span>${o[1]}</span><b>${o[2]}</b></button>`).join('')}
+      </div></div>
+    ${planCard('Premium · VIP','120€/mes','Incluye todas las consultas telefónicas','premium')}
+    <div class="switch" style="margin-top:14px">¿Ya eres cliente? <a onclick="showLogin()">Entrar</a></div>`;
+}
+// Formulario de datos + crear cuenta y pagar
+function nuevoDatos(planId){
+  const p=PLAN_NUEVO[planId]||{label:planId,amount:''};
+  document.getElementById('nuevoBody').innerHTML=`
+    <h2 style="text-align:center">${p.label} · ${p.amount}€</h2>
+    <p style="font-size:13px;color:var(--muted);text-align:center;margin:8px 0 14px">Crea tu cuenta para empezar. Entrarás con tu <b>email + teléfono</b>.</p>
+    <div class="grid2">
+      <div class="field"><label>Nombre</label><input id="n_nombre"></div>
+      <div class="field"><label>Apellido 1</label><input id="n_ap1"></div>
+      <div class="field"><label>Apellido 2</label><input id="n_ap2"></div>
+      <div class="field"><label>DNI</label><input id="n_dni"></div>
+      <div class="field"><label>Email</label><input id="n_email" type="email"></div>
+      <div class="field"><label>Teléfono</label><input id="n_tel" type="tel"></div>
+    </div>
+    <div class="field"><label>Calle y número</label><input id="n_calle"></div>
+    <div class="grid2">
+      <div class="field"><label>Municipio</label><input id="n_muni"></div>
+      <div class="field"><label>Código postal</label><input id="n_cp"></div>
+      <div class="field"><label>Provincia</label><input id="n_prov"></div>
+      <div class="field"><label>País</label><input id="n_pais" value="España"></div>
+    </div>
+    <button class="btn" id="btnCrearPagar" onclick="crearYpagar('${planId}')">Crear cuenta y pagar ${p.amount}€</button>
+    <div id="nuevoMsg"></div>
+    <div class="switch" style="margin-top:10px"><a onclick="elegirPlanManual('${planId}')">Prefiero pagar manual (Bizum, transferencia…)</a></div>
+    <div class="switch" style="margin-top:6px"><a onclick="renderPlanes()">‹ Volver a los bonos</a></div>`;
+}
+async function crearYpagar(planId){
+  const g=id=>document.getElementById(id).value.trim();
+  const email=g('n_email'),tel=g('n_tel'),nombre=g('n_nombre'),ap1=g('n_ap1'),dni=g('n_dni');
+  if(!email||!tel||!nombre||!ap1||!dni){setMsg('nuevoMsg','Rellena email, teléfono, nombre, primer apellido y DNI.','err');return;}
+  const btn=document.getElementById('btnCrearPagar');btn.disabled=true;btn.textContent='Creando...';
+  try{
+    const {data,error}=await sb.auth.signUp({email,password:telPass(tel)});
+    if(error){ if((error.message||'').toLowerCase().includes('already')) throw new Error('Ya tienes una cuenta. Entra con tu email y teléfono.'); throw error; }
+    if(!data.session){ setMsg('nuevoMsg','Cuenta creada. Si te pide confirmar el email, desactívalo en Supabase (Authentication → Email) y entra.','ok'); btn.disabled=false;btn.textContent='Crear cuenta y pagar'; return; }
+    const u=data.user;
+    const {error:e2}=await sb.from('clientes').insert({id:u.id,email:u.email,telefono:telPass(tel),
+      nombre,apellido:ap1,apellido2:g('n_ap2'),dni,calle:g('n_calle'),municipio:g('n_muni'),
+      codigo_postal:g('n_cp'),provincia:g('n_prov'),pais:g('n_pais')||'España',
+      nivel:'Nivel1',agua_objetivo_ml:2000,plan:(PLAN_NUEVO[planId]||{}).label});
+    if(e2) throw e2;
+    await contratarPlan(planId);   // crea el pago en Mollie y redirige al checkout
+  }catch(e){ setMsg('nuevoMsg','Error: '+(e.message||e),'err'); btn.disabled=false;btn.textContent='Crear cuenta y pagar'; }
+}
+// Alternativa: pago manual + contacto (Oscar da el alta)
+function elegirPlanManual(planId){
+  const p=PLAN_NUEVO[planId]||{label:planId,amount:''}; const amt=p.amount;
+  const wa='https://wa.me/34689806987?text='+encodeURIComponent('Hola Oscar, quiero contratar el '+p.label+' de Saneas ('+amt+'€). Te paso mis datos:');
+  const bizum=(nombre,tel)=>`<div class="orow" style="cursor:pointer" onclick="copiar('${tel}')"><span>📱 Bizum · ${nombre}</span><b>${tel.replace(/(\d{3})(\d{3})(\d{3})/,'$1 $2 $3')} 📋</b></div>`;
+  document.getElementById('nuevoBody').innerHTML=`
+    <h2 style="text-align:center">Pago manual</h2>
+    <div class="hitomsg" style="margin:10px 0">${p.label} · <b>${amt}€</b></div>
+    <p style="font-size:13px;color:var(--muted);text-align:center;margin-bottom:12px">Paga por el método que prefieras y avísame. Yo confirmo tu alta y te doy acceso.</p>
+    ${bizum('Oscar','689806987')}
+    ${bizum('Raquel','676693237')}
+    <div class="orow"><span>🔵 PayPal</span><b><a href="https://paypal.me/saneascom/${amt}" target="_blank" rel="noopener">Pagar ${amt}€ ›</a></b></div>
+    <div class="orow" style="cursor:pointer" onclick="copiar('ES9214650100942061236296')"><span>🏦 ING</span><b style="font-size:12px">ES92 1465 0100 9420 6123 6296 📋</b></div>
+    <div class="orow" style="cursor:pointer" onclick="copiar('ES2215830001199064086644')"><span>🏦 Revolut</span><b style="font-size:12px">ES22 1583 0001 1990 6408 6644 📋</b></div>
+    <div class="orow"><span>💳 Tarjeta (SumUp)</span><b><a href="https://pay.sumup.com/b2c/XFTLTE3ENC" target="_blank" rel="noopener">Pagar ›</a></b></div>
+    <a class="btn" style="display:block;text-align:center;text-decoration:none;margin-top:16px" href="${wa}" target="_blank" rel="noopener">💬 Enviar mis datos por WhatsApp</a>
+    <div class="switch" style="margin-top:12px"><a onclick="renderPlanes()">‹ Volver a los bonos</a></div>`;
+}
+const telPass = t => String(t||'').replace(/\D/g,'').slice(-9);   // teléfono → últimos 9 dígitos (hace de contraseña)
+
+async function login(){
+  const email=val('l_email'),tel=val('l_tel');
+  if(!email||!tel){setMsg('loginMsg','Introduce email y teléfono.','err');return;}
+  const btn=document.getElementById('btnLogin');btn.disabled=true;btn.textContent='Entrando...';
+  const {error}=await sb.auth.signInWithPassword({email,password:telPass(tel)});
+  if(error){setMsg('loginMsg','Email o teléfono incorrectos. Si es tu primera vez, pulsa «Regístrate».','err');btn.disabled=false;btn.textContent='Entrar';return;}
+  await iniciarSesion();
+}
+
+// Registro paso 1: verificar email+teléfono contra los clientes dados de alta
+async function verificar(){
+  const email=val('v_email'),tel=val('v_tel');
+  if(!email||!tel){setMsg('verifMsg','Introduce email y teléfono.','err');return;}
+  const btn=document.getElementById('btnVerif');btn.disabled=true;btn.textContent='Verificando...';
+  const {data,error}=await sb.rpc('verificar_acceso',{p_email:email,p_telefono:tel});
+  btn.disabled=false;btn.textContent='Verificar';
+  if(error){setMsg('verifMsg','Error de conexión: '+error.message,'err');return;}
+  if(!data||!data.ok){
+    const m=data?data.motivo:'';
+    if(m==='no_encontrado') setMsg('verifMsg','No encontramos tu alta con ese email. Contacta con Saneas.','err');
+    else if(m==='telefono') setMsg('verifMsg','El teléfono no coincide con el registrado para ese email.','err');
+    else if(m==='caducado') setMsg('verifMsg','Tu suscripción está caducada (renovación '+(data.renovacion||'')+'). Renueva con Saneas para acceder.','err');
+    else setMsg('verifMsg','No se pudo verificar. Revisa los datos.','err');
+    return;
+  }
+  PENDING={email:email.trim(),telefono:telPass(tel),verif:data};
+  const partes=(data.nombre||'').trim().split(' ');
+  document.getElementById('d_nombre').value=partes[0]||'';
+  document.getElementById('d_ap1').value=partes.slice(1).join(' ')||'';
+  if(data.altura) document.getElementById('d_altura').value=data.altura;
+  if(data.genero) document.getElementById('d_genero').value=data.genero;
+  setMsg('verifMsg','');
+  hideCard('verifCard');showCard('datosCard');
+}
+
+// Registro paso 2: crear la cuenta con los datos de facturación
+async function crearCuenta(){
+  if(!PENDING){showLogin();return;}
+  const datos={nombre:val('d_nombre'),ap1:val('d_ap1'),ap2:val('d_ap2'),dni:val('d_dni'),
+    altura:val('d_altura'),genero:document.getElementById('d_genero').value,
+    calle:val('d_calle'),muni:val('d_muni'),cp:val('d_cp'),prov:val('d_prov'),pais:val('d_pais')||'España'};
+  if(!datos.nombre||!datos.ap1||!datos.dni){setMsg('datosMsg','Nombre, primer apellido y DNI son obligatorios.','err');return;}
+  const btn=document.getElementById('btnCrear');btn.disabled=true;btn.textContent='Creando...';
+  try{
+    const {data,error}=await sb.auth.signUp({email:PENDING.email,password:PENDING.telefono});
+    if(error){
+      if((error.message||'').toLowerCase().includes('already')) throw new Error('Ya tienes una cuenta. Entra con tu email y teléfono.');
+      throw error;
+    }
+    if(!data.session){setMsg('datosMsg','Cuenta creada. Si te pide confirmar el email, desactívalo en Supabase (Authentication → Email) y entra.','ok');btn.disabled=false;btn.textContent='Crear mi cuenta';return;}
+    await crearCliente(data.user,datos);
+    await iniciarSesion();
+  }catch(err){setMsg('datosMsg','Error: '+(err.message||err),'err');btn.disabled=false;btn.textContent='Crear mi cuenta';}
+}
+
+async function logout(){await sb.auth.signOut();location.reload();}
+function val(id){return document.getElementById(id).value.trim();}
+
+// ====== BLOQUEO por renovación caducada ======
+function bloqueado(c){ if(!c||!c.fecha_renovacion) return false;
+  const r=new Date(c.fecha_renovacion+'T00:00:00'); const t=new Date(); t.setHours(0,0,0,0); return r<=t; }
+function mostrarBloqueo(){
+  document.getElementById('auth').classList.add('hidden');
+  document.getElementById('main').classList.add('hidden');
+  document.getElementById('bloqTxt').textContent='Tu renovación venció el '+fechaCorta(CLIENTE.fecha_renovacion)+'. Renueva tu cuota para volver a acceder a tu app.';
+  document.getElementById('bloq-pagos').innerHTML=PAGOS_HTML.split('@User / CuotaTotal,00 €').join('Tu cuota').split('@User / CuotaTotal').join('');
+  document.getElementById('bloqueo').classList.remove('hidden');
+}
+
+// ====== AUTO-VÍNCULO: migrar datos del cliente al primer login ======
+async function linkCliente(user){
+  // ¿existe perfil migrado para este email? (RLS solo devuelve el suyo)
+  const {data:imp}=await sb.from('clientes_import').select('*').maybeSingle();
+  if(imp){
+    let da=null,dp=null;
+    if(imp.estrategia){const {data:d}=await sb.from('dietas').select('id').eq('nombre_plan',imp.estrategia).maybeSingle();da=d?d.id:null;}
+    if(imp.proxima_estrategia){const {data:d}=await sb.from('dietas').select('id').eq('nombre_plan',imp.proxima_estrategia).maybeSingle();dp=d?d.id:null;}
+    const row={id:user.id,nombre:(imp.nombre||'').split(' ')[0],apellido:(imp.nombre||'').split(' ').slice(1).join(' '),
+      email:user.email,nivel:imp.nivel,dia_consulta:(imp.dia_consulta||'').toLowerCase(),
+      dieta_actual_id:da,dieta_proxima_id:dp,dias_entreno:imp.dias_entreno||3,casa_gym:imp.casa_gym,agua_objetivo_ml:2000,
+      fecha_proxima_consulta:imp.proxima_cita,fecha_renovacion:imp.proxima_renovacion,
+      peso_inicial:imp.peso_inicial,grasa_inicial:imp.grasa_inicial,altura:imp.altura,genero:imp.genero,fecha_nacimiento:imp.fecha_nacimiento};
+    const {error}=await sb.from('clientes').insert(row);
+    if(error){console.error('insert cliente',error);}
+    // copiar histórico de registros (RLS solo devuelve los suyos)
+    const {data:regs}=await sb.from('registros_import').select('*');
+    if(regs&&regs.length){
+      const rows=regs.map(r=>({cliente_id:user.id,fecha:r.fecha,semana:r.semana,sin_consulta:r.sin_consulta,dieta_asignada:r.dieta,
+        peso:r.peso,grasa_corporal:r.grasa_corporal,peso_sin_grasa:r.peso_sin_grasa,grasa_subcutanea:r.grasa_subcutanea,
+        grasa_visceral:r.grasa_visceral,agua:r.agua,musculo_esqueletico:r.musculo_esqueletico,masa_muscular:r.masa_muscular,
+        masa_esqueletica:r.masa_esqueletica,proteina:r.proteina,edad_metabolica:r.edad_metabolica,
+        per_hombro:r.per_hombro,per_cintura:r.per_cintura,per_cadera:r.per_cadera,pli_bicipital:r.pli_bicipital,
+        pli_abdominal:r.pli_abdominal,pli_muslo:r.pli_muslo,pli_subescapular:r.pli_subescapular,
+        pli_tricipital:r.pli_tricipital,pli_suprailiaco:r.pli_suprailiaco}));
+      const {error:er}=await sb.from('registros').insert(rows);
+      if(er)console.error('insert registros',er);
+    }
+    // semana actual = nº de registros
+    const {count}=await sb.from('registros').select('*',{count:'exact',head:true}).eq('cliente_id',user.id);
+    if(count){await sb.from('clientes').update({semana:count}).eq('id',user.id);}
+    return (await sb.from('clientes').select('*').eq('id',user.id).maybeSingle()).data;
+  }
+  // cliente nuevo (no migrado): ficha mínima con una dieta de ejemplo
+  const {data:dietaDemo}=await sb.from('dietas').select('id').limit(1).maybeSingle();
+  const row={id:user.id,nombre:REG_NOMBRE||user.email.split('@')[0],email:user.email,nivel:'Nivel1',
+    agua_objetivo_ml:2000,semana:1,dieta_actual_id:dietaDemo?dietaDemo.id:null};
+  await sb.from('clientes').insert(row);
+  return row;
+}
+
+// Crear ficha completa con datos de facturación (registro nuevo)
+async function crearCliente(user,datos){
+  const {data:imp}=await sb.from('clientes_import').select('*').maybeSingle();
+  let da=null,dp=null;
+  if(imp&&imp.estrategia){const {data:d}=await sb.from('dietas').select('id').eq('nombre_plan',imp.estrategia).maybeSingle();da=d?d.id:null;}
+  if(imp&&imp.proxima_estrategia){const {data:d}=await sb.from('dietas').select('id').eq('nombre_plan',imp.proxima_estrategia).maybeSingle();dp=d?d.id:null;}
+  const row={id:user.id,email:user.email,telefono:PENDING?PENDING.telefono:null,
+    nombre:datos.nombre,apellido:datos.ap1,apellido2:datos.ap2,dni:datos.dni,genero:datos.genero,altura:num(datos.altura),
+    calle:datos.calle,municipio:datos.muni,codigo_postal:datos.cp,provincia:datos.prov,pais:datos.pais,
+    nivel:imp?imp.nivel:'Nivel1',dia_consulta:imp?(imp.dia_consulta||'').toLowerCase():null,
+    dieta_actual_id:da,dieta_proxima_id:dp,dias_entreno:imp?(imp.dias_entreno||3):3,casa_gym:imp?imp.casa_gym:null,agua_objetivo_ml:2000,
+    fecha_proxima_consulta:imp?imp.proxima_cita:null,fecha_renovacion:imp?imp.proxima_renovacion:null,
+    peso_inicial:imp?imp.peso_inicial:null,grasa_inicial:imp?imp.grasa_inicial:null,fecha_nacimiento:imp?imp.fecha_nacimiento:null};
+  const {error}=await sb.from('clientes').insert(row);
+  if(error)console.error('insert cliente',error);
+  await copiarRegistros(user);
+  const {count}=await sb.from('registros').select('*',{count:'exact',head:true}).eq('cliente_id',user.id);
+  if(count){await sb.from('clientes').update({semana:count}).eq('id',user.id);}
+}
+async function copiarRegistros(user){
+  const {data:regs}=await sb.from('registros_import').select('*');
+  if(!regs||!regs.length) return;
+  const rows=regs.map(r=>({cliente_id:user.id,fecha:r.fecha,semana:r.semana,sin_consulta:r.sin_consulta,dieta_asignada:r.dieta,
+    peso:r.peso,grasa_corporal:r.grasa_corporal,peso_sin_grasa:r.peso_sin_grasa,grasa_subcutanea:r.grasa_subcutanea,
+    grasa_visceral:r.grasa_visceral,agua:r.agua,musculo_esqueletico:r.musculo_esqueletico,masa_muscular:r.masa_muscular,
+    masa_esqueletica:r.masa_esqueletica,proteina:r.proteina,edad_metabolica:r.edad_metabolica,
+    per_hombro:r.per_hombro,per_cintura:r.per_cintura,per_cadera:r.per_cadera,pli_bicipital:r.pli_bicipital,
+    pli_abdominal:r.pli_abdominal,pli_muslo:r.pli_muslo,pli_subescapular:r.pli_subescapular,
+    pli_tricipital:r.pli_tricipital,pli_suprailiaco:r.pli_suprailiaco}));
+  const {error}=await sb.from('registros').insert(rows);
+  if(error)console.error('insert registros',error);
+}
+
+// ====== CARGA DE DATOS ======
+function saludo(){const h=new Date().getHours();return h<12?'Buenos días':(h<20?'Buenas tardes':'Buenas noches');}
+function mostrarSplash(){
+  const s=document.getElementById('splash');
+  document.getElementById('splashTxt').innerHTML=`${saludo()},<br><b>${CLIENTE.nombre||''}</b> 👋`;
+  s.classList.remove('hidden'); void s.offsetWidth; s.classList.add('show');
+  return new Promise(r=>setTimeout(r,2300));
+}
+async function registrarAcceso(){ try{ if(CLIENTE&&CLIENTE.id) await sb.from('accesos').insert({cliente_id:CLIENTE.id}); }catch(e){console.error('acceso',e);} }
+
+async function iniciarSesion(){
+  document.getElementById('auth').classList.add('hidden');
+  const {data:{user}}=await sb.auth.getUser();
+  let {data:cli}=await sb.from('clientes').select('*').eq('id',user.id).maybeSingle();
+  if(!cli){ cli=await linkCliente(user); }   // primera vez: vincular datos migrados
+  CLIENTE=cli||{nombre:REG_NOMBRE||'',email:user.email};
+  if(bloqueado(CLIENTE)){ mostrarBloqueo(); return; }   // renovación caducada → bloquear
+  const splash=mostrarSplash();   // bienvenida con saludo + nombre
+  registrarAcceso();              // contar la entrada del cliente
+  document.getElementById('avatar').textContent=((CLIENTE.nombre||'?')[0]||'?').toUpperCase()+((CLIENTE.apellido||'')[0]||'').toUpperCase();
+  const {data:regs}=await sb.from('registros').select('*').eq('cliente_id',user.id).order('semana',{ascending:false,nullsFirst:false}).order('fecha',{ascending:false}).limit(1);
+  ULTIMO=(regs&&regs[0])||null;
+  const {data:regs0}=await sb.from('registros').select('*').eq('cliente_id',user.id).order('semana',{ascending:true,nullsFirst:false}).order('fecha',{ascending:true}).limit(1);
+  PRIMERO=(regs0&&regs0[0])||null;
+  await cargarDieta();
+  // gym: recuperar la última elección del cliente (o valores por defecto)
+  GYM.origen=CLIENTE.gym_origen || (String(CLIENTE.casa_gym||'Casa').toLowerCase().includes('gym')?'gym':'casa');
+  GYM.dias=Math.min(6,Math.max(3,parseInt(CLIENTE.dias_entreno)||4));
+  GYM.dia=CLIENTE.gym_dia||'Dia1';
+  GYM._key=null;
+  await cargarGym();
+  await splash;                   // esperar el mínimo de tiempo del splash
+  document.getElementById('splash').classList.add('hidden');
+  document.getElementById('main').classList.remove('hidden');
+  renderInicio();
+}
+
+async function cargarDieta(){
+  TOMAS_HOY=[];DIETA=null;
+  let dietaId=CLIENTE.dieta_actual_id;
+  if(!dietaId){const {data:d}=await sb.from('dietas').select('id,nombre_plan,fase').limit(1);if(d&&d[0])dietaId=d[0].id;}
+  if(!dietaId)return;
+  const {data:dieta}=await sb.from('dietas').select('*').eq('id',dietaId).maybeSingle();
+  DIETA=dieta;
+  const hoyCod=DIA_MAP[new Date().getDay()];
+  TOMAS_HOY=await tomasDe(dietaId,hoyCod);
+  if(TOMAS_HOY.length===0) TOMAS_HOY=await tomasDe(dietaId,'1_Dia1'); // fallback demo
+}
+async function tomasDe(dietaId,dia){
+  const {data,error}=await sb.from('dieta_tomas')
+    .select('*, toma_productos(productos(id,nombre,descripcion,precio,formato_venta,imagen_url,url_compra)), toma_recetas(recetas(id,nombre,descripcion,ingredientes,pasos,tiempo_min,imagen_url))')
+    .eq('dieta_id',dietaId).eq('dia_semana',dia).order('orden');
+  if(error){console.error(error);return[];}
+  return data||[];
+}
+// Cachés para abrir la ficha concreta al tocar un chip
+const PRODUCTOS_CACHE={}, RECETAS_CACHE={};
+
+// ====== OBJETIVOS (peso, grasa, IMC) ======
+const r1 = x => (x==null||isNaN(x))?'—':(Math.round(x*10)/10).toString().replace('.',',');
+function calcObjetivos(){
+  const alt=parseFloat(CLIENTE.altura), gen=String(CLIENTE.genero||'').toLowerCase();
+  if(!alt) return null;
+  const a2=alt*alt, esMujer=gen.startsWith('m');
+  const POb=(29.9*a2)/10000;                     // límite obesidad (IMC 29,9)
+  const PO1=(24.9*a2)/10000;                     // límite sobrepeso (IMC 24,9)
+  const PO2=alt-100-((alt-150)/(esMujer?2.5:4)); // peso mínimo saludable (Lorentz)
+  const promedio=(PO1+PO2)/2;                    // objetivo total
+  const grasaObj=esMujer?24:19;
+  const masaMuscObj=promedio*(1-grasaObj/100)*0.95;   // peso objetivo − grasa ideal − 5% (órganos/piel/hueso)
+  return {alt,esMujer,POb,PO1,PO2,promedio,grasaObj,imcObj:22,
+    visceralIdeal:7,visceralMax:8.9,aguaMin:52,muscEsqObj:esMujer?48:52,masaMuscObj};
+}
+function hitoPeso(peso,o){
+  if(peso==null) return {meta:o.promedio,texto:''};
+  if(peso>o.POb) return {meta:o.POb,texto:`Te faltan ${r1(peso-o.POb)} kg para salir de la obesidad 💪`};
+  if(peso>o.PO1) return {meta:o.PO1,texto:`Te faltan ${r1(peso-o.PO1)} kg para dejar el sobrepeso 💪`};
+  if(peso<o.PO2) return {meta:o.PO2,texto:`Te faltan ${r1(o.PO2-peso)} kg para tu peso mínimo saludable`};
+  if(peso>o.promedio) return {meta:o.promedio,texto:`Te faltan ${r1(peso-o.promedio)} kg para tu objetivo total 🎯`};
+  return {meta:o.promedio,texto:'¡Enhorabuena! Estás en tu peso objetivo 🎉'};
+}
+function verObjetivos(){
+  const o=calcObjetivos();
+  if(!o){abrirDetalle('Tus objetivos','<div class="empty">Necesitamos tu altura para calcular tus objetivos.</div>');return;}
+  const peso=ULTIMO?ULTIMO.peso:(CLIENTE.peso_inicial||null);
+  const h=hitoPeso(peso,o);
+  let estado='—';
+  if(peso!=null){ estado = peso>o.POb?'Obesidad' : peso>o.PO1?'Sobrepeso' : peso<o.PO2?'Por debajo del mínimo' : 'Peso saludable'; }
+  abrirDetalle('Tus objetivos',`
+    <div class="card" style="text-align:center;box-shadow:none;background:var(--light)">
+      <div style="font-size:12px;color:var(--muted);font-weight:700;letter-spacing:.5px">TU PESO HOY</div>
+      <div style="font-size:34px;font-weight:800;color:var(--teal);line-height:1.1">${peso!=null?r1(peso)+' kg':'—'}</div>
+      <div style="font-size:13px;font-weight:700">${estado}</div>
+    </div>
+    ${h.texto?`<div class="hitomsg" style="margin-bottom:14px">${h.texto}</div>`:''}
+    <div class="dsec">Referencias de peso (según tu altura ${o.alt} cm)</div>
+    <div class="orow"><span>Límite de obesidad (IMC 29,9)</span><b>${r1(o.POb)} kg</b></div>
+    <div class="orow"><span>Límite de sobrepeso (IMC 24,9)</span><b>${r1(o.PO1)} kg</b></div>
+    <div class="orow"><span>🎯 Objetivo total (peso ideal)</span><b style="color:var(--teal)">${r1(o.promedio)} kg</b></div>
+    <div class="orow"><span>Peso mínimo saludable</span><b>${r1(o.PO2)} kg</b></div>
+    <div class="dsec">Composición corporal</div>
+    ${bloquesComposicion(o)}
+    <p style="font-size:12px;color:var(--muted);margin-top:14px;line-height:1.5">Tu objetivo total es el promedio entre el límite de sobrepeso y tu peso mínimo saludable. El camino: primero salir de la obesidad, luego del sobrepeso y por último alcanzar tu peso ideal.</p>`);
+}
+function objBloque(nombre,actualTxt,objTxt,msg,ok){
+  return `<div style="padding:10px 0;border-bottom:1px dashed #dbe6e9">
+    <div style="display:flex;justify-content:space-between;font-size:14px;gap:8px"><b>${nombre}</b><span style="white-space:nowrap">${actualTxt} → <b style="color:var(--teal)">${objTxt}</b></span></div>
+    <div style="font-size:12px;color:${ok?'var(--green)':'var(--muted)'};margin-top:3px">${msg}</div></div>`;
+}
+function bloquesComposicion(o){
+  const u=ULTIMO||{};
+  const alt=o.alt; const peso=u.peso;
+  const imcHoy=(peso&&alt)?+(peso/Math.pow(alt/100,2)).toFixed(1):null;
+  let out='';
+  // Grasa corporal
+  { const g=u.grasa_corporal; let m,ok=false;
+    if(g==null)m='Registra tu grasa corporal';
+    else if(g<=o.grasaObj){m='✅ Objetivo cumplido';ok=true;}
+    else m=`Te sobra ${r1(g-o.grasaObj)}% de grasa`;
+    out+=objBloque('Grasa corporal', g!=null?r1(g)+'%':'—', o.grasaObj+'%', m, ok); }
+  // IMC
+  { let m,ok=false;
+    if(imcHoy==null)m='Registra tu peso';
+    else if(imcHoy<=o.imcObj){m='✅ En tu IMC ideal';ok=true;}
+    else m=`Te falta bajar a un IMC de ${o.imcObj}`;
+    out+=objBloque('IMC', imcHoy!=null?r1(imcHoy):'—', String(o.imcObj), m, ok); }
+  // Grasa visceral
+  { const v=u.grasa_visceral; let m,ok=false;
+    if(v==null)m='Registra tu grasa visceral';
+    else if(v<2.5)m='⚠️ Demasiado baja. Sigue las pautas de Oscar.';
+    else if(v<=7){m='✅ Objetivo cumplido';ok=true;}
+    else if(v<=8.9)m=`Te sobran ${r1(v-7)} para el ideal (7)`;
+    else m='Hay que seguir trabajando en limpiar tus órganos';
+    out+=objBloque('Grasa visceral', v!=null?r1(v):'—', '7', m, ok); }
+  // Hidratación
+  { const a=u.agua; let m,ok=false;
+    if(a==null)m='Registra tu hidratación';
+    else if(a>=o.aguaMin){m='✅ Objetivo cumplido';ok=true;}
+    else m=`Te falta ${r1(o.aguaMin-a)}% · mejora hidratación y baja grasa`;
+    out+=objBloque('Hidratación', a!=null?r1(a)+'%':'—', o.aguaMin+'%', m, ok); }
+  // Músculo esquelético
+  { const me=u.musculo_esqueletico; let m,ok=false;
+    if(me==null)m='Registra tu músculo esquelético';
+    else if(me>=o.muscEsqObj){m='✅ Objetivo cumplido';ok=true;}
+    else m=`Te falta ${r1(o.muscEsqObj-me)}% para tu objetivo`;
+    out+=objBloque('Músculo esquelético', me!=null?r1(me)+'%':'—', o.muscEsqObj+'%', m, ok); }
+  // Masa muscular
+  { const mm=u.masa_muscular; let m,ok=false;
+    if(mm==null)m='Registra tu masa muscular';
+    else if(mm>=o.masaMuscObj){m='✅ Objetivo cumplido';ok=true;}
+    else m=`Te faltan ${r1(o.masaMuscObj-mm)} kg · sigue mejorando tu composición`;
+    out+=objBloque('Masa muscular', mm!=null?r1(mm)+' kg':'—', r1(o.masaMuscObj)+' kg', m, ok); }
+  return out;
+}
+
+// ====== HISTORIAL DE EVOLUCIÓN ======
+function edadEn(fechaStr){
+  if(!CLIENTE.fecha_nacimiento||!fechaStr) return null;
+  const n=new Date(CLIENTE.fecha_nacimiento+'T00:00:00'), f=new Date(fechaStr+'T00:00:00');
+  let e=f.getFullYear()-n.getFullYear(); const mm=f.getMonth()-n.getMonth();
+  if(mm<0||(mm===0&&f.getDate()<n.getDate())) e--;
+  return (e>0&&e<120)?e:null;
+}
+function edadMetabolica(rec){
+  const edad=edadEn(rec.fecha), g=rec.grasa_corporal;
+  if(edad==null||g==null) return rec.edad_metabolica!=null?Math.round(rec.edad_metabolica):null;
+  const ideal=String(CLIENTE.genero||'').toLowerCase().startsWith('m')?24:19;   // grasa ideal mujer/hombre
+  return Math.round(edad*(1+(g-ideal)/100));
+}
+async function verHistorial(){
+  const {data}=await sb.from('registros').select('*').eq('cliente_id',CLIENTE.id).order('semana',{ascending:false,nullsFirst:false}).order('fecha',{ascending:false});
+  if(!data||!data.length){abrirDetalle('Tu evolución','<div class="empty">Aún no tienes registros.</div>');return;}
+  const m=(l,v,u)=> v==null?'' : `<div class="hm"><span>${l}</span><b>${r1(v)}${u||''}</b></div>`;
+  const cards=data.map(x=>{const em=edadMetabolica(x);
+    return `<div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px">
+        <b style="font-size:15px">Semana ${x.semana!=null?x.semana:'—'}</b>
+        <small style="color:var(--muted)">${fechaCorta(x.fecha)}</small></div>
+      <div class="hgrid">
+        ${m('Peso',x.peso,' kg')}
+        ${m('Grasa corporal',x.grasa_corporal,'%')}
+        ${m('Grasa subcutánea',x.grasa_subcutanea,'%')}
+        ${m('Grasa visceral',x.grasa_visceral,'')}
+        ${m('Agua',x.agua,'%')}
+        ${m('Músculo esq.',x.musculo_esqueletico,'%')}
+        ${m('Masa muscular',x.masa_muscular,' kg')}
+        ${m('Masa ósea',x.masa_esqueletica,' kg')}
+        ${m('Proteína',x.proteina,'%')}
+        <div class="hm"><span>Edad metabólica</span><b>${em!=null?em+' años':'—'}</b></div>
+      </div></div>`;}).join('');
+  const ult10=data.slice(0,10).reverse();   // últimas 10, en orden cronológico
+  const chart = ult10.length>=2
+    ? `<div class="dsec">Últimas ${ult10.length} semanas</div>
+       <div style="height:230px;background:#fff;border-radius:16px;padding:10px 8px;box-shadow:var(--shadow);margin-bottom:16px"><canvas id="evoChart"></canvas></div>`
+    : '';
+  abrirDetalle('Tu evolución', chart + cards);
+  if(ult10.length>=2) setTimeout(()=>dibujarGrafico(ult10),40);
+}
+let _evoChart=null;
+function dibujarGrafico(regs){
+  const ctx=document.getElementById('evoChart'); if(!ctx||!window.Chart) return;
+  if(_evoChart) _evoChart.destroy();
+  const labels=regs.map(r=>r.semana!=null?('S'+r.semana):fechaCorta(r.fecha));
+  const ds=(l,key,color)=>({label:l,data:regs.map(r=>r[key]??null),borderColor:color,backgroundColor:color,tension:.3,pointRadius:3,borderWidth:2,spanGaps:true});
+  _evoChart=new Chart(ctx,{type:'line',
+    data:{labels,datasets:[ds('Peso (kg)','peso','#3890a4'),ds('Grasa %','grasa_corporal','#d05a4a'),ds('Masa musc. (kg)','masa_muscular','#2f9e5f')]},
+    options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+      plugins:{legend:{labels:{font:{family:'Quicksand',size:11},boxWidth:12,padding:10}}},
+      scales:{x:{ticks:{font:{family:'Quicksand',size:10}},grid:{display:false}},
+              y:{ticks:{font:{family:'Quicksand',size:10}},grid:{color:'#eef3f4'}}}}});
+}
+
+// ====== RENDER INICIO ======
+function renderInicio(){
+  const hoy=new Date();
+  const esConsulta=(CLIENTE.dia_consulta||'').toLowerCase()===DIA_NOMBRE[hoy.getDay()];
+  const altura=CLIENTE.altura||null;
+  const imc=(p)=>(p&&altura)?+(p/Math.pow(altura/100,2)).toFixed(1):null;
+  const pesoIni=(PRIMERO&&PRIMERO.peso!=null)?PRIMERO.peso:CLIENTE.peso_inicial;
+  const grasaIni=(PRIMERO&&PRIMERO.grasa_corporal!=null)?PRIMERO.grasa_corporal:CLIENTE.grasa_inicial;
+  const pesoHoy=ULTIMO?ULTIMO.peso:null, grasaHoy=ULTIMO?ULTIMO.grasa_corporal:null;
+  const imcIni=imc(pesoIni), imcHoy=imc(pesoHoy);
+  const OBJ=calcObjetivos();
+  const hito=OBJ?hitoPeso(pesoHoy,OBJ):null;
+  const metaPeso=hito?hito.meta:CLIENTE.peso_objetivo;
+  const metaGrasa=OBJ?OBJ.grasaObj:CLIENTE.grasa_objetivo;
+  const metaImc=OBJ?OBJ.imcObj:null;
+  const metaFinal=OBJ?OBJ.promedio:CLIENTE.peso_objetivo;
+  const prog=(pesoIni&&metaFinal&&pesoHoy)?
+    Math.max(0,Math.min(100,Math.round((pesoIni-pesoHoy)/(pesoIni-metaFinal)*100))):0;
+  // Agua diaria = peso actual / 20 (litros). Ej: 80 kg → 4,0 L
+  const pesoAgua=pesoHoy||pesoIni||null;
+  const aguaL=pesoAgua?(pesoAgua/20):null;
+  const litros=aguaL!=null?aguaL.toFixed(1).replace('.',','):'—';
+  const vasos=aguaL!=null?Math.round(aguaL*4):0;   // vasos de 250 ml
+  let glasses='';for(let i=0;i<vasos;i++)glasses+='<span class="full"></span>';
+  const vid=CLIENTE.video_semana_url;
+
+  document.getElementById('s-inicio').innerHTML=`
+    <p style="font-size:20px;font-weight:700;margin:4px 6px 2px">Hola, ${CLIENTE.nombre||''} 👋</p>
+    <p style="font-size:13px;color:var(--muted);margin:0 6px 4px">Semana ${fmt(CLIENTE.semana)} en Saneas · ${fmt(CLIENTE.nivel)}</p>
+
+    <div class="card agenda">
+      <h3>📅 Tu agenda</h3>
+      <div class="row"><span>Hoy</span><span>${hoy.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'short'})}</span></div>
+      <div class="row"><span>Próxima consulta</span><span>${fechaCorta(CLIENTE.fecha_proxima_consulta)}</span></div>
+      <div class="row"><span>Próxima renovación</span><span>${fechaCorta(CLIENTE.fecha_renovacion)}</span></div>
+      <div class="today">${esConsulta
+        ?'📣 ¡Hoy es tu día de consulta! Envía tus datos antes de las 10:00 🕙'
+        :'Hoy no es día de consulta. Recuerda enviar tus datos el '+fmt(CLIENTE.dia_consulta)+' antes de las 10:00 🕙'}</div>
+    </div>
+
+    <h2 class="sec">🧭 Tu pizarra</h2>
+    <div class="choices">
+      <div class="choice active" onclick="pizarra('dieta',this)"><span class="ic">🥗</span>Dieta de hoy</div>
+      <div class="choice" onclick="pizarra('gym',this)"><span class="ic">💪</span>Entreno de hoy</div>
+      <div class="choice" onclick="pizarra('prox',this)"><span class="ic">🛒</span>Próxima dieta + compra</div>
+    </div>
+    <div class="card" id="pizarra"></div>
+
+    <h2 class="sec">📈 Tu evolución</h2>
+    <div class="card">
+      <div class="evo"><div class="lbl">Peso (kg)</div>
+        <div class="stat">
+          <div><span class="k">Inicio</span><span class="v">${fmt(pesoIni)}</span></div>
+          <div><span class="k">Hoy</span><span class="v now">${fmt(pesoHoy)}</span></div>
+          <div><span class="k">Meta</span><span class="v goal">${metaPeso!=null?r1(metaPeso):'—'}</span></div>
+        </div>
+      </div>
+      <div class="bar"><span style="width:${prog}%"></span></div>
+      <div class="evo" style="margin-top:14px;display:flex">
+        <div style="flex:1"><div class="lbl">Grasa %</div><div class="stat">
+          <div><span class="k">Ini</span><span class="v">${fmt(grasaIni)}</span></div>
+          <div><span class="k">Hoy</span><span class="v now">${fmt(grasaHoy)}</span></div>
+          <div><span class="k">Meta</span><span class="v goal">${metaGrasa!=null?r1(metaGrasa):'—'}</span></div></div></div>
+        <div style="flex:1"><div class="lbl">IMC</div><div class="stat">
+          <div><span class="k">Ini</span><span class="v">${fmt(imcIni)}</span></div>
+          <div><span class="k">Hoy</span><span class="v now">${fmt(imcHoy)}</span></div>
+          <div><span class="k">Meta</span><span class="v goal">${metaImc!=null?r1(metaImc):'—'}</span></div></div></div>
+      </div>
+      ${hito&&hito.texto?`<div class="hitomsg">${hito.texto}</div>`:''}
+      <div style="display:flex;gap:8px">
+        <button class="verobj" onclick="verObjetivos()">🎯 Objetivos</button>
+        <button class="verobj" onclick="verHistorial()">📊 Evolución</button>
+      </div>
+    </div>
+
+    <div class="card water">
+      <div class="drop">💧</div>
+      <div style="flex:1"><h3 style="margin:0">Agua de hoy</h3>
+        <div><span class="big">${litros} L</span> <span style="font-size:13px;color:var(--muted)">${aguaL!=null?'≈ '+vasos+' vasos':'registra tu peso'}</span></div>
+        <div class="glasses">${glasses}</div></div>
+    </div>
+
+    <h2 class="sec">🎬 Vídeo de la semana</h2>
+    <div class="video">
+      ${vid?`<a class="play" href="${vid}" target="_blank" rel="noopener">▶</a>`:'<div class="play">▶</div>'}
+      <div class="cap">${vid?'Toca para ver el vídeo de esta semana':'Sin vídeo esta semana'}</div>
+    </div>`;
+  pizarra('dieta',document.querySelector('#s-inicio .choice'));
+}
+
+function pizarra(k,el){
+  document.querySelectorAll('#s-inicio .choice').forEach(c=>c.classList.remove('active'));
+  if(el)el.classList.add('active');
+  const cont=document.getElementById('pizarra');
+  if(k==='gym'){ renderPizarraGym(); return; }
+  let html='';
+  if(k==='dieta'){
+    if(TOMAS_HOY.length===0) html='<div class="empty">No hay dieta asignada para hoy.</div>';
+    else html=TOMAS_HOY.map(t=>{const i=TOMA_INFO[t.toma]||['🍴',t.toma];
+      return `<div class="meal"><div class="t">${i[0]} ${i[1]}</div><div class="d">${listar(t.texto)}</div></div>`;}).join('');
+  }else{
+    html=`<p style="font-size:13px;color:var(--muted)">Tu próxima dieta y su lista de la compra aparecerán aquí cuando la tengas asignada.</p>`;
+  }
+  cont.innerHTML=html;
+}
+// Pizarra Gym: la elección del cliente (Casa/Gym, días, día) + su entreno de ese día
+async function renderPizarraGym(){
+  const cont=document.getElementById('pizarra');
+  await cargarGym();
+  const dias=diasGym(), col='dia_'+GYM.dias;
+  const list=GYM.ejers.filter(e=>e[col]===GYM.dia);
+  cont.innerHTML=`
+    <div class="seg2" style="margin-bottom:8px">
+      <button class="${GYM.origen==='casa'?'active':''}" onclick="selGymO('casa')">🏠 Casa</button>
+      <button class="${GYM.origen==='gym'?'active':''}" onclick="selGymO('gym')">🏋️ Gimnasio</button></div>
+    <div class="seg2" style="margin-bottom:8px">${[3,4,5,6].map(n=>`<button class="${GYM.dias===n?'active':''}" onclick="selGymN(${n})">${n} días</button>`).join('')}</div>
+    <div class="daysel" style="margin-bottom:8px">${dias.map((d,i)=>`<button class="${d===GYM.dia?'active':''}" onclick="selGymD('${d}')">Día ${i+1}</button>`).join('')}</div>
+    ${list.length? list.map(exCard).join('') : '<div class="empty">Sin ejercicios.</div>'}`;
+}
+function persistGym(){ if(CLIENTE&&CLIENTE.id){const upd={dias_entreno:GYM.dias,gym_origen:GYM.origen,gym_dia:GYM.dia};sb.from('clientes').update(upd).eq('id',CLIENTE.id);Object.assign(CLIENTE,upd);} }
+async function selGymO(o){GYM.origen=o;GYM.dia='Dia1';await cargarGym();persistGym();renderPizarraGym();}
+async function selGymN(n){GYM.dias=n;GYM.dia='Dia1';await cargarGym();persistGym();renderPizarraGym();}
+function selGymD(d){GYM.dia=d;persistGym();renderPizarraGym();}
+
+// ====== RENDER DIETA ======
+let DIA_SEL=null;
+async function renderDieta(){
+  const cont=document.getElementById('s-dieta');
+  if(!DIETA){cont.innerHTML='<div class="empty">Aún no tienes una dieta asignada.</div>';return;}
+  DIA_SEL=DIA_SEL||DIA_MAP[new Date().getDay()];
+  const dias=[['1_Dia1','Lun'],['2_Dia2','Mar'],['3_Dia3','Mié'],['4_Dia4','Jue'],['5_Dia5','Vie'],['6_Dia6','Sáb'],['7_Domingo','Dom']];
+  const tomas=await tomasDe(DIETA.id,DIA_SEL);
+  cont.innerHTML=`
+    <p style="font-size:20px;font-weight:700;margin:4px 6px 2px">Tu dieta</p>
+    <p style="font-size:13px;color:var(--muted);margin:0 6px 10px">${fmt(DIETA.nombre_plan)}</p>
+    <div class="daysel">${dias.map(d=>`<button class="${d[0]===DIA_SEL?'active':''}" onclick="selDia('${d[0]}')">${d[1]}</button>`).join('')}</div>
+    ${tomas.length===0?'<div class="empty">Sin comidas para este día.</div>':tomas.map(t=>{
+      const i=TOMA_INFO[t.toma]||['🍴',t.toma];
+      const prods=(t.toma_productos||[]).map(x=>x.productos).filter(Boolean);
+      const recs=(t.toma_recetas||[]).map(x=>x.recetas).filter(Boolean);
+      prods.forEach(p=>PRODUCTOS_CACHE[p.id]=p); recs.forEach(r=>RECETAS_CACHE[r.id]=r);
+      return `<div class="card"><div class="plato">
+        <h4>${i[0]} ${i[1]}</h4><p>${listar(t.texto)}</p>
+        ${prods.length?`<div class="relh">🛒 Artículos de tienda</div><div class="chips">${prods.map(p=>`<span class="chip shop link" onclick="verProducto('${p.id}')">🛒 ${p.nombre} ›</span>`).join('')}</div>`:''}
+        ${recs.length?`<div class="relh">👩‍🍳 Recetas relacionadas</div><div class="chips">${recs.map(r=>`<span class="chip rec link" onclick="verReceta('${r.id}')">👩‍🍳 ${r.nombre} ›</span>`).join('')}</div>`:''}
+      </div></div>`;}).join('')}`;
+}
+function selDia(d){DIA_SEL=d;renderDieta();}
+
+// ====== FICHA DE PRODUCTO / RECETA ======
+function abrirDetalle(titulo,html){
+  document.getElementById('detTitle').textContent=titulo;
+  document.getElementById('detBody').innerHTML=html;
+  document.getElementById('detail').classList.add('open');
+}
+function cerrarDetalle(){document.getElementById('detail').classList.remove('open');}
+
+async function verProducto(id){
+  const {data:p}=await sb.from('productos').select('*').eq('id',id).maybeSingle();
+  if(!p)return;
+  const hero=p.imagen_url?`<img src="${p.imagen_url}" alt="" style="width:100%;height:300px;object-fit:contain;background:var(--light);border-radius:16px;margin-bottom:14px">`:`<div class="hero">🛒</div>`;
+  abrirDetalle(p.nombre,`
+    ${hero}
+    <h3 style="font-size:20px;margin-bottom:6px">${p.nombre}</h3>
+    ${p.precio!=null?`<div class="price-big">${Number(p.precio).toFixed(2).replace('.',',')} €</div>`:''}
+    ${p.supermercado?`<div class="kv">🛒 Supermercado: ${p.supermercado}</div>`:''}
+    ${p.formato_venta?`<div class="kv">Formato: ${p.formato_venta}</div>`:''}
+    ${p.categoria?`<div class="kv">Categoría: ${p.categoria}</div>`:''}
+    ${p.descripcion?`<div class="dsec">Descripción</div><div class="dtext">${p.descripcion}</div>`:''}
+    ${p.url_compra?`<a class="btn" style="display:block;text-align:center;text-decoration:none;margin-top:18px" href="${p.url_compra}" target="_blank" rel="noopener">🛒 Comprar en la tienda</a>`:''}
+  `);
+}
+async function verReceta(id){
+  const {data:r}=await sb.from('recetas').select('*').eq('id',id).maybeSingle();
+  if(!r)return;
+  const hero=r.imagen_url?`<img src="${r.imagen_url}" alt="" style="width:100%;height:300px;object-fit:cover;background:var(--light);border-radius:16px;margin-bottom:14px">`:`<div class="hero">👩‍🍳</div>`;
+  abrirDetalle(r.nombre,`
+    ${hero}
+    <h3 style="font-size:20px;margin-bottom:6px">${r.nombre}</h3>
+    ${r.tiempo_min?`<div class="kv">⏱️ ${r.tiempo_min} min${r.categoria?' · '+r.categoria:''}</div>`:''}
+    ${r.video_url?`<a class="btn" style="display:block;text-align:center;text-decoration:none;margin:12px 0;background:#111" href="${r.video_url}" target="_blank" rel="noopener">▶ Ver vídeo</a>`:''}
+    ${r.descripcion?`<div class="dtext">${r.descripcion}</div>`:''}
+    ${r.ingredientes?`<div class="dsec">Ingredientes</div><div class="dtext">${formatoLista(r.ingredientes)}</div>`:''}
+    ${r.pasos?`<div class="dsec">Preparación</div><div class="dtext">${formatoLista(r.pasos)}</div>`:''}
+  `);
+}
+
+// ====== REGISTRO ======
+function regTab(k,el){['imp','pli','per'].forEach(x=>document.getElementById('r-'+x).classList.add('hidden'));
+  document.getElementById('r-'+k).classList.remove('hidden');
+  document.querySelectorAll('#s-registro .tabs button').forEach(b=>b.classList.remove('active'));el.classList.add('active');}
+
+async function guardarRegistro(){
+  const btn=document.getElementById('btnReg2');btn.disabled=true;btn.textContent='Guardando...';
+  const campos=['peso','imc','grasa_corporal','grasa_visceral','agua','masa_muscular','proteina','edad_metabolica',
+    'pli_tricipital','pli_subescapular','pli_suprailiaco','pli_abdominal','pli_muslo','pli_pantorrilla',
+    'per_cintura','per_cadera','per_pecho','per_brazo','per_muslo','per_gemelo'];
+  const row={cliente_id:CLIENTE.id,fecha:new Date().toISOString().slice(0,10),semana:CLIENTE.semana||null};
+  campos.forEach(c=>row[c]=num(document.getElementById('f_'+c).value));
+  const {error}=await sb.from('registros').insert(row);
+  if(error){setMsg('regSaveMsg','Error al guardar: '+error.message,'err');}
+  else{setMsg('regSaveMsg','✅ Datos guardados en tu ficha correctamente.','ok');
+    ULTIMO=row;renderInicio();campos.forEach(c=>document.getElementById('f_'+c).value='');}
+  btn.disabled=false;btn.textContent='✅ Enviar mis datos';
+}
+
+// ====== NAV ======
+function go(id,el){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.add('hidden'));
+  document.getElementById('s-'+id).classList.remove('hidden');
+  document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));el.classList.add('active');
+  if(id==='dieta')renderDieta();
+  if(id==='gym')renderGym();
+  document.getElementById('s-'+id).scrollTop=0;
+}
+
+// ====== GYM ======
+let GYM={origen:'casa',dias:4,dia:'Dia1',full:false,ejers:[],_key:null};
+const EJ_CACHE={};                       // ejercicios por id (para abrir su ficha)
+let GYMFULL={origen:null,ejers:[]};      // programa completo (pantalla Gym)
+function diasGym(){const col='dia_'+GYM.dias;return [...new Set(GYM.ejers.map(e=>e[col]))].filter(Boolean).sort();}
+// Reparto de los días de entreno en la semana según cuántos días entrena (1=Lun … 6=Sáb; domingo descanso)
+const HORARIO={3:{1:1,3:2,5:3},4:{1:1,2:2,4:3,5:4},5:{1:1,2:2,3:3,4:4,5:5},6:{1:1,2:2,3:3,4:4,5:5,6:6}};
+function diaHoyGym(){const wd=new Date().getDay();const m=HORARIO[GYM.dias]||{};const n=m[wd];return n?('Dia'+n):null;}
+async function cargarGym(){
+  const key=GYM.origen+'|'+GYM.dias;
+  if(GYM._key===key) return;
+  const col='dia_'+GYM.dias;
+  // cada nº de días es un programa distinto (tanto en gimnasio como en casa) → filtrar por total_dias
+  const {data}=await sb.from('gym_ejercicios').select('*').eq('origen',GYM.origen).eq('total_dias',GYM.dias).not(col,'is',null).order('orden');
+  GYM.ejers=data||[]; GYM._key=key; GYM.ejers.forEach(e=>EJ_CACHE[e.id]=e);
+  const dias=diasGym(); if(!dias.includes(GYM.dia)) GYM.dia=dias[0]||'Dia1';
+}
+async function renderGym(){
+  const cont=document.getElementById('s-gym');
+  cont.innerHTML='<div class="spinner"></div>';
+  const origen=GYMFULL.origen||GYM.origen||'casa'; GYMFULL.origen=origen;
+  const {data}=await sb.from('gym_ejercicios').select('*').eq('origen',origen).eq('total_dias',6).not('dia_6','is',null).order('orden');
+  const ejers=data||[]; ejers.forEach(e=>EJ_CACHE[e.id]=e); GYMFULL.ejers=ejers;
+  const dias=[...new Set(ejers.map(e=>e.dia_6))].filter(Boolean).sort();
+  const segOrigen=`<div class="seg2">
+    <button class="${origen==='casa'?'active':''}" onclick="setGymFull('casa')">🏠 Casa</button>
+    <button class="${origen==='gym'?'active':''}" onclick="setGymFull('gym')">🏋️ Gimnasio</button></div>`;
+  const body=dias.length? dias.map((d,i)=>`<h2 class="sec">Día ${i+1}</h2>`+ejers.filter(e=>e.dia_6===d).map(exCard).join('')).join('') : '<div class="empty">Sin ejercicios.</div>';
+  cont.innerHTML=`
+    <p style="font-size:20px;font-weight:700;margin:4px 6px 2px">Programa completo</p>
+    <p style="font-size:13px;color:var(--muted);margin:0 6px 10px">Todos los ejercicios clasificados por día (programa de 6 días).</p>
+    ${segOrigen}${body}`;
+}
+function setGymFull(o){GYMFULL.origen=o;renderGym();}
+function exCard(e){
+  const vis=e.img1?`<img src="${e.img1}" loading="lazy" alt="">`:'<div class="ph">🏋️</div>';
+  return `<div class="exitem" onclick="verEjercicio('${e.id}')">
+    ${vis}
+    <div class="en"><b>${e.ejercicio}</b><small>Descanso ${e.descanso||'-'}</small></div>
+    <div class="rr">${e.series||''}${e.reps?'<br>× '+e.reps:''}</div></div>`;
+}
+function verEjercicio(id){
+  const e=EJ_CACHE[id]; if(!e)return;
+  const hero=e.img1?`<img src="${e.img1}" alt="" style="width:100%;max-height:280px;object-fit:contain;background:var(--light);border-radius:16px;margin-bottom:14px">`:'<div class="hero">🏋️</div>';
+  const emb=(e.video&&String(e.video).trim().startsWith('<'))?`<div class="dsec">Vídeo</div><div style="border-radius:14px;overflow:hidden">${e.video}</div>`:'';
+  abrirDetalle(e.ejercicio,`
+    ${hero}
+    <h3 style="font-size:20px;margin-bottom:6px">${e.ejercicio}</h3>
+    <div class="price-big" style="font-size:18px">${e.series||'-'} series × ${e.reps||'-'}</div>
+    <div class="kv">Descanso: ${e.descanso||'-'}</div>
+    ${e.notas?`<div class="dsec">Notas biomecánicas</div><div class="dtext">${e.notas}</div>`:''}
+    ${emb}`);
+}
+async function setGym(k,v){
+  GYM[k]=v; GYM.full=false;
+  await renderGym();
+  if(CLIENTE&&CLIENTE.id){
+    const upd={dias_entreno:GYM.dias,gym_origen:GYM.origen,gym_dia:GYM.dia};
+    sb.from('clientes').update(upd).eq('id',CLIENTE.id); Object.assign(CLIENTE,upd);
+  }
+}
+function setGymDia(d){
+  GYM.dia=d; GYM.full=false; renderGym();
+  if(CLIENTE&&CLIENTE.id){ sb.from('clientes').update({gym_dia:d}).eq('id',CLIENTE.id); CLIENTE.gym_dia=d; }
+}
+function toggleFull(){GYM.full=!GYM.full;renderGym();}
+
+// ====== Contenido de la página Pagos (escaparate) ======
+const PAGOS_HTML = `
+<div style="padding: 10px 4px; font-family: 'Poppins', sans-serif; text-align: left;">
+<div style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border-radius: 24px; padding: 16px 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); text-align: left;">
+<div style="margin-bottom: 12px; text-align: left;">
+<span style="font-family: 'Montserrat', sans-serif; font-weight: 800; font-size: 24px; color: #34d399; letter-spacing: -0.5px;">Saneas</span>
+<span style="font-family: 'Montserrat', sans-serif; font-weight: 800; font-size: 26px; color: #ffffff; letter-spacing: -0.5px;"> Tarifas</span>
+</div>
+<table style="width: 100%; border-collapse: separate; border-spacing: 8px; margin-bottom: 4px; border: none;">
+<tr>
+<td style="width: 50%; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 16px; padding: 12px 10px; text-align: left; vertical-align: top;">
+<div style="font-size: 12px; color: #94a3b8; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px;">Prueba</div>
+<div style="font-size: 26px; color: #ffffff; font-weight: 800; font-family: 'Montserrat', sans-serif; line-height: 1;">15€</div>
+<div style="font-size: 11px; color: #34d399; font-weight: 500; margin-top: 4px; line-height: 1.2;">2 semanas</div>
+</td>
+<td style="width: 50%; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 16px; padding: 12px 10px; text-align: left; vertical-align: top;">
+<div style="font-size: 12px; color: #94a3b8; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px;">Básico</div>
+<div style="font-size: 26px; color: #ffffff; font-weight: 800; font-family: 'Montserrat', sans-serif; line-height: 1;">30€</div>
+<div style="font-size: 11px; color: #e2e8f0; font-weight: 400; margin-top: 4px; line-height: 1.2; font-style: italic; opacity: 0.9;">En modo automático</div>
+</td>
+</tr>
+<tr>
+<td style="width: 50%; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 16px; padding: 12px 10px; text-align: left; vertical-align: top;">
+<div style="font-size: 12px; color: #94a3b8; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px;">Mensual</div>
+<div style="font-size: 26px; color: #ffffff; font-weight: 800; font-family: 'Montserrat', sans-serif; line-height: 1;">60€</div>
+<div style="font-size: 11px; color: #94a3b8; font-weight: 400; margin-top: 4px; line-height: 1.2;">Mes a mes</div>
+</td>
+<td style="width: 50%; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 16px; padding: 12px 10px; text-align: left; vertical-align: top;">
+<div style="font-size: 12px; color: #94a3b8; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px;">Trimestre</div>
+<div style="font-size: 26px; color: #ffffff; font-weight: 800; font-family: 'Montserrat', sans-serif; line-height: 1;">170€</div>
+<div style="font-size: 11px; color: #94a3b8; font-weight: 400; margin-top: 4px; line-height: 1.2;">Pago trimestral</div>
+</td>
+</tr>
+<tr>
+<td style="width: 50%; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 16px; padding: 12px 10px; text-align: left; vertical-align: top;">
+<div style="font-size: 12px; color: #94a3b8; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px;">Bono 6 Meses</div>
+<div style="font-size: 26px; color: #ffffff; font-weight: 800; font-family: 'Montserrat', sans-serif; line-height: 1;">300€</div>
+<div style="display: inline-block; font-size: 10px; color: #34d399; font-weight: 700; background: rgba(52,211,153,0.1); padding: 2px 6px; border-radius: 6px; margin-top: 4px;">1 mes gratis</div>
+</td>
+<td style="width: 50%; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 16px; padding: 12px 10px; text-align: left; vertical-align: top;">
+<div style="font-size: 12px; color: #94a3b8; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px;">Bono 1 Año</div>
+<div style="font-size: 26px; color: #ffffff; font-weight: 800; font-family: 'Montserrat', sans-serif; line-height: 1;">600€</div>
+<div style="display: inline-block; font-size: 10px; color: #34d399; font-weight: 700; background: rgba(52,211,153,0.1); padding: 2px 6px; border-radius: 6px; margin-top: 4px;">2 meses gratis</div>
+</td>
+</tr>
+</table>
+<div style="margin: 6px 8px 0px 8px; background: linear-gradient(90deg, rgba(147,51,234,0.15) 0%, rgba(192,132,252,0.05) 100%); border: 1px solid rgba(147,51,234,0.4); border-radius: 16px; padding: 12px 14px; text-align: left;">
+<table style="width: 100%; border-collapse: collapse; border: none;">
+<tr>
+<td style="text-align: left; padding: 0; border: none; vertical-align: middle;">
+<div style="font-family: 'Montserrat', sans-serif; font-size: 18px; color: #ffffff; font-weight: 800; line-height: 1.1;">Tarifa VIP</div>
+<div style="font-size: 12px; color: #c084fc; font-weight: 500; margin-top: 2px; line-height: 1.2;">Todas las consultas telefónicas</div>
+</td>
+<td style="text-align: right; padding: 0; border: none; vertical-align: middle;">
+<div style="font-size: 26px; color: #c084fc; font-weight: 800; font-family: 'Montserrat', sans-serif; line-height: 1;">120€</div>
+<div style="font-size: 11px; color: #94a3b8; font-weight: 400; margin-top: 2px;">al mes</div>
+</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+<div style="height:14px"></div>
+<div style="background:linear-gradient(135deg,#ffffff,#f8fafc);border-radius:28px;padding:24px;border:1px solid #e2e8f0;box-shadow:0 10px 30px rgba(15,23,42,.08);font-family:sans-serif;">
+<div style="text-align:center;margin-bottom:22px;">
+<div style="font-size:13px;color:#0ea5a4;font-weight:700;text-transform:uppercase;letter-spacing:2px;">💎 Área de Pago Saneas</div>
+</div>
+<div style="background:#f8fafc;border-radius:18px;padding:18px;margin-bottom:18px;border:1px solid #e2e8f0;">
+<div style="display:flex;align-items:center;margin-bottom:18px;">
+<span style="font-size:34px;margin-right:12px;">📱</span>
+<div><div style="font-size:22px;font-weight:800;color:#0f172a;">Pago por Bizum</div>
+<div style="font-size:14px;color:#64748b;">Transferencia inmediata y segura</div></div>
+</div>
+<div style="display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-top:1px solid #e2e8f0;">
+<div><div style="font-size:18px;font-weight:700;color:#0f172a;">+34 689 806 987</div>
+<div style="font-size:14px;color:#64748b;">Oscar BJ</div></div>
+<a href="data:text/vcard;charset=utf-8,BEGIN%3AVCARD%0AVERSION%3A3.0%0AFN%3AOscar%20Belloso%20-%20Saneas%0ATEL%3BTYPE%3DCELL%3A%2B34689806987%0AORG%3ASaneas%0AEND%3AVCARD" style="background:#14b8a6;color:white;padding:12px 18px;border-radius:30px;text-decoration:none;font-size:14px;font-weight:700;">👤 Guardar</a>
+</div>
+<div style="display:flex;justify-content:space-between;align-items:center;padding-top:14px;">
+<div><div style="font-size:18px;font-weight:700;color:#0f172a;">+34 676 693 237</div>
+<div style="font-size:14px;color:#64748b;">Raquel GR</div></div>
+<a href="data:text/vcard;charset=utf-8,BEGIN%3AVCARD%0AVERSION%3A3.0%0AFN%3ARaquel%20GR%20-%20Saneas%0ATEL%3BTYPE%3DCELL%3A%2B34676693237%0AORG%3ASaneas%0AEND%3AVCARD" style="background:#14b8a6;color:white;padding:12px 18px;border-radius:30px;text-decoration:none;font-size:14px;font-weight:700;">👤 Guardar</a>
+</div>
+</div>
+<div style="background:linear-gradient(135deg,#ecfeff,#f0fdfa);border:1px solid #99f6e4;padding:16px;border-radius:16px;text-align:center;">
+<div style="font-size:15px;font-weight:700;color:#0f766e;">💡 Paso final</div>
+<div style="font-size:14px;color:#155e75;margin-top:6px;line-height:1.5;">Guarda el contacto y realiza el Bizum desde tu aplicación bancaria habitual.</div>
+</div>
+</div>
+<div style="height:14px"></div>
+<div style="background:linear-gradient(135deg,#0f4c81,#2563eb);border-radius:28px;padding:24px;box-shadow:0 10px 30px rgba(37,99,235,.25);font-family:sans-serif;color:white;">
+<div style="display:flex;align-items:center;margin-bottom:20px;">
+<div style="width:52px;height:52px;background:rgba(255,255,255,.15);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:28px;margin-right:14px;">🔵</div>
+<div><div style="font-size:24px;font-weight:800;">PayPal</div>
+<div style="font-size:14px;color:rgba(255,255,255,.75);">Pago online seguro</div></div>
+</div>
+<div style="background:rgba(255,255,255,.08);border-radius:16px;padding:16px;margin-bottom:18px;">
+<div style="font-size:13px;color:rgba(255,255,255,.7);margin-bottom:6px;">Enlace de pago</div>
+<div style="font-size:18px;font-weight:700;">paypal.me/saneascom</div>
+</div>
+<div style="text-align:center;">
+<a href="https://paypal.me/saneascom" style="display:inline-block;background:white;color:#2563eb;padding:15px 24px;border-radius:30px;text-decoration:none;font-size:16px;font-weight:800;box-shadow:0 4px 12px rgba(0,0,0,.15);">💸 Pagar por PayPal</a>
+</div>
+<div style="margin-top:18px;text-align:center;font-size:13px;color:rgba(255,255,255,.75);">⚡ Acceso rápido y pago instantáneo mediante PayPal</div>
+</div>
+<div style="height:14px"></div>
+<div style="background:linear-gradient(135deg,#065f46,#10b981);border-radius:28px;padding:24px;box-shadow:0 10px 30px rgba(16,185,129,.25);font-family:sans-serif;color:white;">
+<div style="display:flex;align-items:center;margin-bottom:20px;">
+<div style="width:52px;height:52px;background:rgba(255,255,255,.15);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:28px;margin-right:14px;">🏦</div>
+<div><div style="font-size:24px;font-weight:800;">Transferencia bancaria</div>
+<div style="font-size:14px;color:rgba(255,255,255,.75);">Pago mediante cuenta bancaria</div></div>
+</div>
+<div style="background:rgba(255,255,255,.12);border-radius:18px;padding:18px;margin-bottom:18px;">
+<div style="font-size:13px;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,.7);margin-bottom:8px;">Cuenta ING</div>
+<div style="font-size:16px;font-weight:700;margin-bottom:10px;">Oscar Belloso Jiménez</div>
+<div style="background:rgba(255,255,255,.15);padding:14px;border-radius:12px;font-family:monospace;font-size:15px;font-weight:700;letter-spacing:1px;word-break:break-all;">ES92 1465 0100 9420 6123 6296</div>
+</div>
+<div style="background:rgba(255,255,255,.12);border-radius:18px;padding:18px;">
+<div style="font-size:13px;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,.7);margin-bottom:8px;">Cuenta Revolut</div>
+<div style="font-size:16px;font-weight:700;margin-bottom:10px;">Oscar Belloso Jiménez</div>
+<div style="background:rgba(255,255,255,.15);padding:14px;border-radius:12px;font-family:monospace;font-size:15px;font-weight:700;letter-spacing:1px;word-break:break-all;">ES22 1583 0001 1990 6408 6644</div>
+</div>
+</div>
+<div style="height:14px"></div>
+<div style="background:linear-gradient(135deg,#0f172a,#020617);border-radius:28px;padding:24px;box-shadow:0 12px 35px rgba(0,0,0,.35);font-family:sans-serif;color:white;">
+<div style="display:flex;align-items:center;margin-bottom:22px;">
+<div style="width:52px;height:52px;background:rgba(255,215,0,.12);border:1px solid rgba(255,215,0,.25);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:28px;margin-right:14px;">💳</div>
+<div><div style="font-size:24px;font-weight:800;color:#f8fafc;">Tarjeta</div>
+<div style="font-size:14px;color:#cbd5e1;">Pago seguro online</div></div>
+</div>
+<div style="background:linear-gradient(135deg,rgba(255,215,0,.08),rgba(255,255,255,.04));border:1px solid rgba(255,215,0,.15);border-radius:20px;padding:18px;margin-bottom:18px;">
+<div style="font-size:13px;text-transform:uppercase;letter-spacing:1px;color:#fbbf24;margin-bottom:8px;">Método de pago</div>
+<div style="font-size:22px;font-weight:800;color:white;">SumUp Secure Payments</div>
+<div style="font-size:14px;color:#cbd5e1;margin-top:8px;">Visa · Mastercard · American Express</div>
+</div>
+<div style="text-align:center;">
+<a href="https://pay.sumup.com/b2c/XFTLTE3ENC" style="display:inline-block;background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#0f172a;padding:16px 28px;border-radius:32px;text-decoration:none;font-size:16px;font-weight:800;box-shadow:0 6px 20px rgba(245,158,11,.35);">💳 Pagar con tarjeta</a>
+</div>
+<div style="margin-top:20px;text-align:center;font-size:13px;color:#94a3b8;">⚡ Confirmación inmediata del pago</div>
+</div>`;
+
+// ====== MÁS: Tienda / Recetas / Pagos ======
+function masTab(k,el){
+  ['tienda','recetas','pagos'].forEach(x=>document.getElementById('m-'+x).classList.toggle('hidden',x!==k));
+  document.querySelectorAll('#s-mas .tabs button').forEach(b=>b.classList.remove('active'));el.classList.add('active');
+  if(k==='tienda') abrirTienda();
+  else if(k==='recetas') abrirRecetas();
+  else if(k==='pagos') renderPagos();
+}
+// Catálogos completos cacheados en memoria (búsqueda instantánea e insensible a tildes)
+const PALL={productos:null,recetas:null};
+const sinTilde = s => String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
+async function fetchAll(table,cols){
+  let all=[],from=0,sz=1000;
+  for(;;){ const {data,error}=await sb.from(table).select(cols).order('nombre').range(from,from+sz-1);
+    if(error){console.error(error);break;} all=all.concat(data||[]);
+    if(!data||data.length<sz) break; from+=sz; }
+  return all;
+}
+function filaCat(x,fn,icon){
+  return `<div class="lrow" onclick="${fn}('${x.id}')">
+    <div class="th" style="${x.imagen_url?`background-image:url('${x.imagen_url}')`:''}">${x.imagen_url?'':icon}</div>
+    <div class="info"><b>${x.nombre}</b><small>${x.categoria||''}${x.supermercado?' · '+x.supermercado:''}</small></div>
+    ${x.precio!=null?`<div class="pr">${Number(x.precio).toFixed(2).replace('.',',')} €</div>`:'<div class="pr">›</div>'}</div>`;
+}
+function acordeon(items,fn,icon){
+  const g={}; items.forEach(x=>{const c=(x.categoria||'Otros');(g[c]=g[c]||[]).push(x);});
+  const cats=Object.keys(g).sort((a,b)=>a.localeCompare(b,'es'));
+  if(!cats.length) return '<div class="empty">No hay elementos.</div>';
+  return cats.map(c=>`<div class="cat">
+    <div class="cathead" onclick="this.parentNode.classList.toggle('open');this.nextElementSibling.classList.toggle('hidden')">
+      <span>${c}</span><span class="cnt">${g[c].length}</span><span class="arw">›</span></div>
+    <div class="catbody hidden">${g[c].map(x=>filaCat(x,fn,icon)).join('')}</div></div>`).join('');
+}
+async function abrirTienda(){
+  const cont=document.getElementById('tienda-list');
+  if(!PALL.productos){cont.innerHTML='<div class="spinner"></div>';PALL.productos=await fetchAll('productos','id,nombre,categoria,supermercado,precio,imagen_url');}
+  buscarTienda();
+}
+function buscarTienda(){
+  const q=sinTilde(document.getElementById('q_tienda').value.trim());
+  const cont=document.getElementById('tienda-list');
+  if(!PALL.productos){return;}
+  if(!q){cont.innerHTML=acordeon(PALL.productos,'verProducto','🛒');return;}
+  const res=PALL.productos.filter(x=>sinTilde(x.nombre).includes(q)||sinTilde(x.categoria).includes(q)).slice(0,100);
+  cont.innerHTML=res.length?res.map(x=>filaCat(x,'verProducto','🛒')).join(''):'<div class="empty">Sin resultados.</div>';
+}
+async function abrirRecetas(){
+  const cont=document.getElementById('recetas-list');
+  if(!PALL.recetas){cont.innerHTML='<div class="spinner"></div>';PALL.recetas=await fetchAll('recetas','id,nombre,categoria,imagen_url');}
+  buscarRecetas();
+}
+function buscarRecetas(){
+  const q=sinTilde(document.getElementById('q_recetas').value.trim());
+  const cont=document.getElementById('recetas-list');
+  if(!PALL.recetas){return;}
+  if(!q){cont.innerHTML=acordeon(PALL.recetas,'verReceta','👩‍🍳');return;}
+  const res=PALL.recetas.filter(x=>sinTilde(x.nombre).includes(q)||sinTilde(x.categoria).includes(q)).slice(0,100);
+  cont.innerHTML=res.length?res.map(x=>filaCat(x,'verReceta','👩‍🍳')).join(''):'<div class="empty">Sin resultados.</div>';
+}
+const PLAN_LIST=[
+  {id:'basico',label:'Básico',amount:30,sub:'/mes'},
+  {id:'completo_mensual',label:'Completo Mensual',amount:60,sub:'/mes'},
+  {id:'completo_trimestral',label:'Completo Trimestral',amount:170,sub:''},
+  {id:'completo_semestral',label:'Completo Semestral',amount:300,sub:''},
+  {id:'completo_anual',label:'Completo Anual',amount:600,sub:''},
+  {id:'premium',label:'Premium VIP',amount:120,sub:'/mes'},
+];
+let CUOTA=PLAN_LIST[1];   // por defecto Completo Mensual
+function setCuota(id){CUOTA=PLAN_LIST.find(p=>p.id===id)||CUOTA;renderPagos();}
+function copiar(txt){ if(navigator.clipboard) navigator.clipboard.writeText(txt); toast('Copiado: '+txt); }
+function toast(m){const t=document.createElement('div');t.textContent=m;
+  t.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1a2e35;color:#fff;padding:10px 16px;border-radius:20px;font-size:13px;z-index:100;box-shadow:0 6px 20px rgba(0,0,0,.3)';
+  document.body.appendChild(t);setTimeout(()=>t.remove(),1600);}
+function renderPagos(){
+  const c=document.getElementById('m-pagos');
+  const est=CLIENTE?CLIENTE.suscripcion_estado:null, activa=est==='activa';
+  const amt=CUOTA.amount;
+  const bizum=(n,nombre,tel)=>`<div class="orow" style="cursor:pointer" onclick="copiar('${tel}')"><span>📱 Bizum ${n} · ${nombre}</span><b>${tel.replace(/(\d{3})(\d{3})(\d{3})/,'$1 $2 $3')} 📋</b></div>`;
+  c.innerHTML=`
+    <div class="card"><h3>💳 Mi suscripción</h3>
+      <div class="orow"><span>Plan</span><b>${(CLIENTE&&CLIENTE.plan)||'—'}</b></div>
+      <div class="orow"><span>Estado</span><b>${est||'sin suscripción'}</b></div>
+      <div class="orow"><span>Próxima renovación</span><b>${(CLIENTE&&CLIENTE.fecha_renovacion)?fechaCorta(CLIENTE.fecha_renovacion):'—'}</b></div>
+      ${activa&&CLIENTE&&CLIENTE.mollie_subscription_id?`<button class="verobj" onclick="cancelarSuscripcion()">Cancelar suscripción</button><p class="note">Al cancelar, la domiciliación se detiene sola.</p>`:''}
+    </div>
+    <div class="dsec">Elige tu bono</div>
+    <div class="card">${PLAN_LIST.map(p=>`<button class="verobj" style="display:flex;justify-content:space-between;text-align:left;${p.id===CUOTA.id?'border-color:var(--teal);color:var(--teal);background:var(--light)':''}" onclick="setCuota('${p.id}')"><span>${p.label}</span><b>${p.amount}€${p.sub}</b></button>`).join('')}</div>
+    <div class="dsec">Pago manual · sin comisiones · ${CUOTA.label} (${amt}€)</div>
+    <div class="card">
+      ${bizum(1,'Oscar BJ','689806987')}
+      ${bizum(2,'Raquel GR','676693237')}
+      <div class="orow"><span>🔵 PayPal</span><b><a href="https://paypal.me/saneascom/${amt}" target="_blank" rel="noopener">Pagar ${amt}€ ›</a></b></div>
+      <div class="orow" style="cursor:pointer" onclick="copiar('ES9214650100942061236296')"><span>🏦 ING</span><b style="font-size:12px">ES92 1465 0100 9420 6123 6296 📋</b></div>
+      <div class="orow" style="cursor:pointer" onclick="copiar('ES2215830001199064086644')"><span>🏦 Revolut</span><b style="font-size:12px">ES22 1583 0001 1990 6408 6644 📋</b></div>
+      <div class="orow"><span>💳 Tarjeta (SumUp)</span><b><a href="https://pay.sumup.com/b2c/XFTLTE3ENC" target="_blank" rel="noopener">Pagar ›</a></b></div>
+      <p class="note">Tras pagar en manual, Oscar confirma tu renovación.</p>
+    </div>
+    <div class="dsec">Pago automático · renovación sola</div>
+    <div class="card">
+      <button class="btn" onclick="contratarPlan('${CUOTA.id}')">Domiciliación o tarjeta · ${amt}€${CUOTA.sub}</button>
+      <div class="hitomsg" style="margin-top:10px">✅ Cancela cuando quieras. Nosotros te damos de alta y de baja, sin que tengas que hacerlo tú con tu banco. Hoy esto ya es automático, sin trampa ni letra pequeña.</div>
+    </div>`;
+}
+async function contratarPlan(planId){
+  const {data:{session}}=await sb.auth.getSession();
+  if(!session){alert('Inicia sesión primero.');return;}
+  try{
+    const r=await fetch(SUPABASE_URL+'/functions/v1/crear-suscripcion',{method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.access_token},
+      body:JSON.stringify({plan:planId})});
+    const d=await r.json();
+    if(d.checkoutUrl){ window.location.href=d.checkoutUrl; }
+    else alert('No se pudo iniciar el pago: '+(d.error||'inténtalo de nuevo'));
+  }catch(e){ alert('Error de conexión: '+e.message); }
+}
+async function cancelarSuscripcion(){
+  if(!confirm('¿Seguro que quieres cancelar tu suscripción? Dejarás de renovar automáticamente.'))return;
+  const {data:{session}}=await sb.auth.getSession();
+  try{
+    const r=await fetch(SUPABASE_URL+'/functions/v1/cancelar-suscripcion',{method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.access_token}});
+    const d=await r.json();
+    if(d.ok){ CLIENTE.suscripcion_estado='cancelada'; CLIENTE.mollie_subscription_id=null; alert('Suscripción cancelada. No se harán más cobros.'); renderPagos(); }
+    else alert('Error: '+(d.error||''));
+  }catch(e){ alert('Error de conexión: '+e.message); }
+}
+
+// ====== ARRANQUE: sesión persistente ======
+(async()=>{
+  if(new URLSearchParams(location.search).get('pago')==='ok'){ setTimeout(()=>{try{toast('¡Pago recibido! Tu cuenta se está activando 🎉');}catch(e){}},800); }
+  const {data:{session}}=await sb.auth.getSession(); if(session) await iniciarSesion();
+})();
+</script>
+</body>
+</html>
