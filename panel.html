@@ -151,6 +151,8 @@ const SUPABASE_URL='https://uisrxztowgdpkxeuznfh.supabase.co';
 const PUBLISHABLE='sb_publishable_8ybOGHnn9rsMDf57mx-Igw_AVvWK30D';
 const FN=SUPABASE_URL+'/functions/v1/panel';
 const DIAS=[['lunes','Lunes'],['martes','Martes'],['miercoles','Miércoles'],['jueves','Jueves'],['viernes','Viernes']];
+const PREFIJO={lunes:'L',martes:'M',miercoles:'X',jueves:'J',viernes:'V'};
+const pref=k=>PREFIJO[norm(k)]||'L';
 const NPLAZAS=40;
 let PASS=sessionStorage.getItem('panel_pw')||'';
 let CLIENTES=[];           // todos los activos
@@ -203,6 +205,7 @@ async function cargar(){
 function render(){
   const delDia=CLIENTES.filter(c=>norm(c.dia_consulta)===DIA_ACT);
   el('tituloDia').textContent='Plazas · '+DIAS.find(d=>d[0]===DIA_ACT)[1];
+  const PREF=pref(DIA_ACT);
   const porPlaza={}; const sinPlaza=[];
   delDia.forEach(c=>{ const p=Number(c.plaza); if(p>=1&&p<=NPLAZAS) porPlaza[p]=c; else sinPlaza.push(c); });
   el('count').textContent=`${delDia.length} clientes hoy · ${Object.keys(porPlaza).length}/${NPLAZAS} plazas`;
@@ -214,11 +217,11 @@ function render(){
       const dot=est==='activa'?'activa':est==='cancelada'?'canc':'pend';
       html+=`<button class="plaza full" onclick="abrirFicha('${c.id}')">
         <span class="dot ${dot}"></span>
-        <div class="cod">L${n}</div>
+        <div class="cod">${PREF}${n}</div>
         <div class="nm">${esc(c.nombre)} ${esc(c.apellido||'')}</div></button>`;
     }else{
       html+=`<button class="plaza empty" onclick="abrirAsig(${n})">
-        <div class="cod">L${n}</div><div class="nm">Libre</div></button>`;
+        <div class="cod">${PREF}${n}</div><div class="nm">Libre</div></button>`;
     }
   }
   el('grid').innerHTML=html;
@@ -294,7 +297,7 @@ function pintarFicha(cli,regs){
   const nom=`${esc(cli.nombre)} ${esc(cli.apellido||'')} ${esc(cli.apellido2||'')}`.trim();
   const ed=edad(cli.fecha_nacimiento);
   const gen=norm(cli.genero).startsWith('m')?'Mujer':'Hombre';
-  const plazaTxt=cli.plaza?`L${cli.plaza}`:'sin plaza';
+  const plazaTxt=cli.plaza?`${pref(cli.dia_consulta)}${cli.plaza}`:'sin plaza';
   const estTxt=cli.suscripcion_estado||'—';
   const pesoHoy=val(cli,act,'peso');
   let estado='—';
@@ -382,7 +385,7 @@ function ihcCell(ihc,min){ if(ihc==null)return '<span class="mini">—</span>'; 
 // ---------- Asignar plaza ----------
 function abrirAsig(plaza){
   ASIG_CTX={plaza};
-  el('asigTit').textContent=`Asignar plaza L${plaza}`;
+  el('asigTit').textContent=`Asignar plaza ${pref(DIA_ACT)}${plaza}`;
   el('asigSub').textContent=`${DIAS.find(d=>d[0]===DIA_ACT)[1]} · elige el cliente para esta plaza`;
   el('asigQuitar').style.display='none';
   el('asigBuscar').value='';
@@ -395,7 +398,7 @@ function pintarAsigList(q){
   const lista=CLIENTES.filter(c=>!nq||norm(c.nombre+' '+(c.apellido||'')).includes(nq))
     .sort((a,b)=>String(a.nombre).localeCompare(b.nombre)).slice(0,60);
   el('asigList').innerHTML=lista.map(c=>{
-    const donde=c.plaza?`${DIAS.find(d=>d[0]===norm(c.dia_consulta))?.[1]||''} L${c.plaza}`:'sin plaza';
+    const donde=c.plaza?`${DIAS.find(d=>d[0]===norm(c.dia_consulta))?.[1]||''} ${pref(c.dia_consulta)}${c.plaza}`:'sin plaza';
     return `<div class="row" onclick="asignar('${c.id}')"><span class="who">${esc(c.nombre)} ${esc(c.apellido||'')}</span><span class="where">${donde}</span></div>`;
   }).join('')||'<p class="empty-msg">Sin resultados</p>';
 }
