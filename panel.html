@@ -113,6 +113,40 @@
   #altaMsg.err{color:var(--bad)} #altaMsg.ok{color:var(--good)}
   .baja-btn{position:absolute;top:16px;right:64px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.55);color:#fff;padding:7px 14px;border-radius:999px;font-size:13px;font-weight:700}
   .baja-btn:hover{background:var(--bad);border-color:var(--bad)}
+  .hdr-btn{background:#fff;border:2px solid var(--line);border-radius:999px;padding:8px 15px;font-weight:700;font-size:13px;color:var(--teal-d)}
+  .hdr-btn:hover{border-color:var(--teal)}
+  /* Informe / Renovar (modales) */
+  #informe,#renovar{position:fixed;inset:0;background:rgba(16,50,58,.45);z-index:46;display:none;align-items:center;justify-content:center}
+  #informe.show,#renovar.show{display:flex}
+  #informe .box{background:var(--bg);border-radius:16px;width:680px;max-width:96vw;max-height:90vh;overflow-y:auto}
+  #informe .ihead{background:linear-gradient(135deg,#0f8a9c,#0b6875);color:#fff;padding:18px 22px;position:sticky;top:0;display:flex;justify-content:space-between;align-items:center}
+  #informe .ihead h3{font-size:19px}
+  #informe .ihead .x{background:rgba(255,255,255,.2);border:0;color:#fff;width:32px;height:32px;border-radius:50%;font-size:18px}
+  #informe .ibody{padding:18px 22px 28px}
+  .isec{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:14px}
+  .isec h4{font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:10px}
+  .isum{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+  .ipill{background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px 14px;font-size:14px;font-weight:700}
+  .ipill b{font-size:18px;display:block;color:var(--teal-d)}
+  .ilist{list-style:none;display:flex;flex-direction:column;gap:6px}
+  .ilist li{font-size:14px;display:flex;justify-content:space-between;border-bottom:1px solid var(--soft);padding:5px 0}
+  .ilist li .r{color:var(--muted);font-size:13px}
+  .tag-cad{color:var(--bad);font-weight:800}.tag-hoy{color:var(--orange);font-weight:800}
+  .rank b{color:var(--teal);font-weight:800}
+  .vacio{color:var(--muted);font-size:13px}
+  #renovar .box{background:#fff;border-radius:16px;padding:24px;width:440px;max-width:94vw;max-height:90vh;overflow-y:auto}
+  #renovar h3{font-size:18px;color:var(--teal-d);margin-bottom:4px}
+  #renovar .sub{font-size:13px;color:var(--muted);margin-bottom:14px}
+  #renovar input,#renovar select{width:100%;padding:11px;border:2px solid var(--line);border-radius:9px;font-size:14px}
+  #renovar label{display:block;font-size:12px;font-weight:700;color:var(--muted);margin:10px 0 4px}
+  #renovar .list{max-height:220px;overflow-y:auto;margin-top:6px}
+  #renovar .row{display:flex;justify-content:space-between;align-items:center;padding:9px;border-radius:8px;cursor:pointer}
+  #renovar .row:hover{background:var(--soft)} #renovar .row.sel{background:var(--soft);border:1px solid var(--teal)}
+  #renovar .foot{display:flex;justify-content:space-between;margin-top:16px}
+  #renovar button{padding:11px 18px;border-radius:9px;border:0;font-weight:700}
+  .btn-renovar{background:var(--teal);color:#fff}
+  #renovMsg{font-size:13px;margin-top:8px;min-height:16px}
+  #renovMsg.err{color:var(--bad)} #renovMsg.ok{color:var(--good)}
 </style>
 </head>
 <body>
@@ -131,6 +165,8 @@
   <div class="logo">Saneas<span>·</span></div>
   <div class="dias" id="dias"></div>
   <div class="sp"></div>
+  <button class="hdr-btn" onclick="abrirInforme()">📋 Informe del día</button>
+  <button class="hdr-btn" onclick="abrirRenovar()">🔄 Renovar</button>
   <button class="alta-btn" onclick="abrirAlta()">＋ Dar de alta</button>
   <div class="count" id="count"></div>
   <button class="out" onclick="salir()">Salir</button>
@@ -184,6 +220,32 @@
     <div class="foot">
       <button class="btn-cerrar" onclick="cerrarAlta()">Cancelar</button>
       <button class="btn-alta" id="btnAlta" onclick="crearAlta()">Crear alta</button>
+    </div>
+  </div>
+</div>
+
+<!-- Informe del día -->
+<div id="informe">
+  <div class="box">
+    <div class="ihead"><h3 id="infTit">Informe del día</h3><button class="x" onclick="cerrarInforme()">×</button></div>
+    <div class="ibody" id="infBody"><p class="vacio">Cargando…</p></div>
+  </div>
+</div>
+
+<!-- Renovar -->
+<div id="renovar">
+  <div class="box">
+    <h3>Renovar suscripción</h3>
+    <div class="sub">Busca al cliente, indica cuántos meses y confirma. Se sumarán a su fecha de renovación.</div>
+    <label>Cliente</label>
+    <input id="rn_buscar" placeholder="Nombre y apellido…" oninput="buscarRenovar()">
+    <div class="list" id="rn_list"></div>
+    <label>Meses a renovar</label>
+    <select id="rn_meses"><option>1</option><option>2</option><option>3</option><option>6</option><option>12</option></select>
+    <div id="renovMsg"></div>
+    <div class="foot">
+      <button class="btn-cerrar" onclick="cerrarRenovar()">Cancelar</button>
+      <button class="btn-renovar" id="btnRenovar" onclick="confirmarRenovar()">Confirmar renovación</button>
     </div>
   </div>
 </div>
@@ -493,6 +555,66 @@ async function darBaja(id,nombre){
   const {status,data}=await api('baja',{cliente_id:id});
   if(status!==200){toast(data.error||'Error al dar de baja');return;}
   cerrarFicha(); toast('Cliente dado de baja'); await cargar();
+}
+
+// ---------- Informe del día ----------
+async function abrirInforme(){
+  el('informe').classList.add('show');
+  el('infBody').innerHTML='<p class="vacio">Cargando…</p>';
+  const {status,data}=await api('reporte');
+  if(status!==200){el('infBody').innerHTML='<p class="vacio">'+(data.error||'Error')+'</p>';return;}
+  el('infTit').textContent='Informe · '+data.fecha+' · Semana '+data.semana_del_ano;
+  const linea=x=>`<li><span>${esc(x.nombre)}</span><span class="r">${x.dia?pref(x.dia)+(x.plaza||''):''}</span></li>`;
+  const renovLinea=(x,cls)=>`<li><span class="${cls||''}">${esc(x.nombre)}</span><span class="r">${x.fecha}</span></li>`;
+  const lista=(arr,fn,vacio)=> (arr&&arr.length)?('<ul class="ilist">'+arr.map(fn).join('')+'</ul>'):('<p class="vacio">'+vacio+'</p>');
+  const r=data.renovaciones||{};
+  el('infBody').innerHTML=`
+    <div class="isum">
+      <div class="ipill"><b>${data.enviados_count}</b>enviados esta semana</div>
+      <div class="ipill"><b>${data.pendientes_count}</b>pendientes</div>
+    </div>
+    <div class="isec"><h4>Pendientes de enviar datos (esta semana)</h4>${lista(data.pendientes,linea,'Nadie pendiente 🎉')}</div>
+    <div class="isec"><h4>Renovaciones</h4>
+      <div style="margin-bottom:10px"><b class="tag-cad">Caducadas</b>${lista(r.caducadas,x=>renovLinea(x,'tag-cad'),'—')}</div>
+      <div style="margin-bottom:10px"><b class="tag-hoy">Hoy</b>${lista(r.hoy,x=>renovLinea(x,'tag-hoy'),'—')}</div>
+      <div style="margin-bottom:10px"><b>Mañana</b>${lista(r.manana,renovLinea,'—')}</div>
+      <div><b>En 2 días</b>${lista(r.dos_dias,renovLinea,'—')}</div>
+    </div>
+    <div class="isec"><h4>Top 10 · más peso perdido</h4>${
+      (data.top10&&data.top10.length)?('<ul class="ilist rank">'+data.top10.map((x,i)=>`<li><span>${i+1}. ${esc(x.nombre)}</span><b>−${x.kg} kg</b></li>`).join('')+'</ul>'):'<p class="vacio">Sin datos suficientes todavía</p>'
+    }</div>`;
+}
+function cerrarInforme(){el('informe').classList.remove('show');}
+
+// ---------- Renovar ----------
+let RENOV_SEL=null;
+function abrirRenovar(){
+  RENOV_SEL=null; el('rn_buscar').value=''; el('rn_meses').value='1';
+  const m=el('renovMsg'); m.textContent='';m.className='';
+  el('renovar').classList.add('show'); pintarRenovList(''); el('rn_buscar').focus();
+}
+function cerrarRenovar(){el('renovar').classList.remove('show');}
+function buscarRenovar(){pintarRenovList(el('rn_buscar').value);}
+function pintarRenovList(q){
+  const nq=norm(q);
+  const lista=CLIENTES.filter(c=>!nq||norm(c.nombre+' '+(c.apellido||'')).includes(nq)).sort((a,b)=>String(a.nombre).localeCompare(b.nombre)).slice(0,40);
+  el('rn_list').innerHTML=lista.map(c=>{
+    const donde=c.plaza?`${pref(c.dia_consulta)}${c.plaza}`:'';
+    const sel=(RENOV_SEL&&RENOV_SEL.id===c.id)?'sel':'';
+    return `<div class="row ${sel}" onclick="selRenovar('${c.id}','${esc((c.nombre+' '+(c.apellido||'')).replace(/'/g,''))}')"><span class="who">${esc(c.nombre)} ${esc(c.apellido||'')}</span><span class="where">${donde}</span></div>`;
+  }).join('')||'<p class="vacio">Sin resultados</p>';
+}
+function selRenovar(id,nombre){RENOV_SEL={id,nombre};el('rn_buscar').value=nombre;pintarRenovList(nombre);}
+async function confirmarRenovar(){
+  const m=el('renovMsg');
+  if(!RENOV_SEL){m.className='err';m.textContent='Elige primero un cliente de la lista.';return;}
+  const meses=parseInt(el('rn_meses').value,10);
+  const btn=el('btnRenovar');btn.disabled=true;btn.textContent='Renovando...';
+  const {status,data}=await api('renovar',{cliente_id:RENOV_SEL.id,meses});
+  btn.disabled=false;btn.textContent='Confirmar renovación';
+  if(status!==200){m.className='err';m.textContent=data.error||'Error';return;}
+  m.className='ok';m.textContent=`✅ ${RENOV_SEL.nombre}: +${data.meses} mes(es). Nueva renovación: ${data.fecha_renovacion}`;
+  toast('Renovación aplicada'); await cargar();
 }
 </script>
 </body>
