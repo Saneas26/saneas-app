@@ -399,7 +399,8 @@ function cerrarFicha(){el('ov').classList.remove('show');el('ficha').classList.r
 
 function pintarFicha(cli,regs){
   const o=calcObjetivos(cli);
-  const act=regs[0]||null, ant=regs[1]||null, ini=regs[regs.length-1]||null;
+  const reales=regs.filter(r=>!r.sin_consulta);
+  const act=reales[0]||null, ant=reales[1]||null, ini=reales[reales.length-1]||null;
   const nom=`${esc(cli.nombre)} ${esc(cli.apellido||'')} ${esc(cli.apellido2||'')}`.trim();
   const ed=edad(cli.fecha_nacimiento);
   const gen=norm(cli.genero).startsWith('m')?'Mujer':'Hombre';

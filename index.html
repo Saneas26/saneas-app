@@ -778,7 +778,16 @@ async function verHistorial(){
   const {data}=await sb.from('registros').select('*').eq('cliente_id',CLIENTE.id).order('semana',{ascending:false,nullsFirst:false}).order('fecha',{ascending:false});
   if(!data||!data.length){abrirDetalle('Tu evolución','<div class="empty">Aún no tienes registros.</div>');return;}
   const m=(l,v,u)=> v==null?'' : `<div class="hm"><span>${l}</span><b>${r1(v)}${u||''}</b></div>`;
-  const cards=data.map(x=>{const em=edadMetabolica(x);
+  const cards=data.map(x=>{
+    if(x.sin_consulta){
+      return `<div class="card" style="border-left:4px solid var(--orange);background:#fff7f0">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px">
+          <b style="font-size:15px">Semana ${x.semana!=null?x.semana:'—'}</b>
+          <small style="color:var(--muted)">${fechaCorta(x.fecha)}</small></div>
+        <div style="color:var(--orange);font-weight:700">Sin consulta esta semana</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px">No se registraron tus datos.</div></div>`;
+    }
+    const em=edadMetabolica(x);
     return `<div class="card">
       <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px">
         <b style="font-size:15px">Semana ${x.semana!=null?x.semana:'—'}</b>
@@ -795,7 +804,7 @@ async function verHistorial(){
         ${m('Proteína',x.proteina,'%')}
         <div class="hm"><span>Edad metabólica</span><b>${em!=null?em+' años':'—'}</b></div>
       </div></div>`;}).join('');
-  const ult10=data.slice(0,10).reverse();   // últimas 10, en orden cronológico
+  const ult10=data.filter(x=>!x.sin_consulta).slice(0,10).reverse();   // últimas 10 con datos, en orden cronológico
   const chart = ult10.length>=2
     ? `<div class="dsec">Últimas ${ult10.length} semanas</div>
        <div style="height:230px;background:#fff;border-radius:16px;padding:10px 8px;box-shadow:var(--shadow);margin-bottom:16px"><canvas id="evoChart"></canvas></div>`
