@@ -199,10 +199,10 @@
   </div>
 </div>
 
-<!-- Dar de alta (Premium/Completo) -->
+<!-- Dar de alta -->
 <div id="alta">
   <div class="box">
-    <h3>Dar de alta · Premium/Completo</h3>
+    <h3>Dar de alta</h3>
     <div class="sub">Tú rellenas lo básico; el cliente completa el resto al entrar en la app con su email y teléfono.</div>
     <label>Nombre</label>
     <input id="al_nombre" placeholder="Nombre">
@@ -212,8 +212,16 @@
     <input id="al_email" type="email" placeholder="correo@ejemplo.com">
     <label>Teléfono</label>
     <input id="al_tel" placeholder="Teléfono (será su contraseña: últimos 9 dígitos)">
-    <label>Plan</label>
-    <select id="al_plan"><option>Completo</option><option>Premium</option></select>
+    <label>Bono / acceso inicial</label>
+    <select id="al_bono">
+      <option value="prueba">Prueba · 2 semanas</option>
+      <option value="basico">Básico · 1 mes</option>
+      <option value="completo_mensual" selected>Completo · 1 mes</option>
+      <option value="completo_trimestral">Completo · 3 meses</option>
+      <option value="completo_semestral">Completo · 6 meses</option>
+      <option value="completo_anual">Completo · 12 meses</option>
+      <option value="premium">Premium · 1 mes</option>
+    </select>
     <label>Día de consulta</label>
     <select id="al_dia"></select>
     <div id="altaMsg"></div>
@@ -532,7 +540,7 @@ function diaSugeridoPC(){
 }
 function abrirAlta(){
   el('al_nombre').value='';el('al_apellido').value='';el('al_email').value='';el('al_tel').value='';
-  el('al_plan').value='Completo';
+  el('al_bono').value='completo_mensual';
   el('al_dia').innerHTML=DIAS.map(([k,l])=>`<option value="${k}">${l}</option>`).join('');
   el('al_dia').value=diaSugeridoPC();
   const m=el('altaMsg'); m.textContent='';m.className='';
@@ -542,14 +550,14 @@ function cerrarAlta(){el('alta').classList.remove('show');}
 async function crearAlta(){
   const nombre=el('al_nombre').value.trim(), apellido=el('al_apellido').value.trim();
   const email=el('al_email').value.trim(), telefono=el('al_tel').value.trim();
-  const plan=el('al_plan').value, dia=el('al_dia').value;
+  const bono=el('al_bono').value, dia=el('al_dia').value;
   const m=el('altaMsg');
   if(!nombre||!email||telefono.replace(/\D/g,'').length<9){m.className='err';m.textContent='Rellena nombre, email y un teléfono válido (9 dígitos).';return;}
   const btn=el('btnAlta');btn.disabled=true;btn.textContent='Creando...';
-  const {status,data}=await api('alta',{nombre,apellido,email,telefono,plan,dia});
+  const {status,data}=await api('alta',{nombre,apellido,email,telefono,bono,dia});
   btn.disabled=false;btn.textContent='Crear alta';
   if(status!==200){m.className='err';m.textContent=data.error||'Error';return;}
-  cerrarAlta(); toast('Cliente dado de alta'); await cargar();
+  cerrarAlta(); toast(data.fecha_renovacion?('Alta creada · acceso hasta '+data.fecha_renovacion):'Cliente dado de alta'); await cargar();
 }
 async function darBaja(id,nombre){
   if(!confirm('¿Dar de baja a '+nombre+'?\n\nSe borrarán TODOS sus datos e historial y su plaza quedará libre. Esta acción no se puede deshacer.')) return;
