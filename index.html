@@ -523,13 +523,15 @@ async function logout(){await sb.auth.signOut();location.reload();}
 function val(id){return document.getElementById(id).value.trim();}
 
 // ====== BLOQUEO por renovación caducada ======
-function bloqueado(c){ if(!c||!c.fecha_renovacion) return false;
+function bloqueado(c){ if(!c||!c.fecha_renovacion) return true;   // sin pago todavía → bloquear el acceso
   const r=new Date(c.fecha_renovacion+'T00:00:00'); const t=new Date(); t.setHours(0,0,0,0); return r<=t; }
 function mostrarBloqueo(){
   document.getElementById('auth').classList.add('hidden');
   document.getElementById('main').classList.add('hidden');
-  document.getElementById('bloqTxt').textContent='Tu renovación venció el '+fechaCorta(CLIENTE.fecha_renovacion)+'. Renueva tu cuota para volver a acceder a tu app.';
-  document.getElementById('bloq-pagos').innerHTML=PAGOS_HTML.split('@User / CuotaTotal,00 €').join('Tu cuota').split('@User / CuotaTotal').join('');
+  document.getElementById('bloqTxt').textContent = CLIENTE.fecha_renovacion
+    ? 'Tu renovación venció el '+fechaCorta(CLIENTE.fecha_renovacion)+'. Renueva tu cuota para volver a acceder a tu app.'
+    : 'Un último paso: elige tu bono y realiza el pago para acceder a tu app.';
+  renderPagos('bloq-pagos');
   document.getElementById('bloqueo').classList.remove('hidden');
 }
 
@@ -1400,7 +1402,7 @@ function masTab(k,el){
   document.querySelectorAll('#s-mas .tabs button').forEach(b=>b.classList.remove('active'));el.classList.add('active');
   if(k==='tienda') abrirTienda();
   else if(k==='recetas') abrirRecetas();
-  else if(k==='pagos') renderPagos();
+  else if(k==='pagos') renderPagos('m-pagos');
 }
 // Catálogos completos cacheados en memoria (búsqueda instantánea e insensible a tildes)
 const PALL={productos:null,recetas:null};
@@ -1467,8 +1469,11 @@ function copiar(txt){ if(navigator.clipboard) navigator.clipboard.writeText(txt)
 function toast(m){const t=document.createElement('div');t.textContent=m;
   t.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1a2e35;color:#fff;padding:10px 16px;border-radius:20px;font-size:13px;z-index:100;box-shadow:0 6px 20px rgba(0,0,0,.3)';
   document.body.appendChild(t);setTimeout(()=>t.remove(),1600);}
-function renderPagos(){
-  const c=document.getElementById('m-pagos');
+let PAGOS_TARGET='m-pagos';
+function renderPagos(target){
+  if(target) PAGOS_TARGET=target;
+  const c=document.getElementById(PAGOS_TARGET);
+  if(!c) return;
   const est=CLIENTE?CLIENTE.suscripcion_estado:null, activa=est==='activa';
   const amt=CUOTA.amount;
   const bizum=(n,nombre,tel)=>`<div class="orow" style="cursor:pointer" onclick="copiar('${tel}')"><span>📱 Bizum ${n} · ${nombre}</span><b>${tel.replace(/(\d{3})(\d{3})(\d{3})/,'$1 $2 $3')} 📋</b></div>`;
