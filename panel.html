@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex,nofollow">
+<title>Saneas · Panel de consulta</title>
+<style>
+  :root{--teal:#0f8a9c;--teal-d:#0b6875;--orange:#F5862E;--text:#16323a;--muted:#6b878f;
+        --line:#dceaee;--bg:#eef4f6;--card:#fff;--good:#12a150;--bad:#e0533d;--soft:#f4f9fa}
+  *{box-sizing:border-box;margin:0;padding:0;font-family:'Segoe UI',system-ui,-apple-system,sans-serif}
+  body{background:var(--bg);color:var(--text)}
+  button{cursor:pointer;font-family:inherit}
+  /* Login */
+  #login{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#0f8a9c,#0b6875);z-index:50}
+  #login .box{background:#fff;border-radius:18px;padding:38px 34px;width:340px;box-shadow:0 20px 60px rgba(0,0,0,.25);text-align:center}
+  #login h1{font-size:22px;color:var(--teal-d);margin-bottom:6px}
+  #login p{font-size:13px;color:var(--muted);margin-bottom:20px}
+  #login input{width:100%;padding:13px 14px;border:2px solid var(--line);border-radius:10px;font-size:15px;margin-bottom:12px}
+  #login input:focus{outline:none;border-color:var(--teal)}
+  #login button{width:100%;padding:13px;background:var(--teal);color:#fff;border:0;border-radius:10px;font-size:16px;font-weight:700}
+  #login .err{color:var(--bad);font-size:13px;min-height:18px;margin-top:4px}
+  /* Layout */
+  header{background:#fff;border-bottom:1px solid var(--line);padding:14px 26px;display:flex;align-items:center;gap:18px;position:sticky;top:0;z-index:10}
+  header .logo{font-weight:800;font-size:20px;color:var(--teal-d)}
+  header .logo span{color:var(--orange)}
+  .dias{display:flex;gap:8px;margin-left:8px;flex-wrap:wrap}
+  .dias button{padding:9px 16px;border:2px solid var(--line);background:#fff;border-radius:999px;font-weight:700;font-size:14px;color:var(--muted)}
+  .dias button.on{background:var(--teal);border-color:var(--teal);color:#fff}
+  header .sp{flex:1}
+  header .count{font-size:13px;color:var(--muted)}
+  header .out{font-size:13px;color:var(--muted);background:none;border:0;text-decoration:underline}
+  main{max-width:1180px;margin:0 auto;padding:26px}
+  h2.t{font-size:15px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:14px;font-weight:800}
+  /* Rejilla de plazas */
+  .grid{display:grid;grid-template-columns:repeat(8,1fr);gap:10px}
+  @media(max-width:1000px){.grid{grid-template-columns:repeat(5,1fr)}}
+  @media(max-width:640px){.grid{grid-template-columns:repeat(3,1fr)}}
+  .plaza{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 10px 12px;min-height:74px;text-align:left;transition:.15s;position:relative}
+  .plaza:hover{border-color:var(--teal);box-shadow:0 4px 14px rgba(15,138,156,.14);transform:translateY(-1px)}
+  .plaza .cod{font-size:12px;font-weight:800;color:var(--muted)}
+  .plaza.full .cod{color:var(--teal)}
+  .plaza .nm{font-size:13px;font-weight:700;margin-top:4px;line-height:1.25;color:var(--text)}
+  .plaza.empty{background:var(--soft);border-style:dashed}
+  .plaza.empty .nm{color:#b7c9ce;font-weight:600}
+  .plaza .dot{position:absolute;top:9px;right:9px;width:9px;height:9px;border-radius:50%}
+  .dot.activa{background:var(--good)}.dot.pend{background:var(--orange)}.dot.canc{background:var(--bad)}
+  .sinplaza{margin-top:26px}
+  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .chip{background:#fff;border:1px solid var(--line);border-radius:999px;padding:7px 14px;font-size:13px;font-weight:700;color:var(--teal-d)}
+  .chip:hover{border-color:var(--teal)}
+  /* Ficha (drawer) */
+  #ov{position:fixed;inset:0;background:rgba(16,50,58,.45);z-index:20;display:none}
+  #ov.show{display:block}
+  #ficha{position:fixed;top:0;right:0;height:100%;width:min(760px,96vw);background:var(--bg);z-index:30;box-shadow:-14px 0 50px rgba(0,0,0,.25);
+          transform:translateX(100%);transition:transform .25s;overflow-y:auto}
+  #ficha.show{transform:none}
+  .fh{background:linear-gradient(135deg,#0f8a9c,#0b6875);color:#fff;padding:22px 26px;position:sticky;top:0;z-index:2}
+  .fh .x{position:absolute;top:16px;right:18px;background:rgba(255,255,255,.2);border:0;color:#fff;width:34px;height:34px;border-radius:50%;font-size:18px}
+  .fh h3{font-size:24px;margin-bottom:4px}
+  .fh .sub{font-size:13px;opacity:.9;display:flex;gap:14px;flex-wrap:wrap}
+  .fbody{padding:22px 26px 60px}
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+  @media(max-width:620px){.kpis{grid-template-columns:repeat(2,1fr)}}
+  .kpi{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px}
+  .kpi .l{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);font-weight:700}
+  .kpi .v{font-size:24px;font-weight:800;color:var(--teal-d);margin-top:3px}
+  .kpi .s{font-size:12px;color:var(--muted);margin-top:2px}
+  .sec{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin-bottom:18px}
+  .sec h4{font-size:14px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:14px}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  th,td{text-align:right;padding:9px 8px;border-bottom:1px solid var(--soft)}
+  th:first-child,td:first-child{text-align:left}
+  thead th{font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);border-bottom:2px solid var(--line)}
+  td.p{font-weight:700;color:var(--text)}
+  .delta{font-weight:800}.delta.g{color:var(--good)}.delta.b{color:var(--bad)}.delta.n{color:var(--muted)}
+  .obj td .ok{color:var(--good);font-weight:800}.obj td .no{color:var(--orange);font-weight:800}
+  .mini{font-size:12px;color:var(--muted)}
+  .empty-msg{color:var(--muted);font-size:14px;padding:14px 0}
+  /* Asignar */
+  #asig{position:fixed;inset:0;background:rgba(16,50,58,.45);z-index:40;display:none;align-items:center;justify-content:center}
+  #asig.show{display:flex}
+  #asig .box{background:#fff;border-radius:16px;padding:24px;width:420px;max-width:94vw;max-height:86vh;overflow-y:auto}
+  #asig h3{font-size:18px;color:var(--teal-d);margin-bottom:4px}
+  #asig .sub{font-size:13px;color:var(--muted);margin-bottom:14px}
+  #asig input{width:100%;padding:11px;border:2px solid var(--line);border-radius:9px;font-size:14px;margin-bottom:12px}
+  #asig .list{max-height:300px;overflow-y:auto}
+  #asig .row{display:flex;justify-content:space-between;align-items:center;padding:10px;border-radius:9px;cursor:pointer}
+  #asig .row:hover{background:var(--soft)}
+  #asig .row .who{font-weight:700;font-size:14px}
+  #asig .row .where{font-size:12px;color:var(--muted)}
+  #asig .foot{display:flex;justify-content:space-between;margin-top:14px}
+  #asig button{padding:10px 16px;border-radius:9px;border:0;font-weight:700}
+  .btn-quitar{background:#fbeae6;color:var(--bad)}
+  .btn-cerrar{background:var(--soft);color:var(--muted)}
+  .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--text);color:#fff;padding:11px 20px;border-radius:10px;font-size:14px;z-index:60;opacity:0;transition:.2s}
+  .toast.show{opacity:1}
+</style>
+</head>
+<body>
+
+<div id="login">
+  <div class="box">
+    <h1>Saneas · Consulta</h1>
+    <p>Panel privado. Introduce tu contraseña.</p>
+    <input id="pw" type="password" placeholder="Contraseña" autocomplete="current-password">
+    <button onclick="entrar()">Entrar</button>
+    <div class="err" id="loginErr"></div>
+  </div>
+</div>
+
+<header style="display:none" id="top">
+  <div class="logo">Saneas<span>·</span></div>
+  <div class="dias" id="dias"></div>
+  <div class="sp"></div>
+  <div class="count" id="count"></div>
+  <button class="out" onclick="salir()">Salir</button>
+</header>
+
+<main style="display:none" id="app">
+  <h2 class="t" id="tituloDia">Plazas</h2>
+  <div class="grid" id="grid"></div>
+  <div class="sinplaza" id="sinplazaWrap" style="display:none">
+    <h2 class="t">Sin plaza asignada este día</h2>
+    <div class="chips" id="sinplaza"></div>
+  </div>
+</main>
+
+<!-- Ficha -->
+<div id="ov" onclick="cerrarFicha()"></div>
+<aside id="ficha"></aside>
+
+<!-- Asignar plaza -->
+<div id="asig">
+  <div class="box">
+    <h3 id="asigTit">Asignar plaza</h3>
+    <div class="sub" id="asigSub"></div>
+    <input id="asigBuscar" placeholder="Buscar cliente por nombre…" oninput="filtrarAsig()">
+    <div class="list" id="asigList"></div>
+    <div class="foot">
+      <button class="btn-quitar" id="asigQuitar" style="display:none" onclick="quitarPlaza()">Quitar de la plaza</button>
+      <button class="btn-cerrar" onclick="cerrarAsig()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SUPABASE_URL='https://uisrxztowgdpkxeuznfh.supabase.co';
+const PUBLISHABLE='sb_publishable_8ybOGHnn9rsMDf57mx-Igw_AVvWK30D';
+const FN=SUPABASE_URL+'/functions/v1/panel';
+const DIAS=[['lunes','Lunes'],['martes','Martes'],['miercoles','Miércoles'],['jueves','Jueves'],['viernes','Viernes']];
+const NPLAZAS=40;
+let PASS=sessionStorage.getItem('panel_pw')||'';
+let CLIENTES=[];           // todos los activos
+let DIA_ACT='lunes';
+let ASIG_CTX=null;         // {plaza} para asignar
+
+const norm=s=>String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
+const r1=n=>n==null||isNaN(n)?null:Math.round(n*10)/10;
+const el=id=>document.getElementById(id);
+
+async function api(action,extra={}){
+  const r=await fetch(FN,{method:'POST',headers:{
+    'Content-Type':'application/json','apikey':PUBLISHABLE,'Authorization':'Bearer '+PUBLISHABLE
+  },body:JSON.stringify({action,password:PASS,...extra})});
+  return {status:r.status,data:await r.json().catch(()=>({}))};
+}
+function toast(m){const t=el('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200);}
+
+// ---------- Login ----------
+el('pw').addEventListener('keydown',e=>{if(e.key==='Enter')entrar();});
+if(PASS){ entrar(true); }
+async function entrar(silent){
+  const pw=silent?PASS:el('pw').value.trim();
+  if(!pw){el('loginErr').textContent='Escribe la contraseña';return;}
+  PASS=pw;
+  const {status,data}=await api('login');
+  if(status!==200){el('loginErr').textContent=data.error||'Error';PASS='';return;}
+  sessionStorage.setItem('panel_pw',PASS);
+  el('login').style.display='none';el('top').style.display='flex';el('app').style.display='block';
+  initDias(); cargar();
+}
+function salir(){sessionStorage.removeItem('panel_pw');location.reload();}
+
+function initDias(){
+  const hoy=new Date().getDay(); // 0 dom..6 sab
+  DIA_ACT=DIAS[Math.min(Math.max(hoy-1,0),4)][0];
+  el('dias').innerHTML=DIAS.map(([k,l])=>`<button data-d="${k}" onclick="setDia('${k}')">${l}</button>`).join('');
+  marcarDia();
+}
+function setDia(k){DIA_ACT=k;marcarDia();render();}
+function marcarDia(){[...el('dias').children].forEach(b=>b.classList.toggle('on',b.dataset.d===DIA_ACT));}
+
+async function cargar(){
+  const {status,data}=await api('grid');
+  if(status!==200){toast(data.error||'Error al cargar');return;}
+  CLIENTES=data.clientes||[];
+  render();
+}
+
+function render(){
+  const delDia=CLIENTES.filter(c=>norm(c.dia_consulta)===DIA_ACT);
+  el('tituloDia').textContent='Plazas · '+DIAS.find(d=>d[0]===DIA_ACT)[1];
+  const porPlaza={}; const sinPlaza=[];
+  delDia.forEach(c=>{ const p=Number(c.plaza); if(p>=1&&p<=NPLAZAS) porPlaza[p]=c; else sinPlaza.push(c); });
+  el('count').textContent=`${delDia.length} clientes hoy · ${Object.keys(porPlaza).length}/${NPLAZAS} plazas`;
+  let html='';
+  for(let n=1;n<=NPLAZAS;n++){
+    const c=porPlaza[n];
+    if(c){
+      const est=norm(c.suscripcion_estado);
+      const dot=est==='activa'?'activa':est==='cancelada'?'canc':'pend';
+      html+=`<button class="plaza full" onclick="abrirFicha('${c.id}')">
+        <span class="dot ${dot}"></span>
+        <div class="cod">L${n}</div>
+        <div class="nm">${esc(c.nombre)} ${esc(c.apellido||'')}</div></button>`;
+    }else{
+      html+=`<button class="plaza empty" onclick="abrirAsig(${n})">
+        <div class="cod">L${n}</div><div class="nm">Libre</div></button>`;
+    }
+  }
+  el('grid').innerHTML=html;
+  if(sinPlaza.length){
+    el('sinplazaWrap').style.display='block';
+    el('sinplaza').innerHTML=sinPlaza.map(c=>`<button class="chip" onclick="abrirFicha('${c.id}')">${esc(c.nombre)} ${esc(c.apellido||'')}</button>`).join('');
+  }else el('sinplazaWrap').style.display='none';
+}
+function esc(s){return String(s||'').replace(/[<>&]/g,x=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[x]));}
+
+// ---------- Objetivos (mismas fórmulas que la app) ----------
+function calcObjetivos(cli){
+  const alt=parseFloat(cli.altura); if(!alt) return null;
+  const a2=alt*alt, esMujer=norm(cli.genero).startsWith('m');
+  const POb=(29.9*a2)/10000, PO1=(24.9*a2)/10000;
+  const PO2=alt-100-((alt-150)/(esMujer?2.5:4));
+  const promedio=(PO1+PO2)/2, grasaObj=esMujer?24:19;
+  return {alt,esMujer,POb,PO1,PO2,promedio,grasaObj,imcObj:22,
+    aguaMin:52,muscEsqObj:esMujer?48:52,cinturaObj:alt*0.5};
+}
+function edad(fechaNac,ref){
+  if(!fechaNac) return null;
+  const n=new Date(fechaNac), r=ref?new Date(ref):new Date();
+  let e=r.getFullYear()-n.getFullYear();
+  if(r.getMonth()<n.getMonth()||(r.getMonth()===n.getMonth()&&r.getDate()<n.getDate()))e--;
+  return e>=0&&e<120?e:null;
+}
+function edadMet(cli,rec){
+  const e=edad(cli.fecha_nacimiento,rec.fecha), g=rec.grasa_corporal;
+  if(e==null||g==null) return rec.edad_metabolica!=null?Math.round(rec.edad_metabolica):null;
+  const ideal=norm(cli.genero).startsWith('m')?24:19;
+  return Math.round(e*(1+(g-ideal)/100));
+}
+
+// Parámetros a mostrar en la tabla de variación
+const PARAMS=[
+  {k:'peso',l:'Peso',u:' kg',down:true},
+  {k:'imc',l:'IMC',u:'',down:true},
+  {k:'grasa_corporal',l:'Grasa corporal',u:' %',down:true},
+  {k:'grasa_visceral',l:'Grasa visceral',u:'',down:true},
+  {k:'grasa_subcutanea',l:'Grasa subcutánea',u:' %',down:true},
+  {k:'agua',l:'Agua',u:' %',down:false},
+  {k:'musculo_esqueletico',l:'Músculo esquelético',u:' %',down:false},
+  {k:'masa_muscular',l:'Masa muscular',u:' kg',down:false},
+  {k:'proteina',l:'Proteína',u:' %',down:false},
+  {k:'__edadmet',l:'Edad metabólica',u:' años',down:true},
+  {k:'per_cintura',l:'Cintura',u:' cm',down:true},
+  {k:'per_cadera',l:'Cadera',u:' cm',down:null},
+  {k:'per_hombros',l:'Hombros',u:' cm',down:null},
+  {k:'per_pecho',l:'Pecho',u:' cm',down:null},
+  {k:'per_brazo',l:'Brazo',u:' cm',down:null},
+  {k:'per_muslo',l:'Muslo',u:' cm',down:null},
+];
+function val(cli,rec,k){ if(!rec)return null; if(k==='__edadmet')return edadMet(cli,rec); const v=rec[k]; return v==null?null:Number(v); }
+function deltaCell(d,down){
+  if(d==null) return '<span class="delta n">—</span>';
+  const s=d>0?'+':''; const cls=down==null?'n':((down&&d<0)||(!down&&d>0))?'g':(d===0?'n':'b');
+  return `<span class="delta ${cls}">${s}${r1(d)}</span>`;
+}
+
+async function abrirFicha(id){
+  el('ov').classList.add('show'); el('ficha').classList.add('show');
+  el('ficha').innerHTML='<div class="fh"><h3>Cargando…</h3></div>';
+  const {status,data}=await api('ficha',{cliente_id:id});
+  if(status!==200){el('ficha').innerHTML=`<div class="fh"><button class="x" onclick="cerrarFicha()">×</button><h3>Error</h3></div><div class="fbody"><p class="empty-msg">${data.error||''}</p></div>`;return;}
+  pintarFicha(data.cliente,data.registros||[]);
+}
+function cerrarFicha(){el('ov').classList.remove('show');el('ficha').classList.remove('show');}
+
+function pintarFicha(cli,regs){
+  const o=calcObjetivos(cli);
+  const act=regs[0]||null, ant=regs[1]||null, ini=regs[regs.length-1]||null;
+  const nom=`${esc(cli.nombre)} ${esc(cli.apellido||'')} ${esc(cli.apellido2||'')}`.trim();
+  const ed=edad(cli.fecha_nacimiento);
+  const gen=norm(cli.genero).startsWith('m')?'Mujer':'Hombre';
+  const plazaTxt=cli.plaza?`L${cli.plaza}`:'sin plaza';
+  const estTxt=cli.suscripcion_estado||'—';
+  const pesoHoy=val(cli,act,'peso');
+  let estado='—';
+  if(o&&pesoHoy!=null){estado=pesoHoy>o.POb?'Obesidad':pesoHoy>o.PO1?'Sobrepeso':pesoHoy<o.PO2?'Bajo peso':'Peso saludable';}
+
+  // KPIs de peso
+  const kpis=o?`
+    <div class="kpi"><div class="l">Peso hoy</div><div class="v">${pesoHoy!=null?r1(pesoHoy)+' kg':'—'}</div><div class="s">${estado}</div></div>
+    <div class="kpi"><div class="l">Objetivo 1 · sobrepeso</div><div class="v">${r1(o.PO1)}</div><div class="s">IMC 24,9</div></div>
+    <div class="kpi"><div class="l">Objetivo 2 · mínimo</div><div class="v">${r1(o.PO2)}</div><div class="s">peso saludable</div></div>
+    <div class="kpi"><div class="l">🎯 Objetivo total</div><div class="v" style="color:var(--orange)">${r1(o.promedio)}</div><div class="s">promedio ideal</div></div>`
+   :`<div class="kpi"><div class="l">Peso hoy</div><div class="v">${pesoHoy!=null?r1(pesoHoy)+' kg':'—'}</div><div class="s">Falta la altura para objetivos</div></div>`;
+
+  // Tabla de variación
+  let filas='';
+  PARAMS.forEach(p=>{
+    const va=val(cli,act,p.k), vb=val(cli,ant,p.k), vi=val(cli,ini,p.k);
+    if(va==null&&vb==null&&vi==null) return;
+    const dSem=(va!=null&&vb!=null)?va-vb:null;
+    const dTot=(va!=null&&vi!=null)?va-vi:null;
+    filas+=`<tr>
+      <td class="p">${p.l}</td>
+      <td>${vb!=null?r1(vb)+p.u:'—'}</td>
+      <td><b>${va!=null?r1(va)+p.u:'—'}</b></td>
+      <td>${deltaCell(dSem,p.down)}</td>
+      <td>${deltaCell(dTot,p.down)}</td></tr>`;
+  });
+
+  // Objetivos de composición y perímetros
+  let objRows='';
+  if(o){
+    const imcA=val(cli,act,'imc'), grA=val(cli,act,'grasa_corporal');
+    const cinA=val(cli,act,'per_cintura'), cadA=val(cli,act,'per_cadera'), homA=val(cli,act,'per_hombros');
+    objRows+=objRow('IMC',imcA,o.imcObj,true,'');
+    objRows+=objRow('Grasa corporal',grA,o.grasaObj,true,' %');
+    objRows+=objRow('Cintura',cinA,r1(o.cinturaObj),true,' cm');
+    if(o.esMujer){
+      const icc=(cinA!=null&&cadA!=null)?cinA/cadA:null;
+      objRows+=`<tr><td class="p">Cadera</td><td>${cadA!=null?r1(cadA)+' cm':'—'}</td><td class="mini">referencia</td><td>${iccCell(icc,0.85)}</td></tr>`;
+    }else{
+      const ihc=(homA!=null&&cinA!=null)?homA/cinA:null;
+      objRows+=`<tr><td class="p">Hombros</td><td>${homA!=null?r1(homA)+' cm':'—'}</td><td class="mini">↑ mejor</td><td>${ihcCell(ihc,1.4)}</td></tr>`;
+    }
+  }
+
+  const sem=act?('Semana '+(act.semana!=null?act.semana:'—')):'sin registros';
+  const fechaAct=act?act.fecha:'';
+  el('ficha').innerHTML=`
+    <div class="fh">
+      <button class="x" onclick="cerrarFicha()">×</button>
+      <h3>${nom||'Cliente'}</h3>
+      <div class="sub">
+        <span>${gen}${ed!=null?' · '+ed+' años':''}</span>
+        <span>${DIAS.find(d=>d[0]===norm(cli.dia_consulta))?.[1]||'—'} · ${plazaTxt}</span>
+        <span>${sem}${fechaAct?' · '+fechaAct:''}</span>
+        <span>Suscripción: ${estTxt}</span>
+      </div>
+    </div>
+    <div class="fbody">
+      <div class="kpis">${kpis}</div>
+      <div class="sec">
+        <h4>Objetivos y perímetros (actual vs objetivo)</h4>
+        ${o?`<table class="obj"><thead><tr><th>Parámetro</th><th>Actual</th><th>Objetivo</th><th>Estado</th></tr></thead><tbody>${objRows}</tbody></table>`:'<p class="empty-msg">Falta la altura del cliente para calcular objetivos.</p>'}
+      </div>
+      <div class="sec">
+        <h4>Variación semanal e histórica</h4>
+        ${act?`<table><thead><tr><th>Parámetro</th><th>Sem. anterior</th><th>Esta semana</th><th>Δ semana</th><th>Acumulado</th></tr></thead><tbody>${filas}</tbody></table>
+        <p class="mini" style="margin-top:10px">«Acumulado» compara la semana actual con el primer registro (semana ${ini&&ini.semana!=null?ini.semana:'inicial'}). Verde = va en la buena dirección.</p>`
+        :'<p class="empty-msg">Este cliente aún no tiene registros de evolución.</p>'}
+      </div>
+    </div>`;
+}
+function objRow(label,actual,obj,down,u){
+  let estado='<span class="mini">—</span>';
+  if(actual!=null&&obj!=null){
+    const ok=down?actual<=obj:actual>=obj;
+    const diff=r1(actual-obj);
+    estado=`<span class="${ok?'ok':'no'}">${ok?'✓ en objetivo':(diff>0?'+':'')+diff+u}</span>`;
+  }
+  return `<tr><td class="p">${label}</td><td>${actual!=null?r1(actual)+u:'—'}</td><td>${obj!=null?r1(obj)+u:'—'}</td><td>${estado}</td></tr>`;
+}
+function iccCell(icc,max){ if(icc==null)return '<span class="mini">—</span>'; const ok=icc<max; return `<span class="${ok?'ok':'no'}">ICC ${r1(icc*100)/100} ${ok?'✓':'(obj <'+max+')'}</span>`; }
+function ihcCell(ihc,min){ if(ihc==null)return '<span class="mini">—</span>'; const ok=ihc>=min; return `<span class="${ok?'ok':'no'}">Í.H/C ${r1(ihc*100)/100} ${ok?'✓':'(obj ≥'+min+')'}</span>`; }
+
+// ---------- Asignar plaza ----------
+function abrirAsig(plaza){
+  ASIG_CTX={plaza};
+  el('asigTit').textContent=`Asignar plaza L${plaza}`;
+  el('asigSub').textContent=`${DIAS.find(d=>d[0]===DIA_ACT)[1]} · elige el cliente para esta plaza`;
+  el('asigQuitar').style.display='none';
+  el('asigBuscar').value='';
+  el('asig').classList.add('show');
+  pintarAsigList('');
+  el('asigBuscar').focus();
+}
+function pintarAsigList(q){
+  const nq=norm(q);
+  const lista=CLIENTES.filter(c=>!nq||norm(c.nombre+' '+(c.apellido||'')).includes(nq))
+    .sort((a,b)=>String(a.nombre).localeCompare(b.nombre)).slice(0,60);
+  el('asigList').innerHTML=lista.map(c=>{
+    const donde=c.plaza?`${DIAS.find(d=>d[0]===norm(c.dia_consulta))?.[1]||''} L${c.plaza}`:'sin plaza';
+    return `<div class="row" onclick="asignar('${c.id}')"><span class="who">${esc(c.nombre)} ${esc(c.apellido||'')}</span><span class="where">${donde}</span></div>`;
+  }).join('')||'<p class="empty-msg">Sin resultados</p>';
+}
+function filtrarAsig(){pintarAsigList(el('asigBuscar').value);}
+async function asignar(id){
+  const {plaza}=ASIG_CTX;
+  const {status,data}=await api('asignar',{cliente_id:id,dia:DIA_ACT,plaza});
+  if(status!==200){toast(data.error||'Error');return;}
+  cerrarAsig(); toast('Plaza asignada'); await cargar();
+}
+async function quitarPlaza(){}
+function cerrarAsig(){el('asig').classList.remove('show');ASIG_CTX=null;}
+</script>
+</body>
+</html>
