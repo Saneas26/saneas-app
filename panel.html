@@ -95,6 +95,24 @@
   .btn-cerrar{background:var(--soft);color:var(--muted)}
   .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--text);color:#fff;padding:11px 20px;border-radius:10px;font-size:14px;z-index:60;opacity:0;transition:.2s}
   .toast.show{opacity:1}
+  /* Alta / Baja */
+  .alta-btn{background:var(--teal);color:#fff;border:0;border-radius:999px;padding:9px 16px;font-weight:700;font-size:14px}
+  .alta-btn:hover{background:var(--teal-d)}
+  #alta{position:fixed;inset:0;background:rgba(16,50,58,.45);z-index:45;display:none;align-items:center;justify-content:center}
+  #alta.show{display:flex}
+  #alta .box{background:#fff;border-radius:16px;padding:24px;width:440px;max-width:94vw;max-height:92vh;overflow-y:auto}
+  #alta h3{font-size:18px;color:var(--teal-d);margin-bottom:4px}
+  #alta .sub{font-size:13px;color:var(--muted);margin-bottom:14px}
+  #alta label{display:block;font-size:12px;font-weight:700;color:var(--muted);margin:10px 0 4px}
+  #alta input,#alta select{width:100%;padding:11px;border:2px solid var(--line);border-radius:9px;font-size:14px;background:#fff}
+  #alta input:focus,#alta select:focus{outline:none;border-color:var(--teal)}
+  #alta .foot{display:flex;justify-content:space-between;margin-top:18px}
+  #alta button{padding:11px 18px;border-radius:9px;border:0;font-weight:700}
+  .btn-alta{background:var(--teal);color:#fff}
+  #altaMsg{font-size:13px;margin-top:10px;min-height:18px}
+  #altaMsg.err{color:var(--bad)} #altaMsg.ok{color:var(--good)}
+  .baja-btn{position:absolute;top:16px;right:64px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.55);color:#fff;padding:7px 14px;border-radius:999px;font-size:13px;font-weight:700}
+  .baja-btn:hover{background:var(--bad);border-color:var(--bad)}
 </style>
 </head>
 <body>
@@ -113,6 +131,7 @@
   <div class="logo">Saneas<span>·</span></div>
   <div class="dias" id="dias"></div>
   <div class="sp"></div>
+  <button class="alta-btn" onclick="abrirAlta()">＋ Dar de alta</button>
   <div class="count" id="count"></div>
   <button class="out" onclick="salir()">Salir</button>
 </header>
@@ -140,6 +159,31 @@
     <div class="foot">
       <button class="btn-quitar" id="asigQuitar" style="display:none" onclick="quitarPlaza()">Quitar de la plaza</button>
       <button class="btn-cerrar" onclick="cerrarAsig()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Dar de alta (Premium/Completo) -->
+<div id="alta">
+  <div class="box">
+    <h3>Dar de alta · Premium/Completo</h3>
+    <div class="sub">Tú rellenas lo básico; el cliente completa el resto al entrar en la app con su email y teléfono.</div>
+    <label>Nombre</label>
+    <input id="al_nombre" placeholder="Nombre">
+    <label>Primer apellido</label>
+    <input id="al_apellido" placeholder="Primer apellido">
+    <label>Email</label>
+    <input id="al_email" type="email" placeholder="correo@ejemplo.com">
+    <label>Teléfono</label>
+    <input id="al_tel" placeholder="Teléfono (será su contraseña: últimos 9 dígitos)">
+    <label>Plan</label>
+    <select id="al_plan"><option>Completo</option><option>Premium</option></select>
+    <label>Día de consulta</label>
+    <select id="al_dia"></select>
+    <div id="altaMsg"></div>
+    <div class="foot">
+      <button class="btn-cerrar" onclick="cerrarAlta()">Cancelar</button>
+      <button class="btn-alta" id="btnAlta" onclick="crearAlta()">Crear alta</button>
     </div>
   </div>
 </div>
@@ -348,6 +392,7 @@ function pintarFicha(cli,regs){
   el('ficha').innerHTML=`
     <div class="fh">
       <button class="x" onclick="cerrarFicha()">×</button>
+      <button class="baja-btn" onclick="darBaja('${cli.id}', '${(nom||'este cliente').replace(/'/g,'')}')">Dar de baja</button>
       <h3>${nom||'Cliente'}</h3>
       <div class="sub">
         <span>${gen}${ed!=null?' · '+ed+' años':''}</span>
@@ -411,6 +456,44 @@ async function asignar(id){
 }
 async function quitarPlaza(){}
 function cerrarAsig(){el('asig').classList.remove('show');ASIG_CTX=null;}
+
+// ---------- Alta / Baja ----------
+const esPC=p=>{const n=norm(p);return n.includes('completo')||n.includes('premium');};
+function diaSugeridoPC(){
+  // día con menos Premium/Completo (empate: lunes primero)
+  const cnt={}; DIAS.forEach(([k])=>cnt[k]=0);
+  CLIENTES.forEach(c=>{ if(c.plaza&&esPC(c.plan)){ const k=norm(c.dia_consulta); if(cnt[k]!=null) cnt[k]++; } });
+  let best=DIAS[0][0], min=Infinity;
+  DIAS.forEach(([k])=>{ if(cnt[k]<min){min=cnt[k];best=k;} });
+  return best;
+}
+function abrirAlta(){
+  el('al_nombre').value='';el('al_apellido').value='';el('al_email').value='';el('al_tel').value='';
+  el('al_plan').value='Completo';
+  el('al_dia').innerHTML=DIAS.map(([k,l])=>`<option value="${k}">${l}</option>`).join('');
+  el('al_dia').value=diaSugeridoPC();
+  const m=el('altaMsg'); m.textContent='';m.className='';
+  el('alta').classList.add('show'); el('al_nombre').focus();
+}
+function cerrarAlta(){el('alta').classList.remove('show');}
+async function crearAlta(){
+  const nombre=el('al_nombre').value.trim(), apellido=el('al_apellido').value.trim();
+  const email=el('al_email').value.trim(), telefono=el('al_tel').value.trim();
+  const plan=el('al_plan').value, dia=el('al_dia').value;
+  const m=el('altaMsg');
+  if(!nombre||!email||telefono.replace(/\D/g,'').length<9){m.className='err';m.textContent='Rellena nombre, email y un teléfono válido (9 dígitos).';return;}
+  const btn=el('btnAlta');btn.disabled=true;btn.textContent='Creando...';
+  const {status,data}=await api('alta',{nombre,apellido,email,telefono,plan,dia});
+  btn.disabled=false;btn.textContent='Crear alta';
+  if(status!==200){m.className='err';m.textContent=data.error||'Error';return;}
+  cerrarAlta(); toast('Cliente dado de alta'); await cargar();
+}
+async function darBaja(id,nombre){
+  if(!confirm('¿Dar de baja a '+nombre+'?\n\nSe borrarán TODOS sus datos e historial y su plaza quedará libre. Esta acción no se puede deshacer.')) return;
+  const {status,data}=await api('baja',{cliente_id:id});
+  if(status!==200){toast(data.error||'Error al dar de baja');return;}
+  cerrarFicha(); toast('Cliente dado de baja'); await cargar();
+}
 </script>
 </body>
 </html>
