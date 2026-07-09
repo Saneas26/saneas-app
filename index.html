@@ -1014,11 +1014,19 @@ async function guardarRegistro(){
   const campos=['peso','imc','grasa_corporal','grasa_visceral','agua','masa_muscular','proteina','edad_metabolica',
     'pli_tricipital','pli_subescapular','pli_suprailiaco','pli_abdominal','pli_muslo','pli_pantorrilla',
     'per_cintura','per_cadera','per_pecho','per_brazo','per_muslo','per_gemelo'];
-  const row={cliente_id:CLIENTE.id,fecha:new Date().toISOString().slice(0,10),semana:CLIENTE.semana||null};
+  // Un registro por semana, editable: si ya hay uno de esta semana, se corrige
+  const hoy=new Date(); const dow=(hoy.getDay()+6)%7;
+  const lunes=new Date(hoy); lunes.setDate(hoy.getDate()-dow);
+  const lunesStr=lunes.toISOString().slice(0,10);
+  const row={cliente_id:CLIENTE.id,fecha:hoy.toISOString().slice(0,10),semana:CLIENTE.semana||null};
   campos.forEach(c=>row[c]=num(document.getElementById('f_'+c).value));
-  const {error}=await sb.from('registros').insert(row);
+  const {data:yaSem}=await sb.from('registros').select('id').eq('cliente_id',CLIENTE.id).gte('fecha',lunesStr).order('fecha',{ascending:false}).limit(1);
+  const corrige=yaSem&&yaSem.length;
+  let error;
+  if(corrige){ ({error}=await sb.from('registros').update(row).eq('id',yaSem[0].id)); }
+  else { ({error}=await sb.from('registros').insert(row)); }
   if(error){setMsg('regSaveMsg','Error al guardar: '+error.message,'err');}
-  else{setMsg('regSaveMsg','✅ Datos guardados en tu ficha correctamente.','ok');
+  else{setMsg('regSaveMsg',corrige?'✅ Actualizamos tus datos de esta semana.':'✅ Datos guardados en tu ficha correctamente.','ok');
     ULTIMO=row;renderInicio();campos.forEach(c=>document.getElementById('f_'+c).value='');}
   btn.disabled=false;btn.textContent='✅ Enviar mis datos';
 }
