@@ -156,6 +156,19 @@
   .btn-dieta:hover{background:var(--teal-d)}
   .dieta-msg{font-size:13px}
   .dieta-msg.ok{color:var(--good)} .dieta-msg.err{color:var(--bad)}
+  /* Necesidades calóricas */
+  .cal-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+  @media(max-width:560px){.cal-grid{grid-template-columns:1fr 1fr}}
+  .cal{background:var(--soft);border-radius:12px;padding:12px 10px;text-align:center}
+  .cal span{display:block;font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.3px}
+  .cal b{display:block;font-size:26px;color:var(--teal-d);margin:2px 0}
+  .cal small{font-size:11px;color:var(--muted)}
+  .cal-obj{background:var(--teal);}
+  .cal-obj span,.cal-obj small{color:rgba(255,255,255,.85)} .cal-obj b{color:#fff}
+  .cal-foot{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:12px}
+  .cal-foot label{font-size:12px;font-weight:700;color:var(--muted)}
+  .cal-foot .dsel{width:auto;min-width:150px}
+  .cal-foot .mini{font-size:12px;color:var(--muted)}
   #renovMsg{font-size:13px;margin-top:8px;min-height:16px}
   #renovMsg.err{color:var(--bad)} #renovMsg.ok{color:var(--good)}
 </style>
@@ -237,6 +250,14 @@
     <select id="al_dia"></select>
     <label>Plaza</label>
     <select id="al_plaza"></select>
+    <label>Actividad (estilo de vida)</label>
+    <select id="al_actividad">
+      <option>Sedentario</option>
+      <option>Ligero</option>
+      <option>Moderado</option>
+      <option>Regular</option>
+      <option>Intenso</option>
+    </select>
     <div id="altaMsg"></div>
     <div class="foot">
       <button class="btn-cerrar" onclick="cerrarAlta()">Cancelar</button>
@@ -440,8 +461,16 @@ async function guardarDieta(id){
   if(status!==200){m.className='dieta-msg err';m.textContent=data.error||'Error';return;}
   m.className='dieta-msg ok';m.textContent='✅ Dieta guardada';
 }
+async function guardarActividad(id,val){
+  const {status,data}=await api('actividad',{cliente_id:id,estilo_vida:val});
+  if(status!==200){toast(data.error||'Error al guardar la actividad');return;}
+  if(FICHA_CLI&&FICHA_CLI.id===id){FICHA_CLI.estilo_vida=val;pintarFicha(FICHA_CLI,FICHA_REGS);}
+  const c=CLIENTES.find(x=>x.id===id); if(c)c.estilo_vida=val;
+}
 
+let FICHA_CLI=null, FICHA_REGS=[];
 function pintarFicha(cli,regs){
+  FICHA_CLI=cli; FICHA_REGS=regs;
   const o=calcObjetivos(cli);
   const reales=regs.filter(r=>!r.sin_consulta);
   const act=reales[0]||null, ant=reales[1]||null, ini=reales[reales.length-1]||null;
@@ -453,6 +482,34 @@ function pintarFicha(cli,regs){
   const pesoHoy=val(cli,act,'peso');
   let estado='—';
   if(o&&pesoHoy!=null){estado=pesoHoy>o.POb?'Obesidad':pesoHoy>o.PO1?'Sobrepeso':pesoHoy<o.PO2?'Bajo peso':'Peso saludable';}
+
+  // ── Necesidades calóricas: TMB (Mifflin) · gasto diario (actividad) · objetivo (auto por IMC) ──
+  const ACTF={Sedentario:1.2,Ligero:1.375,Moderado:1.55,Regular:1.725,Intenso:1.9};
+  const estilo=cli.estilo_vida||'Sedentario';
+  const altc=Number(cli.altura)||null;
+  let calSec='';
+  if(pesoHoy!=null && altc && ed!=null){
+    const esM=norm(cli.genero).startsWith('m');
+    const tmb=10*pesoHoy + 6.25*altc - 5*ed + (esM?-161:5);
+    const get=tmb*(ACTF[estilo]||1.2);
+    const imc=pesoHoy/Math.pow(altc/100,2);
+    let objL,objF; if(imc<21){objL='Ganar peso';objF=1.15;} else if(imc<=23){objL='Mantener';objF=1;} else {objL='Adelgazar';objF=0.8;}
+    const kcal=get*objF;
+    const opts=['Sedentario','Ligero','Moderado','Regular','Intenso'].map(a=>`<option${a===estilo?' selected':''}>${a}</option>`).join('');
+    calSec=`<div class="sec"><h4>Necesidades calóricas</h4>
+      <div class="cal-grid">
+        <div class="cal"><span>TMB basal</span><b>${Math.round(tmb)}</b><small>kcal</small></div>
+        <div class="cal"><span>Gasto diario</span><b>${Math.round(get)}</b><small>×${ACTF[estilo]||1.2} · ${estilo.toLowerCase()}</small></div>
+        <div class="cal cal-obj"><span>Objetivo · ${objL}</span><b>${Math.round(kcal)}</b><small>kcal/día</small></div>
+      </div>
+      <div class="cal-foot">
+        <label>Actividad</label>
+        <select class="dsel" id="fd_act" onchange="guardarActividad('${cli.id}',this.value)">${opts}</select>
+        <span class="mini">IMC ${r1(imc)} · objetivo automático según su estado</span>
+      </div></div>`;
+  } else {
+    calSec=`<div class="sec"><h4>Necesidades calóricas</h4><p class="empty-msg">Faltan peso, altura o fecha de nacimiento para calcular la TMB.</p></div>`;
+  }
 
   // KPIs de peso
   const kpis=o?`
@@ -528,6 +585,7 @@ function pintarFicha(cli,regs){
     </div>
     <div class="fbody">
       <div class="kpis">${kpis}</div>
+      ${calSec}
       <div class="sec">
         <h4>Objetivos y perímetros (actual vs objetivo)</h4>
         ${o?`<table class="obj"><thead><tr><th>Parámetro</th><th>Actual</th><th>Objetivo</th><th>Estado</th></tr></thead><tbody>${objRows}</tbody></table>`:'<p class="empty-msg">Falta la altura del cliente para calcular objetivos.</p>'}
@@ -596,6 +654,7 @@ function diaSugeridoPC(){
 function abrirAlta(){
   el('al_nombre').value='';el('al_apellido').value='';el('al_email').value='';el('al_tel').value='';
   el('al_bono').value='completo_mensual';
+  el('al_actividad').value='Sedentario';
   el('al_dia').innerHTML=DIAS.map(([k,l])=>`<option value="${k}">${l}</option>`).join('');
   el('al_dia').value=diaSugeridoPC();
   el('al_dia').onchange=pintarPlazasAlta;
@@ -620,11 +679,11 @@ function cerrarAlta(){el('alta').classList.remove('show');}
 async function crearAlta(){
   const nombre=el('al_nombre').value.trim(), apellido=el('al_apellido').value.trim();
   const email=el('al_email').value.trim(), telefono=el('al_tel').value.trim();
-  const bono=el('al_bono').value, dia=el('al_dia').value, plaza=el('al_plaza').value;
+  const bono=el('al_bono').value, dia=el('al_dia').value, plaza=el('al_plaza').value, estilo_vida=el('al_actividad').value;
   const m=el('altaMsg');
   if(!nombre||!email||telefono.replace(/\D/g,'').length<9){m.className='err';m.textContent='Rellena nombre, email y un teléfono válido (9 dígitos).';return;}
   const btn=el('btnAlta');btn.disabled=true;btn.textContent='Creando...';
-  const {status,data}=await api('alta',{nombre,apellido,email,telefono,bono,dia,plaza:plaza||null});
+  const {status,data}=await api('alta',{nombre,apellido,email,telefono,bono,dia,plaza:plaza||null,estilo_vida});
   btn.disabled=false;btn.textContent='Crear alta';
   if(status!==200){m.className='err';m.textContent=data.error||'Error';return;}
   cerrarAlta(); toast(data.fecha_renovacion?('Alta creada · acceso hasta '+data.fecha_renovacion):'Cliente dado de alta'); await cargar();
