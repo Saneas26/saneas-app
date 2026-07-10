@@ -147,6 +147,21 @@
   .kv{font-size:13px;color:var(--muted);margin-bottom:4px}
   .dsec{font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);font-weight:700;margin:16px 0 6px}
   .dtext{font-size:14px;line-height:1.6;white-space:pre-wrap}
+  /* Registro de gimnasio */
+  .gymlog{margin-top:4px}
+  .gl-ref{font-size:14px;background:var(--light);border-radius:12px;padding:10px 12px;margin-bottom:12px}
+  .gl-ref.gl-empty{color:var(--muted)}
+  .gl-form{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px}
+  .gl-f label{display:block;font-size:11px;font-weight:700;color:var(--muted);margin-bottom:3px}
+  .gl-f input{width:100%;padding:10px;border:2px solid var(--line);border-radius:10px;font-size:15px;text-align:center}
+  .gl-f input:focus{outline:none;border-color:var(--teal)}
+  .gl-save{width:100%}
+  .gl-msg{font-size:13px;margin-top:8px;text-align:center}
+  .gl-msg.err{color:#c0392b}
+  .gl-hist{margin-top:16px}
+  .gl-h{font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);font-weight:700;margin-bottom:6px}
+  .gl-row{display:flex;justify-content:space-between;font-size:13px;padding:7px 2px;border-bottom:1px solid var(--line)}
+  .gl-row span{color:var(--muted)}
   .spinner{border:3px solid var(--light);border-top-color:var(--teal);border-radius:50%;width:34px;height:34px;animation:spin .8s linear infinite;margin:40px auto}
   @keyframes spin{to{transform:rotate(360deg)}}
 </style>
@@ -1281,7 +1296,52 @@ function verEjercicio(id){
     <div class="price-big" style="font-size:18px">${e.series||'-'} series × ${e.reps||'-'}</div>
     <div class="kv">Descanso: ${e.descanso||'-'}</div>
     ${e.notas?`<div class="dsec">Notas biomecánicas</div><div class="dtext">${e.notas}</div>`:''}
-    ${emb}`);
+    ${emb}
+    <div class="dsec">Tu registro</div>
+    <div id="gymlog" class="gymlog">Cargando…</div>`);
+  renderGymLog(id);
+}
+
+// Registro de gimnasio: series, reps y peso de la última serie por ejercicio
+async function renderGymLog(ejId){
+  const cont=document.getElementById('gymlog'); if(!cont) return;
+  const e=EJ_CACHE[ejId]; const ejNombre=e?e.ejercicio:'';
+  let logs=[];
+  if(CLIENTE&&CLIENTE.id&&ejNombre){
+    try{ const {data}=await sb.from('gym_logs').select('*').eq('cliente_id',CLIENTE.id).eq('ejercicio_nombre',ejNombre)
+        .order('fecha',{ascending:false}).order('created_at',{ascending:false}); logs=data||[]; }catch(err){console.error('gymlog',err);}
+  }
+  const fmt=l=>`${l.series!=null?l.series:'-'} × ${l.reps!=null?l.reps:'-'} · ${l.peso!=null?l.peso+' kg':'-'}`;
+  const ult=logs[0];
+  const ref=ult
+    ? `<div class="gl-ref">La última vez (${fechaCorta(ult.fecha)}): <b>${fmt(ult)}</b></div>`
+    : `<div class="gl-ref gl-empty">Aún no has anotado este ejercicio.</div>`;
+  const hist=logs.length>1
+    ? `<div class="gl-hist"><div class="gl-h">Historial</div>${logs.slice(0,20).map(l=>`<div class="gl-row"><span>${fechaCorta(l.fecha)}</span><b>${fmt(l)}</b></div>`).join('')}</div>`
+    : '';
+  cont.innerHTML=`
+    ${ref}
+    <div class="gl-form">
+      <div class="gl-f"><label>Series</label><input id="gl_series" type="number" inputmode="numeric" min="0" placeholder="${ult&&ult.series!=null?ult.series:''}"></div>
+      <div class="gl-f"><label>Reps (última)</label><input id="gl_reps" type="number" inputmode="numeric" min="0" placeholder="${ult&&ult.reps!=null?ult.reps:''}"></div>
+      <div class="gl-f"><label>Peso (kg)</label><input id="gl_peso" type="number" inputmode="decimal" min="0" step="0.5" placeholder="${ult&&ult.peso!=null?ult.peso:''}"></div>
+    </div>
+    <button class="btn gl-save" onclick="guardarGymLog('${ejId}')">Guardar lo de hoy</button>
+    <div id="gl_msg" class="gl-msg"></div>
+    ${hist}`;
+}
+async function guardarGymLog(ejId){
+  const e=EJ_CACHE[ejId]; const ejNombre=e?e.ejercicio:''; const msg=document.getElementById('gl_msg');
+  if(!CLIENTE||!CLIENTE.id){ if(msg){msg.className='gl-msg err';msg.textContent='Inicia sesión para guardar.';} return; }
+  const gv=id=>{const el=document.getElementById(id);return el?el.value.trim():'';};
+  const s=gv('gl_series'), r=gv('gl_reps'), p=gv('gl_peso');
+  if(!s&&!r&&!p){ if(msg){msg.className='gl-msg err';msg.textContent='Escribe al menos un dato.';} return; }
+  const btn=document.querySelector('.gl-save'); if(btn){btn.disabled=true;btn.textContent='Guardando...';}
+  const row={cliente_id:CLIENTE.id,ejercicio_ref:String(ejId),ejercicio_nombre:ejNombre,
+    series:s?parseInt(s,10):null,reps:r?parseInt(r,10):null,peso:p?parseFloat(p.replace(',','.')):null};
+  const {error}=await sb.from('gym_logs').insert(row);
+  if(error){ if(btn){btn.disabled=false;btn.textContent='Guardar lo de hoy';} if(msg){msg.className='gl-msg err';msg.textContent='No se pudo guardar: '+error.message;} return; }
+  await renderGymLog(ejId);
 }
 async function setGym(k,v){
   GYM[k]=v; GYM.full=false;
