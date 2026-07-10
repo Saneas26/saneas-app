@@ -235,6 +235,8 @@
     </select>
     <label>Día de consulta</label>
     <select id="al_dia"></select>
+    <label>Plaza</label>
+    <select id="al_plaza"></select>
     <div id="altaMsg"></div>
     <div class="foot">
       <button class="btn-cerrar" onclick="cerrarAlta()">Cancelar</button>
@@ -596,18 +598,33 @@ function abrirAlta(){
   el('al_bono').value='completo_mensual';
   el('al_dia').innerHTML=DIAS.map(([k,l])=>`<option value="${k}">${l}</option>`).join('');
   el('al_dia').value=diaSugeridoPC();
+  el('al_dia').onchange=pintarPlazasAlta;
+  pintarPlazasAlta();
   const m=el('altaMsg'); m.textContent='';m.className='';
   el('alta').classList.add('show'); el('al_nombre').focus();
+}
+// Opciones de plaza según el día elegido, marcando libres/ocupadas
+function pintarPlazasAlta(){
+  const dia=el('al_dia').value;
+  const ocup={};
+  CLIENTES.filter(c=>norm(c.dia_consulta)===dia && c.plaza).forEach(c=>{ocup[Number(c.plaza)]=c;});
+  let opts='<option value="">— sin plaza (asignar luego) —</option>';
+  for(let n=1;n<=NPLAZAS;n++){
+    const o=ocup[n];
+    opts+=`<option value="${n}"${o?' disabled':''}>${pref(dia)}${n}${o?(' · ocupada ('+esc(o.nombre)+')'):' · libre'}</option>`;
+  }
+  el('al_plaza').innerHTML=opts;
+  el('al_plaza').value='';
 }
 function cerrarAlta(){el('alta').classList.remove('show');}
 async function crearAlta(){
   const nombre=el('al_nombre').value.trim(), apellido=el('al_apellido').value.trim();
   const email=el('al_email').value.trim(), telefono=el('al_tel').value.trim();
-  const bono=el('al_bono').value, dia=el('al_dia').value;
+  const bono=el('al_bono').value, dia=el('al_dia').value, plaza=el('al_plaza').value;
   const m=el('altaMsg');
   if(!nombre||!email||telefono.replace(/\D/g,'').length<9){m.className='err';m.textContent='Rellena nombre, email y un teléfono válido (9 dígitos).';return;}
   const btn=el('btnAlta');btn.disabled=true;btn.textContent='Creando...';
-  const {status,data}=await api('alta',{nombre,apellido,email,telefono,bono,dia});
+  const {status,data}=await api('alta',{nombre,apellido,email,telefono,bono,dia,plaza:plaza||null});
   btn.disabled=false;btn.textContent='Crear alta';
   if(status!==200){m.className='err';m.textContent=data.error||'Error';return;}
   cerrarAlta(); toast(data.fecha_renovacion?('Alta creada · acceso hasta '+data.fecha_renovacion):'Cliente dado de alta'); await cargar();
