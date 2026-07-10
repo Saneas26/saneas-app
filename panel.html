@@ -145,6 +145,17 @@
   #renovar .foot{display:flex;justify-content:space-between;margin-top:16px}
   #renovar button{padding:11px 18px;border-radius:9px;border:0;font-weight:700}
   .btn-renovar{background:var(--teal);color:#fff}
+  /* Selectores de dieta en la ficha */
+  .dieta-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media(max-width:560px){.dieta-grid{grid-template-columns:1fr}}
+  .dlab{display:block;font-size:12px;font-weight:700;color:var(--muted);margin-bottom:4px}
+  .dsel{width:100%;padding:10px;border:2px solid var(--line);border-radius:9px;font-size:14px;background:#fff}
+  .dsel:focus{outline:none;border-color:var(--teal)}
+  .dieta-foot{display:flex;align-items:center;gap:12px;margin-top:12px}
+  .btn-dieta{padding:10px 18px;border-radius:9px;border:0;font-weight:700;background:var(--teal);color:#fff;cursor:pointer}
+  .btn-dieta:hover{background:var(--teal-d)}
+  .dieta-msg{font-size:13px}
+  .dieta-msg.ok{color:var(--good)} .dieta-msg.err{color:var(--bad)}
   #renovMsg{font-size:13px;margin-top:8px;min-height:16px}
   #renovMsg.err{color:var(--bad)} #renovMsg.ok{color:var(--good)}
 </style>
@@ -403,14 +414,30 @@ function deltaCell(d,down){
   return `<span class="delta ${cls}">${s}${r1(d)}</span>`;
 }
 
+let DIETAS=[];
+async function cargarDietas(){
+  if(DIETAS.length) return;
+  const {status,data}=await api('dietas',{});
+  if(status===200&&data.dietas) DIETAS=data.dietas;
+}
 async function abrirFicha(id){
   el('ov').classList.add('show'); el('ficha').classList.add('show');
   el('ficha').innerHTML='<div class="fh"><h3>Cargando…</h3></div>';
+  await cargarDietas();
   const {status,data}=await api('ficha',{cliente_id:id});
   if(status!==200){el('ficha').innerHTML=`<div class="fh"><button class="x" onclick="cerrarFicha()">×</button><h3>Error</h3></div><div class="fbody"><p class="empty-msg">${data.error||''}</p></div>`;return;}
   pintarFicha(data.cliente,data.registros||[]);
 }
 function cerrarFicha(){el('ov').classList.remove('show');el('ficha').classList.remove('show');}
+async function guardarDieta(id){
+  const da=el('fd_actual').value||null, dp=el('fd_proxima').value||null;
+  const btn=el('btnDieta'); btn.disabled=true; btn.textContent='Guardando...';
+  const {status,data}=await api('asignar_dieta',{cliente_id:id,dieta_actual_id:da,dieta_proxima_id:dp});
+  btn.disabled=false; btn.textContent='Guardar dieta';
+  const m=el('dietaMsg');
+  if(status!==200){m.className='dieta-msg err';m.textContent=data.error||'Error';return;}
+  m.className='dieta-msg ok';m.textContent='✅ Dieta guardada';
+}
 
 function pintarFicha(cli,regs){
   const o=calcObjetivos(cli);
@@ -467,6 +494,24 @@ function pintarFicha(cli,regs){
 
   const sem=act?('Semana '+(act.semana!=null?act.semana:'—')):'sin registros';
   const fechaAct=act?act.fecha:'';
+
+  // Selectores de dieta (semana actual y próxima)
+  const dietaOpts=(sel)=>['<option value="">— sin asignar —</option>'].concat(
+    DIETAS.map(d=>`<option value="${d.id}"${d.id===sel?' selected':''}>${esc(d.nombre_plan)}</option>`)).join('');
+  const dietaSec=`
+      <div class="sec">
+        <h4>Dieta</h4>
+        <div class="dieta-grid">
+          <div><label class="dlab">Dieta de esta semana</label>
+            <select id="fd_actual" class="dsel">${dietaOpts(cli.dieta_actual_id)}</select></div>
+          <div><label class="dlab">Próxima dieta</label>
+            <select id="fd_proxima" class="dsel">${dietaOpts(cli.dieta_proxima_id)}</select></div>
+        </div>
+        <div class="dieta-foot">
+          <button class="btn-dieta" id="btnDieta" onclick="guardarDieta('${cli.id}')">Guardar dieta</button>
+          <span id="dietaMsg" class="dieta-msg"></span>
+        </div>
+      </div>`;
   el('ficha').innerHTML=`
     <div class="fh">
       <button class="x" onclick="cerrarFicha()">×</button>
@@ -485,6 +530,7 @@ function pintarFicha(cli,regs){
         <h4>Objetivos y perímetros (actual vs objetivo)</h4>
         ${o?`<table class="obj"><thead><tr><th>Parámetro</th><th>Actual</th><th>Objetivo</th><th>Estado</th></tr></thead><tbody>${objRows}</tbody></table>`:'<p class="empty-msg">Falta la altura del cliente para calcular objetivos.</p>'}
       </div>
+      ${dietaSec}
       <div class="sec">
         <h4>Variación semanal e histórica</h4>
         ${act?`<table><thead><tr><th>Parámetro</th><th>Sem. anterior</th><th>Esta semana</th><th>Δ semana</th><th>Acumulado</th></tr></thead><tbody>${filas}</tbody></table>
