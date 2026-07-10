@@ -65,7 +65,7 @@
   .choice.active{background:var(--teal);color:#fff;border-color:var(--teal)}
   .meal{display:flex;gap:10px;padding:9px 0;border-bottom:1px dashed #dbe6e9}
   .meal:last-child{border-bottom:none}
-  .meal .t{font-size:11px;font-weight:700;color:var(--teal);min-width:78px}
+  .meal .t{font-size:13.5px;font-weight:700;color:var(--teal);min-width:86px;line-height:1.2;word-break:normal;overflow-wrap:normal}
   .meal .d{font-size:13px}
   .shop li{font-size:13px;padding:5px 0;list-style:none;display:flex;justify-content:space-between;border-bottom:1px dashed #dbe6e9}
   .evo .lbl{font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase}
@@ -706,7 +706,12 @@ async function iniciarSesion(){
 async function cargarDieta(){
   TOMAS_HOY=[];DIETA=null;
   let dietaId=CLIENTE.dieta_actual_id;
-  if(!dietaId){const {data:d}=await sb.from('dietas').select('id,nombre_plan,fase').limit(1);if(d&&d[0])dietaId=d[0].id;}
+  if(!dietaId){ // sin dieta asignada: elige una que tenga el día de hoy (evita caer en una de un solo día)
+    const hoyCod0=DIA_MAP[new Date().getDay()];
+    const {data:dt}=await sb.from('dieta_tomas').select('dieta_id').eq('dia_semana',hoyCod0).limit(1);
+    if(dt&&dt[0])dietaId=dt[0].dieta_id;
+    if(!dietaId){const {data:d}=await sb.from('dietas').select('id').limit(1);if(d&&d[0])dietaId=d[0].id;}
+  }
   if(!dietaId)return;
   const {data:dieta}=await sb.from('dietas').select('*').eq('id',dietaId).maybeSingle();
   DIETA=dieta;
@@ -871,7 +876,8 @@ function comidasCalDe(tomas){ return tomas.filter(t=>COMIDAS_CAL.includes(t.toma
 function lineaKcal(toma,pctMap,objetivo){
   if(!objetivo||!(toma in pctMap)) return '';
   const kcal=Math.round(objetivo*pctMap[toma]/100), m=macrosDe(kcal);
-  return `<div style="margin-top:6px;font-size:12.5px;font-weight:700;color:var(--teal);background:var(--light);padding:5px 10px;border-radius:10px;display:inline-block">🔥 ${kcal} kcal · P ${m.prot}g · HC ${m.hc}g · G ${m.grasa}g</div>`;
+  const nw='white-space:nowrap';
+  return `<div style="margin-top:6px;font-size:12.5px;font-weight:700;color:var(--teal);background:var(--light);padding:5px 10px;border-radius:10px;display:inline-block"><span style="${nw}">🔥 ${kcal} kcal</span> · <span style="${nw}">P ${m.prot}g</span> · <span style="${nw}">HC ${m.hc}g</span> · <span style="${nw}">G ${m.grasa}g</span></div>`;
 }
 
 async function verHistorial(){
@@ -1011,7 +1017,7 @@ function renderInicio(){
         <div style="flex:1"><div class="lbl">Gasto día</div><div style="font-size:19px;font-weight:800">${CAL.get}</div><div style="font-size:11px;color:var(--muted)">kcal</div></div>
         <div style="flex:1"><div class="lbl">Objetivo</div><div style="font-size:19px;font-weight:800;color:var(--teal)">${CAL.objetivo}</div><div style="font-size:11px;color:var(--muted)">${CAL.objLabel}</div></div>
       </div>
-      <div style="margin-top:12px;font-size:13px;color:var(--muted);text-align:center">Reparto diario · <b style="color:var(--text)">P ${MAC.prot}g</b> · <b style="color:var(--text)">HC ${MAC.hc}g</b> · <b style="color:var(--text)">G ${MAC.grasa}g</b></div>
+      <div style="margin-top:12px;font-size:13px;color:var(--muted);text-align:center">Reparto diario · <b style="color:var(--text);white-space:nowrap">P ${MAC.prot}g</b> · <b style="color:var(--text);white-space:nowrap">HC ${MAC.hc}g</b> · <b style="color:var(--text);white-space:nowrap">G ${MAC.grasa}g</b></div>
     </div>`:''}
 
     ${esPlanPC()?`<div style="padding:6px 4px" onclick="abrirInvitar()">
@@ -1227,7 +1233,7 @@ async function renderDieta(){
   cont.innerHTML=`
     <p style="font-size:20px;font-weight:700;margin:4px 6px 2px">Tu dieta</p>
     <p style="font-size:13px;color:var(--muted);margin:0 6px 10px">${fmt(DIETA.nombre_plan)}</p>
-    ${CAL?`<div class="card" style="text-align:center;padding:12px"><div style="font-size:13px;color:var(--muted)">Objetivo del día (${CAL.objLabel})</div><div style="font-size:22px;font-weight:800;color:var(--teal)">${CAL.objetivo} kcal</div><div style="font-size:12px;color:var(--muted);margin-top:2px">P ${macrosDe(CAL.objetivo).prot}g · HC ${macrosDe(CAL.objetivo).hc}g · G ${macrosDe(CAL.objetivo).grasa}g</div></div>`:''}
+    ${CAL?`<div class="card" style="text-align:center;padding:12px"><div style="font-size:13px;color:var(--muted)">Objetivo del día (${CAL.objLabel})</div><div style="font-size:22px;font-weight:800;color:var(--teal)">${CAL.objetivo} kcal</div><div style="font-size:12px;color:var(--muted);margin-top:2px"><span style="white-space:nowrap">P ${macrosDe(CAL.objetivo).prot}g</span> · <span style="white-space:nowrap">HC ${macrosDe(CAL.objetivo).hc}g</span> · <span style="white-space:nowrap">G ${macrosDe(CAL.objetivo).grasa}g</span></div></div>`:''}
     <div class="daysel">${dias.map(d=>`<button class="${d[0]===DIA_SEL?'active':''}" onclick="selDia('${d[0]}')">${d[1]}</button>`).join('')}</div>
     ${tomas.length===0?'<div class="empty">Sin comidas para este día.</div>':tomas.map(t=>{
       const i=TOMA_INFO[t.toma]||['🍴',t.toma];
@@ -1275,6 +1281,13 @@ async function verReceta(id){
     ${r.tiempo_min?`<div class="kv">⏱️ ${r.tiempo_min} min${r.categoria?' · '+r.categoria:''}</div>`:''}
     ${r.video_url?`<a class="btn" style="display:block;text-align:center;text-decoration:none;margin:12px 0;background:#111" href="${r.video_url}" target="_blank" rel="noopener">▶ Ver vídeo</a>`:''}
     ${r.descripcion?`<div class="dtext">${r.descripcion}</div>`:''}
+    ${(r.ing_proteina||r.ing_hc||r.ing_grasa||r.ing_fibra)?`<div class="dsec">Aporte nutricional</div>
+    <div style="display:flex;flex-direction:column;gap:7px;margin-top:2px">
+      ${r.ing_proteina?`<div style="display:flex;justify-content:space-between;gap:12px;font-size:13px"><span style="color:var(--muted);white-space:nowrap">🥩 Proteína</span><span style="font-weight:600;text-align:right">${r.ing_proteina}${r.prot_100!=null?` · <span style="white-space:nowrap">${r1(r.prot_100)} g/100g</span>`:''}</span></div>`:''}
+      ${r.ing_hc?`<div style="display:flex;justify-content:space-between;gap:12px;font-size:13px"><span style="color:var(--muted);white-space:nowrap">🍞 Hidratos</span><span style="font-weight:600;text-align:right">${r.ing_hc}${r.hc_100!=null?` · <span style="white-space:nowrap">${r1(r.hc_100)} g/100g</span>`:''}</span></div>`:''}
+      ${r.ing_grasa?`<div style="display:flex;justify-content:space-between;gap:12px;font-size:13px"><span style="color:var(--muted);white-space:nowrap">🥑 Grasa</span><span style="font-weight:600;text-align:right">${r.ing_grasa}${r.grasa_100!=null?` · <span style="white-space:nowrap">${r1(r.grasa_100)} g/100g</span>`:''}</span></div>`:''}
+      ${r.ing_fibra?`<div style="display:flex;justify-content:space-between;gap:12px;font-size:13px"><span style="color:var(--muted);white-space:nowrap">🌾 Fibra</span><span style="font-weight:600;text-align:right">${r.ing_fibra}${r.fibra_10!=null?` · <span style="white-space:nowrap">${r1(r.fibra_10)} g/10g</span>`:''}</span></div>`:''}
+    </div>`:''}
     ${r.ingredientes?`<div class="dsec">Ingredientes</div><div class="dtext">${formatoLista(r.ingredientes)}</div>`:''}
     ${r.pasos?`<div class="dsec">Preparación</div><div class="dtext">${formatoLista(r.pasos)}</div>`:''}
   `);
