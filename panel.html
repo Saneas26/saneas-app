@@ -339,7 +339,7 @@ function render(){
   el('tituloDia').textContent='Plazas · '+DIAS.find(d=>d[0]===DIA_ACT)[1];
   const PREF=pref(DIA_ACT);
   const porPlaza={}; const sinPlaza=[];
-  delDia.forEach(c=>{ const p=Number(c.plaza); if(p>=1&&p<=NPLAZAS) porPlaza[p]=c; else sinPlaza.push(c); });
+  delDia.forEach(c=>{ const p=Number(c.plaza); if(p>=1&&p<=NPLAZAS&&!porPlaza[p]) porPlaza[p]=c; else sinPlaza.push(c); });
   el('count').textContent=`${delDia.length} clientes hoy · ${Object.keys(porPlaza).length}/${NPLAZAS} plazas`;
   let html='';
   for(let n=1;n<=NPLAZAS;n++){
