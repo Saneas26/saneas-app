@@ -835,6 +835,45 @@ function edadMetabolica(rec){
   const ideal=String(CLIENTE.genero||'').toLowerCase().startsWith('m')?24:19;   // grasa ideal mujer/hombre
   return Math.round(edad*(1+(g-ideal)/100));
 }
+
+// ====== CALORÍAS: TMB (Mifflin-St Jeor) · Gasto diario (GET) · Objetivo por IMC ======
+const ACT_FACT={Sedentario:1.2,Ligero:1.375,Moderado:1.55,Regular:1.725,Intenso:1.9};
+function calcCalorias(){
+  const alt=Number(CLIENTE.altura)||null;
+  const peso=(ULTIMO&&ULTIMO.peso!=null)?Number(ULTIMO.peso):(CLIENTE.peso_inicial!=null?Number(CLIENTE.peso_inicial):null);
+  const ed=edadEn(new Date().toISOString().slice(0,10));
+  if(!alt||!peso||ed==null) return null;
+  const esMujer=String(CLIENTE.genero||'').toLowerCase().startsWith('m');
+  const tmb=10*peso+6.25*alt-5*ed+(esMujer?-161:5);
+  const estilo=CLIENTE.estilo_vida||'Sedentario';
+  const get=tmb*(ACT_FACT[estilo]||1.2);
+  const imc=peso/Math.pow(alt/100,2);
+  let objL,objF; if(imc<21){objL='Ganar peso';objF=1.15;} else if(imc<=23){objL='Mantener';objF=1;} else {objL='Adelgazar';objF=0.8;}
+  return {tmb:Math.round(tmb),get:Math.round(get),objetivo:Math.round(get*objF),objLabel:objL,estilo};
+}
+// Comidas que cuentan como calóricas (En pie y Antes de dormir no cuentan)
+const COMIDAS_CAL=['Desayuno','MediaManana','Almuerzo','Merienda','Cena'];
+// Reparto de kcal (%) según cuántas comidas calóricas tenga el día
+function repartoComidas(presentes){
+  const has=k=>presentes.includes(k), n=presentes.length; let map={};
+  if(has('Desayuno')&&n===5){ map={Desayuno:15,MediaManana:15,Almuerzo:30,Merienda:10,Cena:30}; }
+  else if(!has('Desayuno')&&n===4){ map={MediaManana:20,Almuerzo:30,Merienda:20,Cena:30}; }
+  else { let base=0; presentes.forEach(k=>{ if(k==='Almuerzo'||k==='Cena'){map[k]=30;base+=30;} });
+    const resto=presentes.filter(k=>k!=='Almuerzo'&&k!=='Cena'); const each=resto.length?(100-base)/resto.length:0;
+    resto.forEach(k=>map[k]=each); }
+  return map;
+}
+// Gramos de macros desde kcal (45% proteína / 35% hidratos / 20% grasa)
+function macrosDe(kcal){ return {prot:Math.round(kcal*0.45/4), hc:Math.round(kcal*0.35/4), grasa:Math.round(kcal*0.20/9)}; }
+// Comidas calóricas presentes (con texto) en una lista de tomas
+function comidasCalDe(tomas){ return tomas.filter(t=>COMIDAS_CAL.includes(t.toma)&&String(t.texto||'').trim()).map(t=>t.toma); }
+// Línea de kcal + macros para una toma concreta
+function lineaKcal(toma,pctMap,objetivo){
+  if(!objetivo||!(toma in pctMap)) return '';
+  const kcal=Math.round(objetivo*pctMap[toma]/100), m=macrosDe(kcal);
+  return `<div style="margin-top:6px;font-size:12.5px;font-weight:700;color:var(--teal);background:var(--light);padding:5px 10px;border-radius:10px;display:inline-block">🔥 ${kcal} kcal · P ${m.prot}g · HC ${m.hc}g · G ${m.grasa}g</div>`;
+}
+
 async function verHistorial(){
   const {data}=await sb.from('registros').select('*').eq('cliente_id',CLIENTE.id).order('semana',{ascending:false,nullsFirst:false}).order('fecha',{ascending:false});
   if(!data||!data.length){abrirDetalle('Tu evolución','<div class="empty">Aún no tienes registros.</div>');return;}
@@ -898,6 +937,8 @@ function renderInicio(){
   const pesoHoy=ULTIMO?ULTIMO.peso:null, grasaHoy=ULTIMO?ULTIMO.grasa_corporal:null;
   const imcIni=imc(pesoIni), imcHoy=imc(pesoHoy);
   const OBJ=calcObjetivos();
+  const CAL=calcCalorias();
+  const MAC=CAL?macrosDe(CAL.objetivo):null;
   const hito=OBJ?hitoPeso(pesoHoy,OBJ):null;
   const metaPeso=hito?hito.meta:CLIENTE.peso_objetivo;
   const metaGrasa=OBJ?OBJ.grasaObj:CLIENTE.grasa_objetivo;
@@ -962,6 +1003,16 @@ function renderInicio(){
         <button class="verobj" onclick="abrirCompartir()">📤 Compartir</button>
       </div>
     </div>
+
+    ${CAL?`<h2 class="sec">🔥 Tus calorías</h2>
+    <div class="card">
+      <div style="display:flex;gap:10px;text-align:center">
+        <div style="flex:1"><div class="lbl">Basal</div><div style="font-size:19px;font-weight:800">${CAL.tmb}</div><div style="font-size:11px;color:var(--muted)">kcal</div></div>
+        <div style="flex:1"><div class="lbl">Gasto día</div><div style="font-size:19px;font-weight:800">${CAL.get}</div><div style="font-size:11px;color:var(--muted)">kcal</div></div>
+        <div style="flex:1"><div class="lbl">Objetivo</div><div style="font-size:19px;font-weight:800;color:var(--teal)">${CAL.objetivo}</div><div style="font-size:11px;color:var(--muted)">${CAL.objLabel}</div></div>
+      </div>
+      <div style="margin-top:12px;font-size:13px;color:var(--muted);text-align:center">Reparto diario · <b style="color:var(--text)">P ${MAC.prot}g</b> · <b style="color:var(--text)">HC ${MAC.hc}g</b> · <b style="color:var(--text)">G ${MAC.grasa}g</b></div>
+    </div>`:''}
 
     ${esPlanPC()?`<div style="padding:6px 4px" onclick="abrirInvitar()">
       <div style="background:linear-gradient(135deg,#a7f3d0 0%,#e6fffa 100%);padding:20px 18px;border-radius:28px;box-shadow:0 12px 24px rgba(20,184,166,0.12);display:flex;align-items:center;gap:14px;cursor:pointer">
@@ -1136,8 +1187,9 @@ function pizarra(k,el){
   let html='';
   if(k==='dieta'){
     if(TOMAS_HOY.length===0) html='<div class="empty">No hay dieta asignada para hoy.</div>';
-    else html=TOMAS_HOY.map(t=>{const i=TOMA_INFO[t.toma]||['🍴',t.toma];
-      return `<div class="meal"><div class="t">${i[0]} ${i[1]}</div><div class="d">${listar(t.texto)}</div></div>`;}).join('');
+    else { const CAL=calcCalorias(), pctMap=repartoComidas(comidasCalDe(TOMAS_HOY));
+      html=TOMAS_HOY.map(t=>{const i=TOMA_INFO[t.toma]||['🍴',t.toma];
+      return `<div class="meal"><div class="t">${i[0]} ${i[1]}</div><div class="d">${listar(t.texto)}</div>${CAL?lineaKcal(t.toma,pctMap,CAL.objetivo):''}</div>`;}).join(''); }
   }else{
     html=`<p style="font-size:13px;color:var(--muted)">Tu próxima dieta y su lista de la compra aparecerán aquí cuando la tengas asignada.</p>`;
   }
@@ -1170,9 +1222,12 @@ async function renderDieta(){
   DIA_SEL=DIA_SEL||DIA_MAP[new Date().getDay()];
   const dias=[['1_Dia1','Lun'],['2_Dia2','Mar'],['3_Dia3','Mié'],['4_Dia4','Jue'],['5_Dia5','Vie'],['6_Dia6','Sáb'],['7_Domingo','Dom']];
   const tomas=await tomasDe(DIETA.id,DIA_SEL);
+  const CAL=calcCalorias();
+  const pctMap=repartoComidas(comidasCalDe(tomas));
   cont.innerHTML=`
     <p style="font-size:20px;font-weight:700;margin:4px 6px 2px">Tu dieta</p>
     <p style="font-size:13px;color:var(--muted);margin:0 6px 10px">${fmt(DIETA.nombre_plan)}</p>
+    ${CAL?`<div class="card" style="text-align:center;padding:12px"><div style="font-size:13px;color:var(--muted)">Objetivo del día (${CAL.objLabel})</div><div style="font-size:22px;font-weight:800;color:var(--teal)">${CAL.objetivo} kcal</div><div style="font-size:12px;color:var(--muted);margin-top:2px">P ${macrosDe(CAL.objetivo).prot}g · HC ${macrosDe(CAL.objetivo).hc}g · G ${macrosDe(CAL.objetivo).grasa}g</div></div>`:''}
     <div class="daysel">${dias.map(d=>`<button class="${d[0]===DIA_SEL?'active':''}" onclick="selDia('${d[0]}')">${d[1]}</button>`).join('')}</div>
     ${tomas.length===0?'<div class="empty">Sin comidas para este día.</div>':tomas.map(t=>{
       const i=TOMA_INFO[t.toma]||['🍴',t.toma];
@@ -1180,7 +1235,7 @@ async function renderDieta(){
       const recs=(t.toma_recetas||[]).map(x=>x.recetas).filter(Boolean);
       prods.forEach(p=>PRODUCTOS_CACHE[p.id]=p); recs.forEach(r=>RECETAS_CACHE[r.id]=r);
       return `<div class="card"><div class="plato">
-        <h4>${i[0]} ${i[1]}</h4><p>${listar(t.texto)}</p>
+        <h4>${i[0]} ${i[1]}</h4><p>${listar(t.texto)}</p>${CAL?lineaKcal(t.toma,pctMap,CAL.objetivo):''}
         ${prods.length?`<div class="relh">🛒 Artículos de tienda</div><div class="chips">${prods.map(p=>`<span class="chip shop link" onclick="verProducto('${p.id}')">🛒 ${p.nombre} ›</span>`).join('')}</div>`:''}
         ${recs.length?`<div class="relh">👩‍🍳 Recetas relacionadas</div><div class="chips">${recs.map(r=>`<span class="chip rec link" onclick="verReceta('${r.id}')">👩‍🍳 ${r.nombre} ›</span>`).join('')}</div>`:''}
       </div></div>`;}).join('')}`;
