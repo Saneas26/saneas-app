@@ -1056,30 +1056,54 @@ async function dibujarPost(conBadge){
   ctx.beginPath(); ctx.arc(120,1250,240,0,7); ctx.fill();
   ctx.textAlign='center';
   ctx.fillStyle='#fff'; ctx.font='800 66px Montserrat, sans-serif'; ctx.fillText('Saneas', W/2, 135);
-  ctx.fillStyle='rgba(255,255,255,.9)'; ctx.font='600 30px Nunito, sans-serif'; ctx.fillText('nutrición para todos los bolsillos', W/2, 182);
-  const pesoIni=(PRIMERO&&PRIMERO.peso!=null)?PRIMERO.peso:CLIENTE.peso_inicial;
-  const pesoHoy=ULTIMO?ULTIMO.peso:null;
-  const perdido=(pesoIni!=null&&pesoHoy!=null)?(pesoIni-pesoHoy):null;
+  ctx.fillStyle='rgba(255,255,255,.9)'; ctx.font='600 34px Nunito, sans-serif'; ctx.fillText('nutrición para todos los bolsillos', W/2, 184);
+  // ── Las 4 mayores evoluciones favorables del cliente ──────────────
+  // Cada métrica sabe en qué dirección "mejora"; elegimos las de mayor cambio real.
+  const POOL=[
+    {f:'peso',                down:true,  unit:'kg',  mm:'menos', noun:'de peso',             chip:'peso',        cu:' kg'},
+    {f:'grasa_corporal',      down:true,  unit:'%',   mm:'menos', noun:'de grasa corporal',   chip:'grasa',       cu:'%'},
+    {f:'grasa_visceral',      down:true,  unit:'pts', mm:'menos', noun:'de grasa visceral',   chip:'g. visceral', cu:''},
+    {f:'grasa_subcutanea',    down:true,  unit:'%',   mm:'menos', noun:'de grasa subcutánea', chip:'g. subcut.',  cu:'%'},
+    {f:'agua',                down:false, unit:'%',   mm:'más',   noun:'de hidratación',      chip:'agua',        cu:'%'},
+    {f:'proteina',            down:false, unit:'%',   mm:'más',   noun:'de proteína',         chip:'proteína',    cu:'%'},
+    {f:'masa_muscular',       down:false, unit:'kg',  mm:'más',   noun:'de músculo',          chip:'músculo',     cu:' kg'},
+    {f:'musculo_esqueletico', down:false, unit:'%',   mm:'más',   noun:'de músculo esq.',     chip:'músc. esq.',  cu:'%'},
+    {f:'edad_metabolica',     down:true,  unit:'años',mm:'menos', noun:'de edad metabólica',  chip:'edad metab.', cu:' años'},
+  ];
+  const wins=[];
+  for(const p of POOL){
+    const ini=(PRIMERO&&PRIMERO[p.f]!=null)?Number(PRIMERO[p.f]):null;
+    const hoy=(ULTIMO&&ULTIMO[p.f]!=null)?Number(ULTIMO[p.f]):null;
+    if(ini==null||hoy==null||isNaN(ini)||isNaN(hoy)) continue;
+    const d=p.down?(ini-hoy):(hoy-ini);
+    if(d>0.05) wins.push(Object.assign({},p,{d:d,sign:p.down?'−':'+'}));
+  }
+  wins.sort((a,b)=>b.d-a.d);
+  const top=wins.slice(0,4);
   const semanas=CLIENTE.semana||null;
-  ctx.fillStyle='#e6fffa'; ctx.font='700 38px Nunito, sans-serif'; ctx.fillText('MI EVOLUCIÓN', W/2, 300);
-  if(perdido!=null && perdido>0){
-    ctx.fillStyle='#a7f3d0'; ctx.font='900 210px Montserrat, sans-serif'; ctx.fillText('−'+r1(perdido).toString().replace('.',','), W/2, 520);
-    ctx.fillStyle='#fff'; ctx.font='800 74px Montserrat, sans-serif'; ctx.fillText('kg menos', W/2, 615);
-    if(semanas){ ctx.fillStyle='rgba(255,255,255,.9)'; ctx.font='600 40px Nunito, sans-serif'; ctx.fillText('en '+semanas+' semanas', W/2, 685); }
+  ctx.fillStyle='#e6fffa'; ctx.font='700 40px Nunito, sans-serif'; ctx.fillText('MI EVOLUCIÓN', W/2, 292);
+  if(top.length){
+    const h=top[0];
+    ctx.fillStyle='#a7f3d0'; ctx.font='900 200px Montserrat, sans-serif';
+    ctx.fillText(h.sign+r1(h.d).toString().replace('.',','), W/2, 500);
+    ctx.fillStyle='#fff'; ctx.font='800 60px Montserrat, sans-serif';
+    ctx.fillText(h.unit+' '+h.mm, W/2, 572);
+    ctx.fillStyle='rgba(255,255,255,.92)'; ctx.font='600 40px Nunito, sans-serif';
+    ctx.fillText(h.noun+(semanas?(' · '+semanas+' sem'):''), W/2, 632);
+    ctx.font='700 38px Nunito, sans-serif'; let cy=770;
+    top.slice(1).forEach(t=>{
+      const txt=t.sign+r1(t.d).toString().replace('.',',')+t.cu+' '+t.chip;
+      const w=ctx.measureText(txt).width+72;
+      ctx.fillStyle='rgba(255,255,255,.15)'; _rr(ctx,W/2-w/2,cy-52,w,74,37); ctx.fill();
+      ctx.fillStyle='#fff'; ctx.fillText(txt,W/2,cy);
+      cy+=98;
+    });
   } else {
     ctx.fillStyle='#a7f3d0'; ctx.font='900 120px Montserrat, sans-serif'; ctx.fillText('¡En marcha!', W/2, 500);
     ctx.fillStyle='rgba(255,255,255,.9)'; ctx.font='600 40px Nunito, sans-serif'; ctx.fillText('Mi cambio con Saneas', W/2, 590);
   }
-  const grasaIni=(PRIMERO&&PRIMERO.grasa_corporal!=null)?PRIMERO.grasa_corporal:CLIENTE.grasa_inicial;
-  const grasaHoy=ULTIMO?ULTIMO.grasa_corporal:null;
-  const muscIni=PRIMERO?PRIMERO.masa_muscular:null, muscHoy=ULTIMO?ULTIMO.masa_muscular:null;
-  const chips=[];
-  if(grasaIni!=null&&grasaHoy!=null&&(grasaIni-grasaHoy)>0) chips.push('−'+r1(grasaIni-grasaHoy)+'% grasa');
-  if(muscIni!=null&&muscHoy!=null&&(muscHoy-muscIni)>0) chips.push('+'+r1(muscHoy-muscIni)+' kg músculo');
-  ctx.font='700 34px Nunito, sans-serif'; let cy=800;
-  chips.slice(0,2).forEach(t=>{ const w=ctx.measureText(t).width+64; ctx.fillStyle='rgba(255,255,255,.15)'; _rr(ctx,W/2-w/2,cy-48,w,66,33); ctx.fill(); ctx.fillStyle='#fff'; ctx.fillText(t,W/2,cy-4); cy+=86; });
   ctx.fillStyle='#fff'; ctx.font='800 48px Montserrat, sans-serif';
-  _wrap(ctx, (perdido>0?'Paso a paso, lo estoy logrando 💚':'Hoy empiezo mi cambio 💚'), W/2, 1090, 920, 60);
+  _wrap(ctx, (top.length?'Paso a paso, lo estoy logrando con Saneas 💚':'Hoy empiezo mi cambio con Saneas 💚'), W/2, 1085, 950, 60);
   const nombre=(CLIENTE.nombre||'').trim();
   const completo=(nombre+' '+((CLIENTE.apellido||'').trim())).trim();
   ctx.fillStyle='#e6fffa'; ctx.font='900 54px Montserrat, sans-serif'; ctx.fillText(completo, W/2, 1250);
