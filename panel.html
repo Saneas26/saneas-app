@@ -244,12 +244,19 @@
 <div id="renovar">
   <div class="box">
     <h3>Renovar suscripción</h3>
-    <div class="sub">Busca al cliente, indica cuántos meses y confirma. Se sumarán a su fecha de renovación.</div>
+    <div class="sub">Busca al cliente, elige el bono que ha pagado y confirma. Se actualiza su plan y su fecha de renovación.</div>
     <label>Cliente</label>
     <input id="rn_buscar" placeholder="Nombre y apellido…" oninput="buscarRenovar()">
     <div class="list" id="rn_list"></div>
-    <label>Meses a renovar</label>
-    <select id="rn_meses"><option>1</option><option>2</option><option>3</option><option>6</option><option>12</option></select>
+    <label>Bono / plan pagado</label>
+    <select id="rn_bono">
+      <option value="basico">Básico · 1 mes</option>
+      <option value="completo_mensual" selected>Completo · 1 mes</option>
+      <option value="completo_trimestral">Completo · 3 meses</option>
+      <option value="completo_semestral">Completo · 6 meses</option>
+      <option value="completo_anual">Completo · 12 meses</option>
+      <option value="premium">Premium · 1 mes</option>
+    </select>
     <div id="renovMsg"></div>
     <div class="foot">
       <button class="btn-cerrar" onclick="cerrarRenovar()">Cancelar</button>
@@ -598,7 +605,7 @@ function cerrarInforme(){el('informe').classList.remove('show');}
 // ---------- Renovar ----------
 let RENOV_SEL=null;
 function abrirRenovar(){
-  RENOV_SEL=null; el('rn_buscar').value=''; el('rn_meses').value='1';
+  RENOV_SEL=null; el('rn_buscar').value=''; el('rn_bono').value='completo_mensual';
   const m=el('renovMsg'); m.textContent='';m.className='';
   el('renovar').classList.add('show'); pintarRenovList(''); el('rn_buscar').focus();
 }
@@ -617,12 +624,12 @@ function selRenovar(id,nombre){RENOV_SEL={id,nombre};el('rn_buscar').value=nombr
 async function confirmarRenovar(){
   const m=el('renovMsg');
   if(!RENOV_SEL){m.className='err';m.textContent='Elige primero un cliente de la lista.';return;}
-  const meses=parseInt(el('rn_meses').value,10);
+  const bono=el('rn_bono').value;
   const btn=el('btnRenovar');btn.disabled=true;btn.textContent='Renovando...';
-  const {status,data}=await api('renovar',{cliente_id:RENOV_SEL.id,meses});
+  const {status,data}=await api('renovar',{cliente_id:RENOV_SEL.id,bono});
   btn.disabled=false;btn.textContent='Confirmar renovación';
   if(status!==200){m.className='err';m.textContent=data.error||'Error';return;}
-  m.className='ok';m.textContent=`✅ ${RENOV_SEL.nombre}: +${data.meses} mes(es). Nueva renovación: ${data.fecha_renovacion}`;
+  m.className='ok';m.textContent=`✅ ${RENOV_SEL.nombre}: ${data.plan||''} · +${data.meses} mes(es). Nueva renovación: ${data.fecha_renovacion}`;
   toast('Renovación aplicada'); await cargar();
 }
 </script>
