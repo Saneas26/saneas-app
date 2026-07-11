@@ -721,7 +721,7 @@ async function cargarDieta(){
 }
 async function tomasDe(dietaId,dia){
   const {data,error}=await sb.from('dieta_tomas')
-    .select('*, toma_productos(productos(id,nombre,descripcion,precio,formato_venta,imagen_url,url_compra)), toma_recetas(recetas(id,nombre,descripcion,ingredientes,pasos,tiempo_min,imagen_url))')
+    .select('*, toma_productos(productos(id,nombre,descripcion,precio,formato_venta,imagen_url,url_compra,disponible)), toma_recetas(recetas(id,nombre,descripcion,ingredientes,pasos,tiempo_min,imagen_url))')
     .eq('dieta_id',dietaId).eq('dia_semana',dia).order('orden');
   if(error){console.error(error);return[];}
   return data||[];
@@ -1237,7 +1237,7 @@ async function renderDieta(){
     <div class="daysel">${dias.map(d=>`<button class="${d[0]===DIA_SEL?'active':''}" onclick="selDia('${d[0]}')">${d[1]}</button>`).join('')}</div>
     ${tomas.length===0?'<div class="empty">Sin comidas para este día.</div>':tomas.map(t=>{
       const i=TOMA_INFO[t.toma]||['🍴',t.toma];
-      const prods=(t.toma_productos||[]).map(x=>x.productos).filter(Boolean);
+      const prods=(t.toma_productos||[]).map(x=>x.productos).filter(p=>p&&p.disponible!==false);
       const recs=(t.toma_recetas||[]).map(x=>x.recetas).filter(Boolean);
       prods.forEach(p=>PRODUCTOS_CACHE[p.id]=p); recs.forEach(r=>RECETAS_CACHE[r.id]=r);
       return `<div class="card"><div class="plato">
@@ -1596,7 +1596,9 @@ const PALL={productos:null,recetas:null};
 const sinTilde = s => String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
 async function fetchAll(table,cols){
   let all=[],from=0,sz=1000;
-  for(;;){ const {data,error}=await sb.from(table).select(cols).order('nombre').range(from,from+sz-1);
+  for(;;){ let query=sb.from(table).select(cols).order('nombre').range(from,from+sz-1);
+    if(table==='productos') query=query.eq('disponible',true);   // ocultar los quitados de CAT_Tienda
+    const {data,error}=await query;
     if(error){console.error(error);break;} all=all.concat(data||[]);
     if(!data||data.length<sz) break; from+=sz; }
   return all;
