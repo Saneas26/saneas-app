@@ -312,8 +312,12 @@
         <button onclick="masTab('pagos',this)">💳 Pagos</button>
       </div>
       <div id="m-tienda">
+        <select class="search" id="q_super" onchange="buscarTienda()" style="margin-bottom:8px">
+          <option value="">🏪 Todos los supermercados</option>
+          <option>Mercadona</option><option>Lidl</option><option>Carrefour</option><option>Aldi</option><option>Dia</option><option>Hiperdino</option><option>Ahorramas</option><option>Decathlon</option><option>Amazon</option>
+        </select>
         <input class="search" id="q_tienda" oninput="buscarTienda()" placeholder="🔎 Buscar producto...">
-        <div id="tienda-list"><div class="empty">Escribe arriba para buscar en tu tienda.</div></div>
+        <div id="tienda-list"><div class="empty">Elige un supermercado o escribe para buscar.</div></div>
       </div>
       <div id="m-recetas" class="hidden">
         <input class="search" id="q_recetas" oninput="buscarRecetas()" placeholder="🔎 Buscar receta...">
@@ -1268,6 +1272,8 @@ async function verProducto(id){
   OFERTAS_DET.sort((a,b)=>{const am=(a.supermercado||'').toLowerCase()==='mercadona',bm=(b.supermercado||'').toLowerCase()==='mercadona';
     if(am!==bm)return am?-1:1; return String(a.supermercado||'').localeCompare(String(b.supermercado||''),'es');});
   OFERTA_SEL=0;   // el primero ya es Mercadona si existe
+  const supF=(document.getElementById('q_super')||{}).value||'';   // si hay filtro de súper, abrir en ese
+  if(supF){ const ns=sinTilde(supF.toLowerCase()); const i=OFERTAS_DET.findIndex(o=>sinTilde((o.supermercado||'').toLowerCase())===ns); if(i>=0)OFERTA_SEL=i; }
   abrirDetalle(p.nombre, renderProductoDet());
 }
 function renderProductoDet(){
@@ -1610,11 +1616,11 @@ function masTab(k,el){
   else if(k==='pagos') renderPagos('m-pagos');
 }
 // Catálogos completos cacheados en memoria (búsqueda instantánea e insensible a tildes)
-const PALL={productos:null,recetas:null};
+const PALL={productos:null,recetas:null,ofertas:null};
 const sinTilde = s => String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
-async function fetchAll(table,cols){
+async function fetchAll(table,cols,orderCol){
   let all=[],from=0,sz=1000;
-  for(;;){ let query=sb.from(table).select(cols).order('nombre').range(from,from+sz-1);
+  for(;;){ let query=sb.from(table).select(cols).order(orderCol||'nombre').range(from,from+sz-1);
     if(table==='productos') query=query.eq('disponible',true);   // ocultar los quitados de CAT_Tienda
     const {data,error}=await query;
     if(error){console.error(error);break;} all=all.concat(data||[]);
@@ -1639,14 +1645,28 @@ function acordeon(items,fn,icon){
 async function abrirTienda(){
   const cont=document.getElementById('tienda-list');
   if(!PALL.productos){cont.innerHTML='<div class="spinner"></div>';PALL.productos=await fetchAll('productos','id,nombre,categoria,supermercado,precio,imagen_url');}
+  if(!PALL.ofertas){PALL.ofertas=await fetchAll('ofertas','alimento_id,supermercado,precio,imagen_url','alimento_id');}
   buscarTienda();
+}
+// Items de la tienda según el supermercado elegido (Todos = precio base del alimento)
+function tiendaItems(){
+  const sup=(document.getElementById('q_super')||{}).value||'';
+  if(!sup) return PALL.productos||[];
+  const ns=sinTilde(sup.toLowerCase());
+  const byAlim={}; (PALL.productos||[]).forEach(p=>byAlim[p.id]=p);
+  const seen={}, out=[];
+  (PALL.ofertas||[]).forEach(o=>{ if(sinTilde((o.supermercado||'').toLowerCase())!==ns) return;
+    const p=byAlim[o.alimento_id]; if(!p||seen[p.id]) return; seen[p.id]=1;
+    out.push({id:p.id,nombre:p.nombre,categoria:p.categoria,supermercado:o.supermercado,precio:o.precio,imagen_url:o.imagen_url||p.imagen_url}); });
+  return out;
 }
 function buscarTienda(){
   const q=sinTilde(document.getElementById('q_tienda').value.trim());
   const cont=document.getElementById('tienda-list');
   if(!PALL.productos){return;}
-  if(!q){cont.innerHTML=acordeon(PALL.productos,'verProducto','🛒');return;}
-  const res=PALL.productos.filter(x=>sinTilde(x.nombre).includes(q)||sinTilde(x.categoria).includes(q)).slice(0,100);
+  const items=tiendaItems();
+  if(!q){cont.innerHTML=items.length?acordeon(items,'verProducto','🛒'):'<div class="empty">No hay productos de ese supermercado todavía.</div>';return;}
+  const res=items.filter(x=>sinTilde(x.nombre).includes(q)||sinTilde(x.categoria).includes(q)).slice(0,100);
   cont.innerHTML=res.length?res.map(x=>filaCat(x,'verProducto','🛒')).join(''):'<div class="empty">Sin resultados.</div>';
 }
 async function abrirRecetas(){
