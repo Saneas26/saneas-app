@@ -430,7 +430,10 @@ const PARAMS=[
   {k:'per_brazo',l:'Brazo',u:' cm',down:null},
   {k:'per_muslo',l:'Muslo',u:' cm',down:null},
 ];
-function val(cli,rec,k){ if(!rec)return null; if(k==='__edadmet')return edadMet(cli,rec); const v=rec[k]; return v==null?null:Number(v); }
+function val(cli,rec,k){ if(!rec)return null; if(k==='__edadmet')return edadMet(cli,rec);
+  let v=rec[k];
+  if(k==='imc' && v==null && rec.peso!=null && Number(cli.altura)>0){ v=Math.round((Number(rec.peso)/Math.pow(Number(cli.altura)/100,2))*10)/10; }
+  return v==null?null:Number(v); }
 function deltaCell(d,down){
   if(d==null) return '<span class="delta n">—</span>';
   const s=d>0?'+':''; const cls=down==null?'n':((down&&d<0)||(!down&&d>0))?'g':(d===0?'n':'b');
