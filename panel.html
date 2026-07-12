@@ -395,8 +395,16 @@ function calcObjetivos(cli){
   const POb=(29.9*a2)/10000, PO1=(24.9*a2)/10000;
   const PO2=alt-100-((alt-150)/(esMujer?2.5:4));
   const promedio=(PO1+PO2)/2, grasaObj=esMujer?24:19;
+  // Canon de belleza: cintura ideal (altura×factor) y cadera(mujer)/hombros(hombre) ideal = cintura ideal ÷ índice
+  const ed=edad(cli.fecha_nacimiento), hombre=!esMujer;
+  let cinturaObj=alt*0.5, canonObj=null;
+  if(ed!=null){
+    const f1=hombre?(ed<30?0.42:(ed<40?0.45:0.49)):(ed<30?0.38:(ed<40?0.40:0.42));
+    const idx=hombre?(ed<20?0.62:(ed<30?0.68:0.72)):(ed<20?0.62:(ed<30?0.68:0.74));
+    cinturaObj=alt*f1; canonObj=cinturaObj/idx;
+  }
   return {alt,esMujer,POb,PO1,PO2,promedio,grasaObj,imcObj:22,
-    aguaMin:52,muscEsqObj:esMujer?48:52,cinturaObj:alt*0.5};
+    aguaMin:52,muscEsqObj:esMujer?48:52,cinturaObj,canonObj};
 }
 function edad(fechaNac,ref){
   if(!fechaNac) return null;
@@ -426,7 +434,7 @@ const PARAMS=[
   {k:'__edadmet',l:'Edad metabólica',u:' años',down:true},
   {k:'per_cintura',l:'Cintura',u:' cm',down:true},
   {k:'per_cadera',l:'Cadera',u:' cm',down:null},
-  {k:'per_hombros',l:'Hombros',u:' cm',down:null},
+  {k:'per_hombro',l:'Hombros',u:' cm',down:null},
   {k:'per_pecho',l:'Pecho',u:' cm',down:null},
   {k:'per_brazo',l:'Brazo',u:' cm',down:null},
   {k:'per_muslo',l:'Muslo',u:' cm',down:null},
@@ -549,16 +557,14 @@ function pintarFicha(cli,regs){
   let objRows='';
   if(o){
     const imcA=val(cli,act,'imc'), grA=val(cli,act,'grasa_corporal');
-    const cinA=val(cli,act,'per_cintura'), cadA=val(cli,act,'per_cadera'), homA=val(cli,act,'per_hombros');
+    const cinA=val(cli,act,'per_cintura'), cadA=val(cli,act,'per_cadera'), homA=val(cli,act,'per_hombro');
     objRows+=objRow('IMC',imcA,o.imcObj,true,'');
     objRows+=objRow('Grasa corporal',grA,o.grasaObj,true,' %');
-    objRows+=objRow('Cintura',cinA,r1(o.cinturaObj),true,' cm');
+    objRows+=`<tr><td class="p">Cintura <span class="mini">(canon)</span></td><td>${cinA!=null?r1(cinA)+' cm':'—'}</td><td><b>${o.cinturaObj!=null?r1(o.cinturaObj)+' cm':'—'}</b></td><td class="mini">ideal</td></tr>`;
     if(o.esMujer){
-      const icc=(cinA!=null&&cadA!=null)?cinA/cadA:null;
-      objRows+=`<tr><td class="p">Cadera</td><td>${cadA!=null?r1(cadA)+' cm':'—'}</td><td class="mini">referencia</td><td>${iccCell(icc,0.85)}</td></tr>`;
+      objRows+=`<tr><td class="p">Cadera <span class="mini">(canon)</span></td><td>${cadA!=null?r1(cadA)+' cm':'—'}</td><td><b>${o.canonObj!=null?r1(o.canonObj)+' cm':'—'}</b></td><td class="mini">ideal</td></tr>`;
     }else{
-      const ihc=(homA!=null&&cinA!=null)?homA/cinA:null;
-      objRows+=`<tr><td class="p">Hombros</td><td>${homA!=null?r1(homA)+' cm':'—'}</td><td class="mini">↑ mejor</td><td>${ihcCell(ihc,1.4)}</td></tr>`;
+      objRows+=`<tr><td class="p">Hombros <span class="mini">(canon)</span></td><td>${homA!=null?r1(homA)+' cm':'—'}</td><td><b>${o.canonObj!=null?r1(o.canonObj)+' cm':'—'}</b></td><td class="mini">ideal</td></tr>`;
     }
   }
 

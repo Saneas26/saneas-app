@@ -311,6 +311,7 @@
         </div>
       </div>
       <div id="r-per" class="card hidden">
+        <div id="canonCard"></div>
         <div class="grid2">
           <div class="field"><label>Cintura (cm)</label><input id="f_per_cintura" type="number" step="0.1"></div>
           <div class="field" id="perCadera"><label>Cadera (cm)</label><input id="f_per_cadera" type="number" step="0.1"></div>
@@ -1421,6 +1422,33 @@ function ajustarPerimetros(){
   const cad=document.getElementById('perCadera'), hom=document.getElementById('perHombros');
   if(cad) cad.style.display = mujer ? '' : 'none';
   if(hom) hom.style.display = mujer ? 'none' : '';
+  renderCanon();
+}
+// Canon de belleza: cintura ideal (altura × factor1) e índice cintura/(cadera|hombro).
+// cadera ideal (mujer) u hombros ideales (hombre) = cintura ideal ÷ índice.
+function canonBelleza(){
+  const alt=Number(CLIENTE&&CLIENTE.altura)||null;
+  const ed=edadEn(new Date().toISOString().slice(0,10));
+  if(!alt||ed==null) return null;
+  const hombre=String(CLIENTE.genero||'').toLowerCase().startsWith('h');
+  const f1 = hombre ? (ed<30?0.42:(ed<40?0.45:0.49)) : (ed<30?0.38:(ed<40?0.40:0.42));
+  const idx = hombre ? (ed<20?0.62:(ed<30?0.68:0.72)) : (ed<20?0.62:(ed<30?0.68:0.74));
+  const cinturaIdeal = alt*f1;
+  return { hombre, cinturaIdeal, idx, objetivoIdeal: cinturaIdeal/idx, objLabel: hombre?'Hombros':'Cadera' };
+}
+function renderCanon(){
+  const el=document.getElementById('canonCard'); if(!el) return;
+  const c=canonBelleza(); if(!c){ el.innerHTML=''; return; }
+  const ri=v=>Math.round(v);
+  const medC=(ULTIMO&&ULTIMO.per_cintura!=null)?Number(ULTIMO.per_cintura):null;
+  const medO=(ULTIMO&&(c.hombre?ULTIMO.per_hombro:ULTIMO.per_cadera)!=null)?Number(c.hombre?ULTIMO.per_hombro:ULTIMO.per_cadera):null;
+  el.innerHTML=`<div style="background:#eaf6f9;border-radius:14px;padding:12px;margin-bottom:14px;text-align:center">
+    <div style="font-size:16px;font-weight:800;color:var(--dark);margin-bottom:8px">🎯 Tu canon de belleza</div>
+    <div style="display:flex;gap:10px">
+      <div style="flex:1"><div style="font-size:14px;color:var(--muted);font-weight:700">Cintura ideal</div><div style="font-size:22px;font-weight:800;color:var(--teal)">${ri(c.cinturaIdeal)} cm</div>${medC!=null?`<div style="font-size:14px;color:var(--muted);font-weight:600">la tuya: ${r1(medC)}</div>`:''}</div>
+      <div style="flex:1"><div style="font-size:14px;color:var(--muted);font-weight:700">${c.objLabel} ideal</div><div style="font-size:22px;font-weight:800;color:var(--teal)">${ri(c.objetivoIdeal)} cm</div>${medO!=null?`<div style="font-size:14px;color:var(--muted);font-weight:600">la tuya: ${r1(medO)}</div>`:''}</div>
+    </div>
+  </div>`;
 }
 function regTab(k,el){['imp','pli','per'].forEach(x=>document.getElementById('r-'+x).classList.add('hidden'));
   document.getElementById('r-'+k).classList.remove('hidden');
