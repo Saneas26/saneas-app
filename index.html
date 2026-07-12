@@ -71,6 +71,14 @@
   .meal .t{font-size:16px;font-weight:700;color:var(--teal);min-width:94px;line-height:1.2;word-break:normal;overflow-wrap:normal}
   .meal .d{font-size:14px;line-height:1.4;font-weight:600;color:var(--dark)}
   .shop li{font-size:14px;padding:5px 0;list-style:none;display:flex;justify-content:space-between;border-bottom:1px dashed #dbe6e9}
+  .lc-cat{font-size:14px;font-weight:800;color:var(--teal);text-transform:uppercase;letter-spacing:.3px;margin:16px 2px 4px}
+  .lc-item{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 0;border-bottom:1px dashed #dbe6e9}
+  .lc-name{font-size:15px;font-weight:700;color:var(--dark);line-height:1.3}
+  .lc-item.done .lc-name{text-decoration:line-through;color:var(--muted)}
+  .lc-sup{font-size:14px;font-weight:600;color:var(--muted);margin-top:1px}
+  .lc-chk{flex:none;width:38px;height:38px;border-radius:50%;font-family:inherit;font-size:18px;font-weight:900;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1}
+  .lc-chk.on{background:#2f9e5f;color:#fff;border:none}
+  .lc-chk.off{background:#fdecea;color:#d05a4a;border:2px solid #ef9e92}
   .evo .lbl{font-size:16px;color:var(--dark);font-weight:800;margin-bottom:2px}
   .evo .stat{display:flex;justify-content:space-around;margin-top:6px}
   .evo .stat div{display:flex;flex-direction:column;text-align:center}
@@ -1375,24 +1383,6 @@ function volverDieta(){
   document.querySelectorAll('.screen').forEach(s=>s.classList.add('hidden'));
   document.getElementById('s-dieta').classList.remove('hidden');
 }
-async function listaCompraDe(dietaId){
-  const {data}=await sb.from('dieta_tomas').select('toma_productos(productos(id,nombre,disponible))').eq('dieta_id',dietaId);
-  const map={};
-  (data||[]).forEach(t=>(t.toma_productos||[]).forEach(x=>{ const p=x&&x.productos; if(p&&p.disponible!==false) map[p.id]=p; }));
-  return Object.values(map).sort((a,b)=>String(a.nombre).localeCompare(String(b.nombre),'es'));
-}
-function _seccionCompra(label, d, items){
-  const url=d&&d.lista_compra_url;
-  const lista = items.length
-    ? `<ul class="shop" style="list-style:none;padding:0;margin:0">${items.map(p=>`<li>🛒 ${p.nombre}</li>`).join('')}</ul>`
-    : `<p style="font-size:14px;color:var(--muted)">Sin artículos en esta dieta.</p>`;
-  const btn = url
-    ? `<a class="btn" style="display:block;text-align:center;text-decoration:none;margin-top:14px" href="${url}" target="_blank" rel="noopener">⬇️ Descargar la lista</a>`
-    : `<button class="btn" disabled style="margin-top:14px;opacity:.55">⬇️ Descarga próximamente</button>`;
-  return `<h2 class="sec">🛒 ${label}</h2>
-    <p style="font-size:16px;font-weight:800;color:#d97757;margin:0 6px 10px">${fmt(d&&d.nombre_plan)}</p>
-    <div class="card">${lista}${btn}</div>`;
-}
 async function renderCompra(){
   const cont=document.getElementById('s-compra');
   const header=`<div style="display:flex;align-items:center;gap:12px;margin:4px 6px 12px">
@@ -1400,15 +1390,47 @@ async function renderCompra(){
       <p style="font-size:18px;font-weight:800">Lista de la compra</p>
     </div>`;
   cont.innerHTML=header+'<div class="empty">Cargando tu lista…</div>';
+  const checkMap={};
+  try{ const {data:chks}=await sb.from('lista_compra_check').select('item_id,checked').eq('cliente_id',CLIENTE.id); (chks||[]).forEach(c=>{ checkMap[c.item_id]=c.checked; }); }catch(e){}
   const pares=[[CLIENTE.dieta_actual_id,'Dieta actual'],[CLIENTE.dieta_proxima_id,'Próxima dieta']];
   const secs=[];
   for(const [id,label] of pares){
     if(!id) continue;
     const {data:d}=await sb.from('dietas').select('nombre_plan,lista_compra_url').eq('id',id).maybeSingle();
-    const items=await listaCompraDe(id);
-    secs.push(_seccionCompra(label,d,items));
+    if(!d) continue;
+    const {data:items}=await sb.from('lista_compra').select('id,categoria,supermercado,producto').eq('nombre_plan',d.nombre_plan).order('categoria').order('id');
+    secs.push(_seccionCompra(label,d,items||[],checkMap));
   }
   cont.innerHTML=header+(secs.length?secs.join(''):'<div class="empty">Aún no tienes dietas asignadas.</div>');
+}
+function _seccionCompra(label,d,items,checkMap){
+  let body='';
+  if(!items.length){ body='<p style="font-size:14px;font-weight:600;color:var(--muted)">Sin artículos para esta dieta todavía.</p>'; }
+  else{
+    const cats={}; items.forEach(it=>{ const c=it.categoria||'Otros'; (cats[c]=cats[c]||[]).push(it); });
+    Object.keys(cats).forEach(cat=>{
+      body+=`<div class="lc-cat">${cat}</div>`;
+      cats[cat].forEach(it=>{ const on=checkMap[it.id]===true;
+        body+=`<div class="lc-item${on?' done':''}" id="lc-${it.id}">
+          <div class="lc-name">${it.producto}${it.supermercado?`<div class="lc-sup">${it.supermercado}</div>`:''}</div>
+          <button class="lc-chk ${on?'on':'off'}" onclick="toggleCompra(${it.id},this)" aria-label="marcar como comprado">${on?'✓':'✕'}</button>
+        </div>`;
+      });
+    });
+  }
+  const url=d&&d.lista_compra_url;
+  const btn = url
+    ? `<a class="btn" style="display:block;text-align:center;text-decoration:none;margin-top:16px" href="${url}" target="_blank" rel="noopener">⬇️ Descargar la lista</a>`
+    : `<button class="btn" disabled style="margin-top:16px;opacity:.55">⬇️ Descarga próximamente</button>`;
+  return `<h2 class="sec">${label}</h2>
+    <p style="font-size:16px;font-weight:800;color:#d97757;margin:0 6px 10px">${fmt(d&&d.nombre_plan)}</p>
+    <div class="card">${body}${btn}</div>`;
+}
+async function toggleCompra(id, btn){
+  const on=!btn.classList.contains('on');
+  btn.classList.toggle('on',on); btn.classList.toggle('off',!on); btn.textContent=on?'✓':'✕';
+  const it=document.getElementById('lc-'+id); if(it) it.classList.toggle('done',on);
+  try{ await sb.from('lista_compra_check').upsert({cliente_id:CLIENTE.id,item_id:id,checked:on},{onConflict:'cliente_id,item_id'}); }catch(e){ console.error('check',e); }
 }
 
 // ====== FICHA DE PRODUCTO / RECETA ======
