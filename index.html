@@ -2008,12 +2008,22 @@ function renderPagos(target){
   const c=document.getElementById(PAGOS_TARGET);
   if(!c) return;
   const est=CLIENTE?CLIENTE.suscripcion_estado:null, activa=est==='activa';
+  // Estado visible para el cliente: lo que manda es la fecha de renovación (acceso real),
+  // no el campo interno de Mollie (que queda "pendiente" en altas/renovaciones manuales).
+  const _hoy0=new Date();_hoy0.setHours(0,0,0,0);
+  const _fr=(CLIENTE&&CLIENTE.fecha_renovacion)?new Date(CLIENTE.fecha_renovacion+'T00:00:00'):null;
+  const _vigente=_fr&&_fr>_hoy0;
+  const estadoView = est==='cancelada' ? 'Cancelada'
+    : _vigente ? 'Al corriente'
+    : _fr ? 'Renovación vencida'
+    : (est||'Sin suscripción');
+  const estadoCol = _vigente ? 'var(--green)' : (_fr ? 'var(--red)' : 'var(--muted)');
   const amt=CUOTA.amount;
   const bizum=(n,nombre,tel)=>`<div class="orow" style="cursor:pointer" onclick="copiar('${tel}')"><span>📱 Bizum ${n} · ${nombre}</span><b>${tel.replace(/(\d{3})(\d{3})(\d{3})/,'$1 $2 $3')} 📋</b></div>`;
   c.innerHTML=`
     <div class="card"><h3>💳 Mi suscripción</h3>
       <div class="orow"><span>Plan</span><b>${(CLIENTE&&CLIENTE.plan)||'—'}</b></div>
-      <div class="orow"><span>Estado</span><b>${est||'sin suscripción'}</b></div>
+      <div class="orow"><span>Estado</span><b style="color:${estadoCol}">${estadoView}</b></div>
       <div class="orow"><span>Próxima renovación</span><b>${(CLIENTE&&CLIENTE.fecha_renovacion)?fechaCorta(CLIENTE.fecha_renovacion):'—'}</b></div>
       ${activa&&CLIENTE&&CLIENTE.mollie_subscription_id?`<button class="verobj" onclick="cancelarSuscripcion()">Cancelar suscripción</button><p class="note">Al cancelar, la domiciliación se detiene sola.</p>`:''}
     </div>
