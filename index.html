@@ -104,7 +104,7 @@
   .steps .bar>span{background:#d97757}
   .steps input{flex:1;min-width:0;padding:9px 11px;border:1.5px solid #e7bfab;border-radius:12px;font-size:16px;outline:none;background:#fff}
   .steps button{background:#d97757;color:#fff;border:none;border-radius:12px;padding:9px 16px;font-weight:700;font-size:14px;cursor:pointer;white-space:nowrap}
-  .steps .smsg{font-size:14px;color:var(--muted);margin-top:8px}
+  .steps .smsg{font-size:14px;color:var(--dark);font-weight:700;margin-top:8px}
   .glasses{display:flex;gap:4px;margin-top:6px;flex-wrap:wrap}
   .glasses span{width:16px;height:20px;border-radius:0 0 5px 5px;border:2px solid var(--teal)}
   .glasses span.full{background:var(--teal)}
@@ -1060,7 +1060,7 @@ function renderInicio(){
       <div class="today">${esConsulta
         ?'📣 ¡Hoy es tu día de consulta! Envía tus datos antes de las 10:00 🕙'
         :'Hoy no es día de consulta. Recuerda enviar tus datos el '+fmt(CLIENTE.dia_consulta)+' antes de las 10:00 🕙'}</div>
-      ${(CAL&&(CAL.get-CAL.objetivo)>0)?`<div class="today" style="margin-top:8px;background:#fff;color:#d97757;font-weight:800">🎯 Esta semana tu objetivo es bajar ${CAL.get-CAL.objetivo} g</div>`:''}
+      ${(CAL&&(CAL.get-CAL.objetivo)>0)?`<div class="today" style="margin-top:8px;background:#fff;color:#d97757;font-weight:800">🎯 Esta semana tu objetivo es bajar <span style="font-size:16px">${CAL.get-CAL.objetivo} g</span></div>`:''}
     </div>
 
     <h2 class="sec">🧭 Tu pizarra</h2>
@@ -1138,7 +1138,7 @@ function renderInicio(){
       <div class="foot">👟</div>
       <div style="flex:1">
         <h3 style="margin:0">Pasos de hoy</h3>
-        <div><span class="big" id="pasosTotal">${PASOS_HOY.toLocaleString('es-ES')}</span> <span style="font-size:14px;color:var(--muted)">/ 8.800 pasos</span></div>
+        <div><span class="big" id="pasosTotal">${PASOS_HOY.toLocaleString('es-ES')}</span> <span style="font-size:14px;color:var(--dark);font-weight:700">/ 8.800 pasos</span></div>
         <div class="bar"><span id="pasosBar" style="width:${Math.min(100,Math.round(PASOS_HOY/8800*100))}%"></span></div>
         <div class="smsg" id="pasosMsg"></div>
         <div style="display:flex;gap:8px;margin-top:10px">
