@@ -1327,14 +1327,28 @@ async function renderPizarraProx(){
   const cont=document.getElementById('pizarra');
   if(!CLIENTE.dieta_proxima_id){ cont.innerHTML='<div class="empty">Aún no tienes una próxima dieta asignada.</div>'; return; }
   cont.innerHTML='<div class="empty">Cargando tu próxima dieta…</div>';
-  const {data:d}=await sb.from('dietas').select('nombre_plan').eq('id',CLIENTE.dieta_proxima_id).maybeSingle();
-  let tomas=await tomasDe(CLIENTE.dieta_proxima_id,DIA_MAP[new Date().getDay()]);
-  if(!tomas.length) tomas=await tomasDe(CLIENTE.dieta_proxima_id,'1_Dia1');
-  const meals = tomas.length
-    ? tomas.map(t=>{const i=TOMA_INFO[t.toma]||['🍴',t.toma]; return `<div class="meal"><div class="t">${i[0]} ${i[1]}</div><div class="d">${listar(t.texto)}</div></div>`;}).join('')
-    : '<p style="font-size:14px;font-weight:600;color:var(--muted)">Tu próxima dieta se activará al terminar la actual.</p>';
-  cont.innerHTML=`<p style="font-size:16px;font-weight:800;color:#d97757;margin:0 0 10px">${fmt(d&&d.nombre_plan)}</p>${meals}
-    <button onclick="abrirCompra()" style="display:inline-flex;align-items:center;gap:7px;margin-top:12px;background:#fff;color:var(--teal);border:2px solid var(--teal);border-radius:12px;padding:9px 14px;font-family:inherit;font-weight:800;font-size:14px;cursor:pointer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3890a4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1.5"/><circle cx="19" cy="21" r="1.5"/><path d="M1 1h3l2.6 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"/></svg>Ver lista de la compra</button>`;
+  const pid=CLIENTE.dieta_proxima_id;
+  const {data:d}=await sb.from('dietas').select('*').eq('id',pid).maybeSingle();
+  const url=d&&d.dieta_url;
+  const bs="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;background:#fff;color:var(--teal);border:2px solid var(--teal);border-radius:12px;padding:12px;font-family:inherit;font-weight:800;font-size:15px;cursor:pointer;text-decoration:none;margin-top:10px";
+  const cart='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3890a4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1.5"/><circle cx="19" cy="21" r="1.5"/><path d="M1 1h3l2.6 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"/></svg>';
+  cont.innerHTML=`<p style="font-size:16px;font-weight:800;color:#d97757;margin:0 0 2px">${fmt(d&&d.nombre_plan)}</p>
+    <p style="font-size:14px;font-weight:600;color:var(--muted);margin:0">Tu próxima dieta y su compra</p>
+    <button onclick="verDietaCompleta('${pid}')" style="${bs}">📋 Ver dieta completa</button>
+    ${url?`<a href="${url}" target="_blank" rel="noopener" style="${bs}">⬇️ Descargar dieta</a>`:`<button disabled style="${bs};opacity:.5;cursor:default">⬇️ Descarga próximamente</button>`}
+    <button onclick="abrirCompra('${pid}')" style="${bs}">${cart} Lista de la compra</button>`;
+}
+async function verDietaCompleta(dietaId){
+  abrirDetalle('Dieta completa','<div class="empty">Cargando tu dieta…</div>');
+  const dias=[['1_Dia1','Lunes'],['2_Dia2','Martes'],['3_Dia3','Miércoles'],['4_Dia4','Jueves'],['5_Dia5','Viernes'],['6_Dia6','Sábado'],['7_Domingo','Domingo']];
+  let html='';
+  for(const [cod,nom] of dias){
+    const tomas=await tomasDe(dietaId,cod);
+    if(!tomas.length) continue;
+    html+=`<div class="dsec">${nom}</div>`;
+    tomas.forEach(t=>{ const i=TOMA_INFO[t.toma]||['🍴',t.toma]; html+=`<div class="plato" style="padding:8px 0;border-bottom:1px dashed #dbe6e9"><h4>${i[0]} ${i[1]}</h4><p>${listar(t.texto)}</p></div>`; });
+  }
+  abrirDetalle('Dieta completa', html||'<div class="empty">Esta dieta aún no tiene comidas cargadas.</div>');
 }
 // Pizarra Gym: la elección del cliente (Casa/Gym, días, día) + su entreno de ese día
 async function renderPizarraGym(){
@@ -1368,7 +1382,7 @@ async function renderDieta(){
   cont.innerHTML=`
     <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin:4px 6px 2px">
       <p style="font-size:18px;font-weight:800">Tu dieta</p>
-      <button onclick="abrirCompra()" style="display:inline-flex;align-items:center;gap:7px;background:#fff;color:var(--teal);border:2px solid var(--teal);border-radius:12px;padding:8px 13px;font-family:inherit;font-weight:800;font-size:14px;white-space:nowrap;cursor:pointer;box-shadow:0 2px 6px rgba(26,46,53,.10)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3890a4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1.5"/><circle cx="19" cy="21" r="1.5"/><path d="M1 1h3l2.6 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"/></svg>Lista de la compra</button>
+      <button onclick="abrirCompra(CLIENTE.dieta_actual_id)" style="display:inline-flex;align-items:center;gap:7px;background:#fff;color:var(--teal);border:2px solid var(--teal);border-radius:12px;padding:8px 13px;font-family:inherit;font-weight:800;font-size:14px;white-space:nowrap;cursor:pointer;box-shadow:0 2px 6px rgba(26,46,53,.10)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3890a4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1.5"/><circle cx="19" cy="21" r="1.5"/><path d="M1 1h3l2.6 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"/></svg>Lista de la compra</button>
     </div>
     <p style="font-size:16px;font-weight:800;color:#d97757;margin:0 6px 10px">${fmt(DIETA.nombre_plan)}</p>
     ${CAL?`<div class="card" style="text-align:center;padding:12px"><div style="font-size:14px;color:var(--muted);font-weight:700">Objetivo del día (${CAL.objLabel})</div><div style="font-size:22px;font-weight:800;color:var(--teal)">${CAL.objetivo} kcal</div><div style="font-size:14px;font-weight:700;color:var(--text);margin-top:2px"><span style="white-space:nowrap">P ${macrosDe(CAL.objetivo).prot}g</span> · <span style="white-space:nowrap">HC ${macrosDe(CAL.objetivo).hc}g</span> · <span style="white-space:nowrap">G ${macrosDe(CAL.objetivo).grasa}g</span></div></div>`:''}
@@ -1386,7 +1400,9 @@ async function renderDieta(){
 function selDia(d){DIA_SEL=d;renderDieta();}
 
 // ====== LISTA DE LA COMPRA (dieta actual + próxima) ======
-function abrirCompra(){
+let COMPRA_DIETA=null;
+function abrirCompra(dietaId){
+  COMPRA_DIETA=dietaId||CLIENTE.dieta_actual_id||null;
   document.querySelectorAll('.screen').forEach(s=>s.classList.add('hidden'));
   const c=document.getElementById('s-compra'); c.classList.remove('hidden'); c.scrollTop=0;
   renderCompra();
@@ -1404,19 +1420,15 @@ async function renderCompra(){
       <p style="font-size:18px;font-weight:800">Lista de la compra</p>
     </div>`;
   cont.innerHTML=header+'<div class="empty">Cargando tu lista…</div>';
+  const id=COMPRA_DIETA;
+  if(!id){ cont.innerHTML=header+'<div class="empty">Aún no tienes una dieta asignada.</div>'; return; }
+  const label = (id===CLIENTE.dieta_proxima_id) ? 'Próxima dieta' : 'Dieta actual';
   const checkMap={};
   try{ const {data:chks}=await sb.from('lista_compra_check').select('item_id,checked').eq('cliente_id',CLIENTE.id); (chks||[]).forEach(c=>{ checkMap[c.item_id]=c.checked; }); }catch(e){}
-  const pares=[[CLIENTE.dieta_actual_id,'Dieta actual'],[CLIENTE.dieta_proxima_id,'Próxima dieta']];
-  const secs=[];
-  for(const [id,label] of pares){
-    if(!id) continue;
-    const {data:d}=await sb.from('dietas').select('nombre_plan,lista_compra_url').eq('id',id).maybeSingle();
-    if(!d) continue;
-    const plan=planBase(d.nombre_plan);   // quita el sufijo de semana "_sN" para cuadrar con la lista de la compra
-    const {data:items}=await sb.from('lista_compra').select('id,categoria,supermercado,producto').eq('nombre_plan',plan).order('categoria').order('id');
-    secs.push(_seccionCompra(label,d,items||[],checkMap));
-  }
-  cont.innerHTML=header+(secs.length?secs.join(''):'<div class="empty">Aún no tienes dietas asignadas.</div>');
+  const {data:d}=await sb.from('dietas').select('*').eq('id',id).maybeSingle();
+  if(!d){ cont.innerHTML=header+'<div class="empty">No se encontró la dieta.</div>'; return; }
+  const {data:items}=await sb.from('lista_compra').select('id,categoria,supermercado,producto').eq('nombre_plan',planBase(d.nombre_plan)).order('categoria').order('id');
+  cont.innerHTML=header+_seccionCompra(label,d,items||[],checkMap);
 }
 function _seccionCompra(label,d,items,checkMap){
   let body='';
