@@ -53,6 +53,9 @@
   .screen{flex:1;overflow-y:auto;padding:16px 14px 96px}
   h2.sec{font-size:13px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin:18px 4px 8px;font-weight:700}
   .card{background:var(--white);border-radius:18px;padding:16px;box-shadow:var(--shadow);margin-bottom:14px}
+  .aviso{background:linear-gradient(135deg,#3890a4,#2f7f92);color:#fff;border-radius:18px;padding:15px 18px;margin:6px 0 14px;box-shadow:var(--shadow);font-size:14px;font-weight:600;line-height:1.4;display:flex;gap:10px;align-items:flex-start}
+  .aviso.urgente{background:linear-gradient(135deg,#d97757,#c15f3c)}
+  .aviso .ico{font-size:20px;line-height:1.2;flex:none}
   .card h3{font-size:15px;font-weight:700;margin-bottom:8px}
   .agenda{background:linear-gradient(135deg,var(--teal),#2b7180);color:#fff}
   .agenda h3{color:#fff}
@@ -680,6 +683,45 @@ function mostrarSplash(){
 }
 async function registrarAcceso(){ try{ if(CLIENTE&&CLIENTE.id) await sb.from('accesos').insert({cliente_id:CLIENTE.id}); }catch(e){console.error('acceso',e);} }
 
+// ---- Tarjeta de aviso automática (prioridad: consulta > renovación > mensaje del pool) ----
+let MENSAJES=[];
+async function cargarMensajes(){ try{ const {data}=await sb.from('mensajes_tarjeta').select('mensaje,importancia').eq('activo',true); MENSAJES=data||[]; }catch(e){ MENSAJES=[]; } }
+function diffDias(f){ if(!f) return null; const d=new Date(String(f).slice(0,10)+'T00:00:00'); if(isNaN(d)) return null; const t=new Date(); t.setHours(0,0,0,0); return Math.round((d-t)/86400000); }
+function avisoTarjeta(){
+  const nom=(CLIENTE.nombre||'').split(' ')[0]||'';
+  const dc=diffDias(CLIENTE.fecha_proxima_consulta), dr=diffDias(CLIENTE.fecha_renovacion);
+  const cand=[];
+  if(dc!=null&&dc>=0&&dc<=2) cand.push({t:'consulta',d:dc});
+  if(dr!=null&&dr>=0&&dr<=2) cand.push({t:'renov',d:dr});
+  cand.sort((a,b)=> (a.d-b.d) || (a.t==='consulta'?-1:1));
+  let txt='', urgente=false;
+  // Naranja de urgencia: cuando falta 1 día o es hoy para consulta/renovación
+  if(cand.length && cand[0].d<=1) urgente=true;
+  if(cand.length){
+    const c=cand[0], cuando=c.d===0?'hoy':(c.d===1?'mañana':'en 2 días');
+    if(c.t==='consulta') txt = c.d===0
+      ? `Hola ${nom}, hoy tenemos consulta: sube tus datos antes de las 10:00 🕙`
+      : `Hola ${nom}, recuerda que ${cuando} tenemos consulta y hay que subir los datos 🕙`;
+    else txt = c.d===0
+      ? `Hola ${nom}, hoy caduca tu suscripción y toca renovar 🔔`
+      : `Hola ${nom}, recuerda que ${cuando} caduca tu suscripción y toca renovar 🔔`;
+  } else {
+    let pool=(MENSAJES||[]).slice();
+    const pIni=(PRIMERO&&PRIMERO.peso!=null)?PRIMERO.peso:CLIENTE.peso_inicial;
+    const pHoy=(ULTIMO&&ULTIMO.peso!=null)?ULTIMO.peso:null;
+    const kg=(pIni&&pHoy)?+(pIni-pHoy).toFixed(1):0;
+    if(kg>=1) pool.push({mensaje:`{nombre}, llevas perdidos {kg} kg. ¡Vamos, que no decaiga esa motivación! 🔥`,importancia:0});
+    if(!pool.length) return '';
+    const maxImp=Math.max.apply(null,pool.map(m=>+m.importancia||0));
+    const top=pool.filter(m=>(+m.importancia||0)===maxImp);
+    txt=(top[Math.floor(Math.random()*top.length)].mensaje||'')
+        .replace(/\{nombre\}/gi,nom).replace(/\{kg\}/gi,String(kg).replace('.',','));
+  }
+  if(!txt) return '';
+  const ico = urgente ? '⏰' : '💬';
+  return `<div class="card aviso${urgente?' urgente':''}"><span class="ico">${ico}</span><span>${txt}</span></div>`;
+}
+
 async function iniciarSesion(){
   document.getElementById('auth').classList.add('hidden');
   const {data:{user}}=await sb.auth.getUser();
@@ -689,6 +731,7 @@ async function iniciarSesion(){
   if(bloqueado(CLIENTE)){ mostrarBloqueo(); return; }   // renovación caducada → bloquear
   const splash=mostrarSplash();   // bienvenida con saludo + nombre
   registrarAcceso();              // contar la entrada del cliente
+  cargarMensajes();               // pool de mensajes para la tarjeta de aviso
   document.getElementById('avatar').textContent=((CLIENTE.nombre||'?')[0]||'?').toUpperCase()+((CLIENTE.apellido||'')[0]||'').toUpperCase();
   const {data:regs}=await sb.from('registros').select('*').eq('cliente_id',user.id).order('semana',{ascending:false,nullsFirst:false}).order('fecha',{ascending:false}).limit(1);
   ULTIMO=(regs&&regs[0])||null;
@@ -968,14 +1011,17 @@ function renderInicio(){
     <p style="font-size:20px;font-weight:700;margin:4px 6px 2px">Hola, ${CLIENTE.nombre||''}${esEmbajador()?` <img src="${SANEAMIGO_BADGE}" title="Embajador Saneas" style="height:24px;vertical-align:-5px">`:''} 👋</p>
     <p style="font-size:13px;color:var(--muted);margin:0 6px 4px">Semana ${fmt(CLIENTE.semana)} en Saneas · ${fmt(CLIENTE.nivel)}</p>
 
+    ${avisoTarjeta()}
+
     <div class="card agenda">
       <h3>📅 Tu agenda</h3>
-      <div class="row"><span>Hoy</span><span>${hoy.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'short'})}</span></div>
+      <div style="font-size:13px;font-weight:600;margin:-2px 0 8px;opacity:.95">Hoy es ${hoy.toLocaleDateString('es-ES',{day:'numeric',month:'long'})}</div>
       <div class="row"><span>Próxima consulta</span><span>${fechaCorta(CLIENTE.fecha_proxima_consulta)}</span></div>
       <div class="row"><span>Próxima renovación</span><span>${fechaCorta(CLIENTE.fecha_renovacion)}</span></div>
       <div class="today">${esConsulta
         ?'📣 ¡Hoy es tu día de consulta! Envía tus datos antes de las 10:00 🕙'
         :'Hoy no es día de consulta. Recuerda enviar tus datos el '+fmt(CLIENTE.dia_consulta)+' antes de las 10:00 🕙'}</div>
+      ${(CAL&&(CAL.get-CAL.objetivo)>0)?`<div class="today" style="margin-top:8px">🎯 Esta semana tu objetivo es bajar ${CAL.get-CAL.objetivo} g</div>`:''}
     </div>
 
     <h2 class="sec">🧭 Tu pizarra</h2>

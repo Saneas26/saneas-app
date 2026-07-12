@@ -324,6 +324,7 @@ async function api(action,extra={}){
   },body:JSON.stringify({action,password:PASS,...extra})});
   return {status:r.status,data:await r.json().catch(()=>({}))};
 }
+async function rpc(fn,body){ try{ const r=await fetch(SUPABASE_URL+'/rest/v1/rpc/'+fn,{method:'POST',headers:{'Content-Type':'application/json','apikey':PUBLISHABLE,'Authorization':'Bearer '+PUBLISHABLE},body:JSON.stringify(body)}); return await r.json(); }catch(e){ return null; } }
 function toast(m){const t=el('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200);}
 
 // ---------- Login ----------
@@ -453,6 +454,13 @@ async function abrirFicha(id){
   const {status,data}=await api('ficha',{cliente_id:id});
   if(status!==200){el('ficha').innerHTML=`<div class="fh"><button class="x" onclick="cerrarFicha()">×</button><h3>Error</h3></div><div class="fbody"><p class="empty-msg">${data.error||''}</p></div>`;return;}
   pintarFicha(data.cliente,data.registros||[]);
+  rpc('accesos_resumen',{p_cliente:id,secret:'SANEAS_SYNC_2026'}).then(res=>{
+    const e=el('fActividad'); if(!e) return;
+    if(res&&res.dias_semana!=null){
+      const vh=res.veces_hoy||0, ds=res.dias_semana||0;
+      e.textContent=`Actividad: entró ${ds}/7 días esta semana · ${vh} ${vh===1?'vez':'veces'} hoy`;
+    } else { e.textContent='Actividad: sin datos'; }
+  });
 }
 function cerrarFicha(){el('ov').classList.remove('show');el('ficha').classList.remove('show');}
 async function guardarDieta(id){
@@ -584,6 +592,7 @@ function pintarFicha(cli,regs){
         <span>${DIAS.find(d=>d[0]===norm(cli.dia_consulta))?.[1]||'—'} · ${plazaTxt}</span>
         <span>${sem}${fechaAct?' · '+fechaAct:''}</span>
         <span>Suscripción: ${estTxt}</span>
+        <span id="fActividad">Actividad: cargando…</span>
       </div>
     </div>
     <div class="fbody">
