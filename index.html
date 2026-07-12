@@ -302,22 +302,19 @@
       </div>
       <div id="r-pli" class="card hidden">
         <div class="grid2">
-          <div class="field"><label>Tricipital (mm)</label><input id="f_pli_tricipital" type="number" step="0.1"></div>
-          <div class="field"><label>Subescapular (mm)</label><input id="f_pli_subescapular" type="number" step="0.1"></div>
-          <div class="field"><label>Suprailíaco (mm)</label><input id="f_pli_suprailiaco" type="number" step="0.1"></div>
+          <div class="field"><label>Bicipital (mm)</label><input id="f_pli_bicipital" type="number" step="0.1"></div>
           <div class="field"><label>Abdominal (mm)</label><input id="f_pli_abdominal" type="number" step="0.1"></div>
-          <div class="field"><label>Muslo (mm)</label><input id="f_pli_muslo" type="number" step="0.1"></div>
-          <div class="field"><label>Pantorrilla (mm)</label><input id="f_pli_pantorrilla" type="number" step="0.1"></div>
+          <div class="field"><label>Cuadricipital (mm)</label><input id="f_pli_cuadricipital" type="number" step="0.1"></div>
+          <div class="field"><label>Subescapular (mm)</label><input id="f_pli_subescapular" type="number" step="0.1"></div>
+          <div class="field"><label>Tricipital (mm)</label><input id="f_pli_tricipital" type="number" step="0.1"></div>
+          <div class="field"><label>Suprailíaco (mm)</label><input id="f_pli_suprailiaco" type="number" step="0.1"></div>
         </div>
       </div>
       <div id="r-per" class="card hidden">
         <div class="grid2">
           <div class="field"><label>Cintura (cm)</label><input id="f_per_cintura" type="number" step="0.1"></div>
-          <div class="field"><label>Cadera (cm)</label><input id="f_per_cadera" type="number" step="0.1"></div>
-          <div class="field"><label>Pecho (cm)</label><input id="f_per_pecho" type="number" step="0.1"></div>
-          <div class="field"><label>Brazo (cm)</label><input id="f_per_brazo" type="number" step="0.1"></div>
-          <div class="field"><label>Muslo (cm)</label><input id="f_per_muslo" type="number" step="0.1"></div>
-          <div class="field"><label>Gemelo (cm)</label><input id="f_per_gemelo" type="number" step="0.1"></div>
+          <div class="field" id="perCadera"><label>Cadera (cm)</label><input id="f_per_cadera" type="number" step="0.1"></div>
+          <div class="field" id="perHombros"><label>Hombros (cm)</label><input id="f_per_hombro" type="number" step="0.1"></div>
         </div>
       </div>
       <button class="btn" id="btnReg2" onclick="guardarRegistro()">✅ Enviar mis datos</button>
@@ -1418,6 +1415,13 @@ async function verReceta(id){
 }
 
 // ====== REGISTRO ======
+// Perímetros según sexo: mujer → cintura + cadera; hombre → cintura + hombros
+function ajustarPerimetros(){
+  const mujer=String(CLIENTE&&CLIENTE.genero||'').toLowerCase().startsWith('m');
+  const cad=document.getElementById('perCadera'), hom=document.getElementById('perHombros');
+  if(cad) cad.style.display = mujer ? '' : 'none';
+  if(hom) hom.style.display = mujer ? 'none' : '';
+}
 function regTab(k,el){['imp','pli','per'].forEach(x=>document.getElementById('r-'+x).classList.add('hidden'));
   document.getElementById('r-'+k).classList.remove('hidden');
   document.querySelectorAll('#s-registro .tabs button').forEach(b=>b.classList.remove('active'));el.classList.add('active');}
@@ -1425,8 +1429,8 @@ function regTab(k,el){['imp','pli','per'].forEach(x=>document.getElementById('r-
 async function guardarRegistro(){
   const btn=document.getElementById('btnReg2');btn.disabled=true;btn.textContent='Guardando...';
   const campos=['peso','imc','grasa_corporal','grasa_visceral','agua','masa_muscular','proteina','edad_metabolica',
-    'pli_tricipital','pli_subescapular','pli_suprailiaco','pli_abdominal','pli_muslo','pli_pantorrilla',
-    'per_cintura','per_cadera','per_pecho','per_brazo','per_muslo','per_gemelo'];
+    'pli_bicipital','pli_abdominal','pli_cuadricipital','pli_subescapular','pli_tricipital','pli_suprailiaco',
+    'per_cintura','per_cadera','per_hombro'];
   // Un registro por semana, editable: si ya hay uno de esta semana, se corrige
   const hoy=new Date(); const dow=(hoy.getDay()+6)%7;
   const lunes=new Date(hoy); lunes.setDate(hoy.getDate()-dow);
@@ -1449,6 +1453,7 @@ function go(id,el){
   document.querySelectorAll('.screen').forEach(s=>s.classList.add('hidden'));
   document.getElementById('s-'+id).classList.remove('hidden');
   document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));el.classList.add('active');
+  if(id==='registro')ajustarPerimetros();
   if(id==='dieta')renderDieta();
   if(id==='gym')renderGym();
   document.getElementById('s-'+id).scrollTop=0;
