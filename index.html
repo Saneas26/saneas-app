@@ -301,11 +301,14 @@
       <div id="r-imp" class="card">
         <div class="grid2">
           <div class="field"><label>Peso (kg)</label><input id="f_peso" type="number" step="0.1"></div>
-          <div class="field"><label>IMC</label><input id="f_imc" type="number" step="0.1"></div>
           <div class="field"><label>Grasa corporal %</label><input id="f_grasa_corporal" type="number" step="0.1"></div>
+          <div class="field"><label>Peso sin grasa (kg)</label><input id="f_peso_sin_grasa" type="number" step="0.1"></div>
+          <div class="field"><label>Grasa subcutánea %</label><input id="f_grasa_subcutanea" type="number" step="0.1"></div>
           <div class="field"><label>Grasa visceral</label><input id="f_grasa_visceral" type="number" step="0.1"></div>
           <div class="field"><label>Agua %</label><input id="f_agua" type="number" step="0.1"></div>
+          <div class="field"><label>Músculo esquelético %</label><input id="f_musculo_esqueletico" type="number" step="0.1"></div>
           <div class="field"><label>Masa muscular (kg)</label><input id="f_masa_muscular" type="number" step="0.1"></div>
+          <div class="field"><label>Masa esquelética (kg)</label><input id="f_masa_esqueletica" type="number" step="0.1"></div>
           <div class="field"><label>Proteína %</label><input id="f_proteina" type="number" step="0.1"></div>
           <div class="field"><label>Edad metabólica</label><input id="f_edad_metabolica" type="number" step="1"></div>
         </div>
@@ -1576,7 +1579,8 @@ function regTab(k,el){['imp','pli','per'].forEach(x=>document.getElementById('r-
 
 async function guardarRegistro(){
   const btn=document.getElementById('btnReg2');btn.disabled=true;btn.textContent='Guardando...';
-  const campos=['peso','imc','grasa_corporal','grasa_visceral','agua','masa_muscular','proteina','edad_metabolica',
+  const campos=['peso','grasa_corporal','peso_sin_grasa','grasa_subcutanea','grasa_visceral','agua',
+    'musculo_esqueletico','masa_muscular','masa_esqueletica','proteina','edad_metabolica',
     'pli_bicipital','pli_abdominal','pli_cuadricipital','pli_subescapular','pli_tricipital','pli_suprailiaco',
     'per_cintura','per_cadera','per_hombro'];
   // Un registro por semana, editable: si ya hay uno de esta semana, se corrige
@@ -1585,6 +1589,8 @@ async function guardarRegistro(){
   const lunesStr=lunes.toISOString().slice(0,10);
   const row={cliente_id:CLIENTE.id,fecha:hoy.toISOString().slice(0,10),semana:CLIENTE.semana||null};
   campos.forEach(c=>row[c]=num(document.getElementById('f_'+c).value));
+  // IMC calculado automáticamente desde el peso y la altura (ya no es campo manual)
+  if(row.peso!=null && CLIENTE && CLIENTE.altura){ const h=CLIENTE.altura/100; row.imc=Math.round((row.peso/(h*h))*10)/10; }
   const {data:yaSem}=await sb.from('registros').select('id').eq('cliente_id',CLIENTE.id).gte('fecha',lunesStr).order('fecha',{ascending:false}).limit(1);
   const corrige=yaSem&&yaSem.length;
   let error;
