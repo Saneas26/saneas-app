@@ -387,8 +387,13 @@ function render(){
   for(let n=1;n<=NPLAZAS;n++){
     const c=porPlaza[n];
     if(c){
-      const est=norm(c.suscripcion_estado);
-      const dot=est==='activa'?'activa':est==='cancelada'?'canc':'pend';
+      // Punto por estado real de renovación (no por el campo Mollie):
+      // verde=al día (>3d) · naranja=renueva en 0-3d · rojo=vencida
+      const _hoy=new Date();_hoy.setHours(0,0,0,0);
+      const _fr=c.fecha_renovacion?new Date(c.fecha_renovacion+'T00:00:00'):null;
+      let dot;
+      if(!_fr){ dot='pend'; }
+      else { const dd=Math.round((_fr-_hoy)/86400000); dot = dd<=0?'canc' : dd<=3?'pend' : 'activa'; }
       html+=`<button class="plaza full" onclick="abrirFicha('${c.id}')">
         <span class="dot ${dot}"></span>
         <div class="cod">${PREF}${n}</div>
