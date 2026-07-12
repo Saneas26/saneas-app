@@ -372,6 +372,19 @@ const TOMA_INFO={
 const num = v => (v===''||v==null)?null:parseFloat(String(v).replace(',','.'));
 const fmt = v => (v==null||v==='')?'—':v;
 function fechaCorta(d){ if(!d) return '—'; const x=new Date(d+'T00:00:00'); return x.toLocaleDateString('es-ES',{day:'numeric',month:'short'}); }
+function fechaLarga(d){ if(!d) return '—'; const x=new Date(d+'T00:00:00'); return x.toLocaleDateString('es-ES',{weekday:'short',day:'numeric',month:'short'}); }
+// Próxima consulta = próxima fecha (hoy o futura) que cae en el día de consulta del cliente (modelo semanal)
+const DIA_NUM={'domingo':0,'lunes':1,'martes':2,'miércoles':3,'miercoles':3,'jueves':4,'viernes':5,'sábado':6,'sabado':6};
+function fechaProximaConsulta(){
+  const dc=((CLIENTE&&CLIENTE.dia_consulta)||'').toLowerCase().trim();
+  if(dc in DIA_NUM){
+    const t=new Date(); t.setHours(0,0,0,0);
+    const add=(DIA_NUM[dc]-t.getDay()+7)%7;
+    const d=new Date(t); d.setDate(t.getDate()+add);
+    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  }
+  return (CLIENTE&&CLIENTE.fecha_proxima_consulta)||null;
+}
 // Muestra los alimentos (separados por | o comas) como listado con saltos de fila
 function listar(t){ if(!t) return '';
   const items=String(t).split(/\s*\|\s*|\n+/).map(x=>x.trim()).filter(Boolean);
@@ -703,7 +716,7 @@ async function cargarMensajes(){ try{ const {data}=await sb.from('mensajes_tarje
 function diffDias(f){ if(!f) return null; const d=new Date(String(f).slice(0,10)+'T00:00:00'); if(isNaN(d)) return null; const t=new Date(); t.setHours(0,0,0,0); return Math.round((d-t)/86400000); }
 function avisoTarjeta(){
   const nom=(CLIENTE.nombre||'').split(' ')[0]||'';
-  const dc=diffDias(CLIENTE.fecha_proxima_consulta), dr=diffDias(CLIENTE.fecha_renovacion);
+  const dc=diffDias(fechaProximaConsulta()), dr=diffDias(CLIENTE.fecha_renovacion);
   const cand=[];
   if(dc!=null&&dc>=0&&dc<=2) cand.push({t:'consulta',d:dc});
   if(dr!=null&&dr>=0&&dr<=2) cand.push({t:'renov',d:dr});
@@ -1031,7 +1044,7 @@ function renderInicio(){
     <div class="card agenda">
       <h3>📅 Tu agenda</h3>
       <div style="font-size:13px;font-weight:600;margin:-2px 0 8px;opacity:.95">Hoy es ${hoy.toLocaleDateString('es-ES',{day:'numeric',month:'long'})}</div>
-      <div class="row"><span>Próxima consulta</span><span>${fechaCorta(CLIENTE.fecha_proxima_consulta)}</span></div>
+      <div class="row"><span>Próxima consulta</span><span>${fechaLarga(fechaProximaConsulta())}</span></div>
       <div class="row"><span>Próxima renovación</span><span>${fechaCorta(CLIENTE.fecha_renovacion)}</span></div>
       <div class="today">${esConsulta
         ?'📣 ¡Hoy es tu día de consulta! Envía tus datos antes de las 10:00 🕙'
