@@ -2039,12 +2039,25 @@ function renderPagos(target){
     : (est||'Sin suscripción');
   const estadoCol = _vigente ? 'var(--green)' : (_fr ? 'var(--red)' : 'var(--muted)');
   const amt=CUOTA.amount;
+  // Cuota neta a pagar = cuota base del plan − descuento por Saneamigos
+  const _desc=Number((CLIENTE&&CLIENTE.descuento_invitados)||0);
+  const _base=Number((CLIENTE&&CLIENTE.plan_importe)||0);
+  const _neta=Math.max(0,_base-_desc);
+  const _nInv=Math.round(_desc/10);
+  const cuotaRow = _base>0 ? `
+      <div class="orow"><span>Tu cuota${_desc>0?' este mes':''}</span><b>${_desc>0
+        ? `<span style="text-decoration:line-through;color:var(--muted);font-weight:600">${_base}€</span> <span style="color:var(--teal)">${_neta}€</span>`
+        : `${_base}€`}</b></div>
+      ${_desc>0?`<p class="note">${_neta===0
+        ? `🎉 ¡Este mes tu cuota es 0€ gracias a tus ${_nInv} Saneamigos!`
+        : `Ya con el descuento de tus ${_nInv} Saneamigo${_nInv>1?'s':''} (−${_desc}€). Cuota base ${_base}€.`}</p>`:''}` : '';
   const bizum=(n,nombre,tel)=>`<div class="orow" style="cursor:pointer" onclick="copiar('${tel}')"><span>📱 Bizum ${n} · ${nombre}</span><b>${tel.replace(/(\d{3})(\d{3})(\d{3})/,'$1 $2 $3')} 📋</b></div>`;
   c.innerHTML=`
     <div class="card"><h3>💳 Mi suscripción</h3>
       <div class="orow"><span>Plan</span><b>${(CLIENTE&&CLIENTE.plan)||'—'}</b></div>
       <div class="orow"><span>Estado</span><b style="color:${estadoCol}">${estadoView}</b></div>
       <div class="orow"><span>Próxima renovación</span><b>${(CLIENTE&&CLIENTE.fecha_renovacion)?fechaCorta(CLIENTE.fecha_renovacion):'—'}</b></div>
+      ${cuotaRow}
       ${activa&&CLIENTE&&CLIENTE.mollie_subscription_id?`<button class="verobj" onclick="cancelarSuscripcion()">Cancelar suscripción</button><p class="note">Al cancelar, la domiciliación se detiene sola.</p>`:''}
     </div>
     <div class="dsec">Elige tu bono</div>
