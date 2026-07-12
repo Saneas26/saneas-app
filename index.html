@@ -88,6 +88,12 @@
   .bar>span{display:block;height:100%;background:var(--teal)}
   .water{display:flex;align-items:center;gap:14px;background:#eaf6f9}
   .water .drop{font-size:34px}.water .big{font-size:26px;font-weight:700;color:var(--teal)}
+  .steps{display:flex;align-items:flex-start;gap:14px;background:#eef6f4}
+  .steps .foot{font-size:32px;line-height:1.1}
+  .steps .big{font-size:26px;font-weight:700;color:var(--teal)}
+  .steps input{flex:1;min-width:0;padding:9px 11px;border:1.5px solid #cfe1e6;border-radius:12px;font-size:15px;outline:none;background:#fff}
+  .steps button{background:var(--teal);color:#fff;border:none;border-radius:12px;padding:9px 16px;font-weight:700;font-size:14px;cursor:pointer;white-space:nowrap}
+  .steps .smsg{font-size:12.5px;color:var(--muted);margin-top:8px}
   .glasses{display:flex;gap:4px;margin-top:6px;flex-wrap:wrap}
   .glasses span{width:16px;height:20px;border-radius:0 0 5px 5px;border:2px solid var(--teal)}
   .glasses span.full{background:var(--teal)}
@@ -683,6 +689,14 @@ function mostrarSplash(){
 }
 async function registrarAcceso(){ try{ if(CLIENTE&&CLIENTE.id) await sb.from('accesos').insert({cliente_id:CLIENTE.id}); }catch(e){console.error('acceso',e);} }
 
+// ---- Pasos de hoy (reto 8.800/día) ----
+const META_PASOS=8800;
+let PASOS_HOY=0;
+function _hoyCanarias(){ return new Date().toLocaleDateString('en-CA',{timeZone:'Atlantic/Canary'}); }
+async function cargarPasos(){ try{ if(!CLIENTE||!CLIENTE.id) return; const {data}=await sb.from('pasos').select('pasos').eq('cliente_id',CLIENTE.id).eq('fecha',_hoyCanarias()); PASOS_HOY=(data||[]).reduce((s,r)=>s+(+r.pasos||0),0); pintarPasos(); }catch(e){ console.error('pasos',e); } }
+function pintarPasos(){ const el=document.getElementById('pasosTotal'); if(!el) return; el.textContent=PASOS_HOY.toLocaleString('es-ES'); const pct=Math.min(100,Math.round(PASOS_HOY/META_PASOS*100)); const b=document.getElementById('pasosBar'); if(b) b.style.width=pct+'%'; const m=document.getElementById('pasosMsg'); if(m){ m.textContent = PASOS_HOY>=META_PASOS ? '✅ ¡Reto conseguido! Has superado los 8.800 pasos 🎉' : ('Te faltan '+(META_PASOS-PASOS_HOY).toLocaleString('es-ES')+' pasos para el reto de hoy 👟'); } }
+async function sumarPasos(){ const inp=document.getElementById('pasosInput'); if(!inp) return; const v=parseInt(inp.value,10); if(!v||v<=0){ inp.focus(); return; } const btn=inp.nextElementSibling; inp.disabled=true; if(btn) btn.disabled=true; try{ await sb.from('pasos').insert({cliente_id:CLIENTE.id, fecha:_hoyCanarias(), pasos:v}); PASOS_HOY+=v; inp.value=''; pintarPasos(); }catch(e){ alert('No se pudieron guardar los pasos, inténtalo de nuevo.'); } inp.disabled=false; if(btn) btn.disabled=false; inp.focus(); }
+
 // ---- Tarjeta de aviso automática (prioridad: consulta > renovación > mensaje del pool) ----
 let MENSAJES=[];
 async function cargarMensajes(){ try{ const {data}=await sb.from('mensajes_tarjeta').select('mensaje,importancia').eq('activo',true); MENSAJES=data||[]; }catch(e){ MENSAJES=[]; } }
@@ -732,6 +746,7 @@ async function iniciarSesion(){
   const splash=mostrarSplash();   // bienvenida con saludo + nombre
   registrarAcceso();              // contar la entrada del cliente
   cargarMensajes();               // pool de mensajes para la tarjeta de aviso
+  cargarPasos();                  // pasos de hoy (reto 8.800)
   document.getElementById('avatar').textContent=((CLIENTE.nombre||'?')[0]||'?').toUpperCase()+((CLIENTE.apellido||'')[0]||'').toUpperCase();
   const {data:regs}=await sb.from('registros').select('*').eq('cliente_id',user.id).order('semana',{ascending:false,nullsFirst:false}).order('fecha',{ascending:false}).limit(1);
   ULTIMO=(regs&&regs[0])||null;
@@ -1090,12 +1105,27 @@ function renderInicio(){
         <div class="glasses">${glasses}</div></div>
     </div>
 
+    <div class="card steps">
+      <div class="foot">👟</div>
+      <div style="flex:1">
+        <h3 style="margin:0">Pasos de hoy</h3>
+        <div><span class="big" id="pasosTotal">${PASOS_HOY.toLocaleString('es-ES')}</span> <span style="font-size:13px;color:var(--muted)">/ 8.800 pasos</span></div>
+        <div class="bar"><span id="pasosBar" style="width:${Math.min(100,Math.round(PASOS_HOY/8800*100))}%"></span></div>
+        <div class="smsg" id="pasosMsg"></div>
+        <div style="display:flex;gap:8px;margin-top:10px">
+          <input id="pasosInput" type="number" inputmode="numeric" min="1" placeholder="Añade los pasos que llevas">
+          <button onclick="sumarPasos()">Sumar</button>
+        </div>
+      </div>
+    </div>
+
     <h2 class="sec">🎬 Vídeo de la semana</h2>
     <div class="video">
       ${vid?`<a class="play" href="${vid}" target="_blank" rel="noopener">▶</a>`:'<div class="play">▶</div>'}
       <div class="cap">${vid?'Toca para ver el vídeo de esta semana':'Sin vídeo esta semana'}</div>
     </div>`;
   pizarra('dieta',document.querySelector('#s-inicio .choice'));
+  pintarPasos();
 }
 
 // ====== SANEAMIGOS (invitar) ======
