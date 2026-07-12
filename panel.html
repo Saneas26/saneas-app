@@ -115,14 +115,23 @@
   .baja-btn:hover{background:var(--bad);border-color:var(--bad)}
   .hdr-btn{background:#fff;border:2px solid var(--line);border-radius:999px;padding:8px 15px;font-weight:700;font-size:13px;color:var(--teal-d)}
   .hdr-btn:hover{border-color:var(--teal)}
-  /* Informe / Renovar (modales) */
-  #informe,#renovar{position:fixed;inset:0;background:rgba(16,50,58,.45);z-index:46;display:none;align-items:center;justify-content:center}
-  #informe.show,#renovar.show{display:flex}
-  #informe .box{background:var(--bg);border-radius:16px;width:680px;max-width:96vw;max-height:90vh;overflow-y:auto}
-  #informe .ihead{background:linear-gradient(135deg,#0f8a9c,#0b6875);color:#fff;padding:18px 22px;position:sticky;top:0;display:flex;justify-content:space-between;align-items:center}
-  #informe .ihead h3{font-size:19px}
-  #informe .ihead .x{background:rgba(255,255,255,.2);border:0;color:#fff;width:32px;height:32px;border-radius:50%;font-size:18px}
-  #informe .ibody{padding:18px 22px 28px}
+  /* Informe / Renovar / Opiniones (modales) */
+  #informe,#renovar,#opiniones{position:fixed;inset:0;background:rgba(16,50,58,.45);z-index:46;display:none;align-items:center;justify-content:center}
+  #informe.show,#renovar.show,#opiniones.show{display:flex}
+  #informe .box,#opiniones .box{background:var(--bg);border-radius:16px;width:680px;max-width:96vw;max-height:90vh;overflow-y:auto}
+  #informe .ihead,#opiniones .ihead{background:linear-gradient(135deg,#0f8a9c,#0b6875);color:#fff;padding:18px 22px;position:sticky;top:0;display:flex;justify-content:space-between;align-items:center}
+  #informe .ihead h3,#opiniones .ihead h3{font-size:19px}
+  #informe .ihead .x,#opiniones .ihead .x{background:rgba(255,255,255,.2);border:0;color:#fff;width:32px;height:32px;border-radius:50%;font-size:18px}
+  #informe .ibody,#opiniones .ibody{padding:18px 22px 28px}
+  .opcard{background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px 15px;margin-bottom:12px}
+  .opcard .oph{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:7px}
+  .opcard .who{font-size:14px;font-weight:800;color:var(--teal-d)}
+  .opcard .who.anon{color:var(--muted);font-weight:700;font-style:italic}
+  .opcard .date{font-size:12px;color:var(--muted);white-space:nowrap}
+  .opcard .txt{font-size:14px;line-height:1.5;color:var(--dark);white-space:pre-wrap}
+  .opcard .meta{margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .opcard .stars{color:#e0a800;font-size:15px;letter-spacing:2px}
+  .opcard .tema{background:var(--soft);color:var(--muted);font-size:12px;font-weight:700;padding:3px 9px;border-radius:20px}
   .isec{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:14px}
   .isec h4{font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:10px}
   .isum{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
@@ -190,6 +199,7 @@
   <div class="dias" id="dias"></div>
   <div class="sp"></div>
   <button class="hdr-btn" onclick="abrirInforme()">📋 Informe del día</button>
+  <button class="hdr-btn" onclick="abrirOpiniones()">💬 Opiniones</button>
   <button class="hdr-btn" onclick="abrirRenovar()">🔄 Renovar</button>
   <button class="alta-btn" onclick="abrirAlta()">＋ Dar de alta</button>
   <div class="count" id="count"></div>
@@ -271,6 +281,14 @@
   <div class="box">
     <div class="ihead"><h3 id="infTit">Informe del día</h3><button class="x" onclick="cerrarInforme()">×</button></div>
     <div class="ibody" id="infBody"><p class="vacio">Cargando…</p></div>
+  </div>
+</div>
+
+<!-- Opiniones de clientes -->
+<div id="opiniones">
+  <div class="box">
+    <div class="ihead"><h3 id="opTit">Opiniones de clientes</h3><button class="x" onclick="cerrarOpiniones()">×</button></div>
+    <div class="ibody" id="opBody"><p class="vacio">Cargando…</p></div>
   </div>
 </div>
 
@@ -741,6 +759,36 @@ async function abrirInforme(){
     }</div>`;
 }
 function cerrarInforme(){el('informe').classList.remove('show');}
+
+// ---------- Opiniones ----------
+const SYNC_SECRET='SANEAS_SYNC_2026';
+async function abrirOpiniones(){
+  el('opiniones').classList.add('show');
+  el('opBody').innerHTML='<p class="vacio">Cargando…</p>';
+  const data=await rpc('get_opiniones',{secret:SYNC_SECRET});
+  if(!Array.isArray(data)){ el('opBody').innerHTML='<p class="vacio">No se pudieron cargar las opiniones.</p>'; return; }
+  if(!data.length){ el('opBody').innerHTML='<p class="vacio">Todavía no hay opiniones. Aparecerán aquí en cuanto un cliente escriba desde la app.</p>'; return; }
+  const fecha=s=>{ try{ const d=new Date(s); return d.toLocaleDateString('es-ES',{day:'2-digit',month:'short',year:'numeric'})+' · '+d.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'}); }catch(e){ return ''; } };
+  const stars=n=>n?('★'.repeat(n)+'<span style="color:#d7e2e6">'+'★'.repeat(5-n)+'</span>'):'';
+  const conNombre=data.filter(o=>o.nombre).length;
+  el('opTit').textContent='Opiniones de clientes · '+data.length;
+  el('opBody').innerHTML=`
+    <div class="isum">
+      <div class="ipill"><b>${data.length}</b>opiniones</div>
+      <div class="ipill"><b>${conNombre}</b>con nombre</div>
+      <div class="ipill"><b>${data.length-conNombre}</b>anónimas</div>
+    </div>`+
+    data.map(o=>`
+      <div class="opcard">
+        <div class="oph">
+          <span class="who ${o.nombre?'':'anon'}">${o.nombre?esc(o.nombre):'Anónimo'}</span>
+          <span class="date">${fecha(o.created_at)}</span>
+        </div>
+        <div class="txt">${esc(o.texto||'')}</div>
+        ${(o.estrellas||o.tema)?`<div class="meta">${o.estrellas?`<span class="stars">${stars(o.estrellas)}</span>`:''}${o.tema?`<span class="tema">${esc(o.tema)}</span>`:''}</div>`:''}
+      </div>`).join('');
+}
+function cerrarOpiniones(){el('opiniones').classList.remove('show');}
 
 // ---------- Renovar ----------
 let RENOV_SEL=null;
