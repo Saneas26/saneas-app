@@ -857,6 +857,16 @@ function verObjetivos(){
     <div class="orow"><span>Peso mínimo saludable</span><b>${r1(o.PO2)} kg</b></div>
     <div class="dsec">Composición corporal</div>
     ${bloquesComposicion(o)}
+    ${(()=>{ const c=canonBelleza(); if(!c) return '';
+      const ri=v=>Math.round(v);
+      const medC=(ULTIMO&&ULTIMO.per_cintura!=null)?Number(ULTIMO.per_cintura):null;
+      const medO=(ULTIMO&&(c.hombre?ULTIMO.per_hombro:ULTIMO.per_cadera)!=null)?Number(c.hombre?ULTIMO.per_hombro:ULTIMO.per_cadera):null;
+      return `<div class="dsec">Canon de belleza (según tu altura y edad)</div>
+      <div class="orow" style="border-bottom:none;padding-bottom:2px"><span>🎯 Cintura ideal</span><b style="color:var(--teal)">${ri(c.cinturaIdeal)} cm</b></div>
+      <div class="orow"><span style="color:var(--muted)">Actualmente es de</span><b>${medC!=null?r1(medC)+' cm':'—'}</b></div>
+      <div class="orow" style="border-bottom:none;padding-bottom:2px"><span>🎯 ${c.objLabel} ideal</span><b style="color:var(--teal)">${ri(c.objetivoIdeal)} cm</b></div>
+      <div class="orow"><span style="color:var(--muted)">Actualmente es de</span><b>${medO!=null?r1(medO)+' cm':'—'}</b></div>`;
+    })()}
     <p style="font-size:14px;color:var(--muted);margin-top:14px;line-height:1.5">Tu objetivo total es el promedio entre el límite de sobrepeso y tu peso mínimo saludable. El camino: primero salir de la obesidad, luego del sobrepeso y por último alcanzar tu peso ideal.</p>`);
 }
 function objBloque(nombre,actualTxt,objTxt,msg,ok){
