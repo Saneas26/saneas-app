@@ -275,6 +275,8 @@
 
     <!-- DIETA -->
     <div class="screen hidden" id="s-dieta"></div>
+    <!-- LISTA DE LA COMPRA -->
+    <div class="screen hidden" id="s-compra"></div>
 
     <!-- GYM -->
     <div class="screen hidden" id="s-gym"></div>
@@ -1344,7 +1346,10 @@ async function renderDieta(){
   const CAL=calcCalorias();
   const pctMap=repartoComidas(comidasCalDe(tomas));
   cont.innerHTML=`
-    <p style="font-size:18px;font-weight:800;margin:4px 6px 2px">Tu dieta</p>
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin:4px 6px 2px">
+      <p style="font-size:18px;font-weight:800">Tu dieta</p>
+      <button onclick="abrirCompra()" style="background:var(--teal);color:#fff;border:none;border-radius:12px;padding:9px 13px;font-family:inherit;font-weight:700;font-size:14px;white-space:nowrap;cursor:pointer">🛒 Lista de la compra</button>
+    </div>
     <p style="font-size:16px;font-weight:800;color:#d97757;margin:0 6px 10px">${fmt(DIETA.nombre_plan)}</p>
     ${CAL?`<div class="card" style="text-align:center;padding:12px"><div style="font-size:14px;color:var(--muted);font-weight:700">Objetivo del día (${CAL.objLabel})</div><div style="font-size:22px;font-weight:800;color:var(--teal)">${CAL.objetivo} kcal</div><div style="font-size:14px;font-weight:700;color:var(--text);margin-top:2px"><span style="white-space:nowrap">P ${macrosDe(CAL.objetivo).prot}g</span> · <span style="white-space:nowrap">HC ${macrosDe(CAL.objetivo).hc}g</span> · <span style="white-space:nowrap">G ${macrosDe(CAL.objetivo).grasa}g</span></div></div>`:''}
     <div class="daysel">${dias.map(d=>`<button class="${d[0]===DIA_SEL?'active':''}" onclick="selDia('${d[0]}')">${d[1]}</button>`).join('')}</div>
@@ -1359,6 +1364,52 @@ async function renderDieta(){
       </div></div>`;}).join('')}`;
 }
 function selDia(d){DIA_SEL=d;renderDieta();}
+
+// ====== LISTA DE LA COMPRA (dieta actual + próxima) ======
+function abrirCompra(){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.add('hidden'));
+  const c=document.getElementById('s-compra'); c.classList.remove('hidden'); c.scrollTop=0;
+  renderCompra();
+}
+function volverDieta(){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.add('hidden'));
+  document.getElementById('s-dieta').classList.remove('hidden');
+}
+async function listaCompraDe(dietaId){
+  const {data}=await sb.from('dieta_tomas').select('toma_productos(productos(id,nombre,disponible))').eq('dieta_id',dietaId);
+  const map={};
+  (data||[]).forEach(t=>(t.toma_productos||[]).forEach(x=>{ const p=x&&x.productos; if(p&&p.disponible!==false) map[p.id]=p; }));
+  return Object.values(map).sort((a,b)=>String(a.nombre).localeCompare(String(b.nombre),'es'));
+}
+function _seccionCompra(label, d, items){
+  const url=d&&d.lista_compra_url;
+  const lista = items.length
+    ? `<ul class="shop" style="list-style:none;padding:0;margin:0">${items.map(p=>`<li>🛒 ${p.nombre}</li>`).join('')}</ul>`
+    : `<p style="font-size:14px;color:var(--muted)">Sin artículos en esta dieta.</p>`;
+  const btn = url
+    ? `<a class="btn" style="display:block;text-align:center;text-decoration:none;margin-top:14px" href="${url}" target="_blank" rel="noopener">⬇️ Descargar la lista</a>`
+    : `<button class="btn" disabled style="margin-top:14px;opacity:.55">⬇️ Descarga próximamente</button>`;
+  return `<h2 class="sec">🛒 ${label}</h2>
+    <p style="font-size:16px;font-weight:800;color:#d97757;margin:0 6px 10px">${fmt(d&&d.nombre_plan)}</p>
+    <div class="card">${lista}${btn}</div>`;
+}
+async function renderCompra(){
+  const cont=document.getElementById('s-compra');
+  const header=`<div style="display:flex;align-items:center;gap:12px;margin:4px 6px 12px">
+      <button onclick="volverDieta()" style="background:none;border:none;color:var(--teal);font-family:inherit;font-weight:800;font-size:16px;cursor:pointer;padding:4px 0">← Volver</button>
+      <p style="font-size:18px;font-weight:800">Lista de la compra</p>
+    </div>`;
+  cont.innerHTML=header+'<div class="empty">Cargando tu lista…</div>';
+  const pares=[[CLIENTE.dieta_actual_id,'Dieta actual'],[CLIENTE.dieta_proxima_id,'Próxima dieta']];
+  const secs=[];
+  for(const [id,label] of pares){
+    if(!id) continue;
+    const {data:d}=await sb.from('dietas').select('nombre_plan,lista_compra_url').eq('id',id).maybeSingle();
+    const items=await listaCompraDe(id);
+    secs.push(_seccionCompra(label,d,items));
+  }
+  cont.innerHTML=header+(secs.length?secs.join(''):'<div class="empty">Aún no tienes dietas asignadas.</div>');
+}
 
 // ====== FICHA DE PRODUCTO / RECETA ======
 function abrirDetalle(titulo,html){
