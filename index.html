@@ -2044,6 +2044,10 @@ function renderPagos(target){
   const _base=Number((CLIENTE&&CLIENTE.plan_importe)||0);
   const _neta=Math.max(0,_base-_desc);
   const _nInv=Math.round(_desc/10);
+  // Fila Saneamigos (solo planes Completo/Premium, que son los que se benefician)
+  const saneamigoRow = esPlanPC() ? `
+      <div class="orow"><span style="color:#d97757;font-weight:800">Saneamigos</span><b>${_nInv} / 6</b></div>
+      ${_nInv<6?`<p class="note">Cada Saneamigo activo te descuenta 10€ de tu cuota. ¡Con 6 tu cuota mensual es 0€! 🎉</p>`:`<p class="note">¡Enhorabuena! Tienes el máximo y tu cuota es gratis 🎉</p>`}` : '';
   const cuotaRow = _base>0 ? `
       <div class="orow"><span>Tu cuota${_desc>0?' este mes':''}</span><b>${_desc>0
         ? `<span style="text-decoration:line-through;color:var(--muted);font-weight:600">${_base}€</span> <span style="color:var(--teal)">${_neta}€</span>`
@@ -2057,6 +2061,7 @@ function renderPagos(target){
       <div class="orow"><span>Plan</span><b>${(CLIENTE&&CLIENTE.plan)||'—'}</b></div>
       <div class="orow"><span>Estado</span><b style="color:${estadoCol}">${estadoView}</b></div>
       <div class="orow"><span>Próxima renovación</span><b>${(CLIENTE&&CLIENTE.fecha_renovacion)?fechaCorta(CLIENTE.fecha_renovacion):'—'}</b></div>
+      ${saneamigoRow}
       ${cuotaRow}
       ${activa&&CLIENTE&&CLIENTE.mollie_subscription_id?`<button class="verobj" onclick="cancelarSuscripcion()">Cancelar suscripción</button><p class="note">Al cancelar, la domiciliación se detiene sola.</p>`:''}
     </div>
