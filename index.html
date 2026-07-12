@@ -1036,7 +1036,7 @@ function renderInicio(){
       <div class="today">${esConsulta
         ?'📣 ¡Hoy es tu día de consulta! Envía tus datos antes de las 10:00 🕙'
         :'Hoy no es día de consulta. Recuerda enviar tus datos el '+fmt(CLIENTE.dia_consulta)+' antes de las 10:00 🕙'}</div>
-      ${(CAL&&(CAL.get-CAL.objetivo)>0)?`<div class="today" style="margin-top:8px">🎯 Esta semana tu objetivo es bajar ${CAL.get-CAL.objetivo} g</div>`:''}
+      ${(CAL&&(CAL.get-CAL.objetivo)>0)?`<div class="today" style="margin-top:8px;background:#fff;color:#d97757;font-weight:800">🎯 Esta semana tu objetivo es bajar ${CAL.get-CAL.objetivo} g</div>`:''}
     </div>
 
     <h2 class="sec">🧭 Tu pizarra</h2>
