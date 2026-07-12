@@ -69,7 +69,7 @@
   .meal{display:flex;gap:10px;padding:9px 0;border-bottom:1px dashed #dbe6e9}
   .meal:last-child{border-bottom:none}
   .meal .t{font-size:16px;font-weight:700;color:var(--teal);min-width:94px;line-height:1.2;word-break:normal;overflow-wrap:normal}
-  .meal .d{font-size:14px;line-height:1.35}
+  .meal .d{font-size:14px;line-height:1.4;font-weight:600;color:var(--dark)}
   .shop li{font-size:14px;padding:5px 0;list-style:none;display:flex;justify-content:space-between;border-bottom:1px dashed #dbe6e9}
   .evo .lbl{font-size:16px;color:var(--dark);font-weight:800;margin-bottom:2px}
   .evo .stat{display:flex;justify-content:space-around;margin-top:6px}
@@ -97,11 +97,13 @@
   .bar>span{display:block;height:100%;background:var(--teal)}
   .water{display:flex;align-items:center;gap:14px;background:#eaf6f9}
   .water .drop{font-size:34px}.water .big{font-size:26px;font-weight:700;color:var(--teal)}
-  .steps{display:flex;align-items:flex-start;gap:14px;background:#eef6f4}
+  .steps{display:flex;align-items:flex-start;gap:14px;background:#fdeadf}
   .steps .foot{font-size:32px;line-height:1.1}
-  .steps .big{font-size:26px;font-weight:700;color:var(--teal)}
-  .steps input{flex:1;min-width:0;padding:9px 11px;border:1.5px solid #cfe1e6;border-radius:12px;font-size:16px;outline:none;background:#fff}
-  .steps button{background:var(--teal);color:#fff;border:none;border-radius:12px;padding:9px 16px;font-weight:700;font-size:14px;cursor:pointer;white-space:nowrap}
+  .steps .big{font-size:26px;font-weight:700;color:#d97757}
+  .steps .bar{background:#f5d3c3}
+  .steps .bar>span{background:#d97757}
+  .steps input{flex:1;min-width:0;padding:9px 11px;border:1.5px solid #e7bfab;border-radius:12px;font-size:16px;outline:none;background:#fff}
+  .steps button{background:#d97757;color:#fff;border:none;border-radius:12px;padding:9px 16px;font-weight:700;font-size:14px;cursor:pointer;white-space:nowrap}
   .steps .smsg{font-size:14px;color:var(--muted);margin-top:8px}
   .glasses{display:flex;gap:4px;margin-top:6px;flex-wrap:wrap}
   .glasses span{width:16px;height:20px;border-radius:0 0 5px 5px;border:2px solid var(--teal)}
@@ -1054,7 +1056,7 @@ function renderInicio(){
       <h3>📅 Tu agenda</h3>
       <div style="font-size:14px;font-weight:700;margin:-2px 0 8px">Hoy es ${hoy.toLocaleDateString('es-ES',{day:'numeric',month:'long'})}</div>
       <div class="row" style="font-weight:800"><span>Próxima consulta</span><span>${fechaLarga(fechaProximaConsulta())}</span></div>
-      <div class="row"><span>Próxima renovación</span><span>${fechaCorta(CLIENTE.fecha_renovacion)}</span></div>
+      <div class="row" style="font-weight:800"><span>Próxima renovación</span><span>${fechaCorta(CLIENTE.fecha_renovacion)}</span></div>
       <div class="today">${esConsulta
         ?'📣 ¡Hoy es tu día de consulta! Envía tus datos antes de las 10:00 🕙'
         :'Hoy no es día de consulta. Recuerda enviar tus datos el '+fmt(CLIENTE.dia_consulta)+' antes de las 10:00 🕙'}</div>
@@ -1107,7 +1109,9 @@ function renderInicio(){
         <div style="flex:1"><div style="font-size:14px;color:var(--muted);font-weight:700">Gasto día</div><div style="font-size:20px;font-weight:800">${CAL.get}</div><div style="font-size:14px;color:var(--muted)">kcal</div></div>
         <div style="flex:1"><div style="font-size:14px;color:var(--muted);font-weight:700">Objetivo</div><div style="font-size:20px;font-weight:800;color:var(--teal)">${CAL.objetivo}</div><div style="font-size:14px;color:var(--muted)">${CAL.objLabel}</div></div>
       </div>
-      <div style="margin-top:12px;font-size:14px;color:var(--muted);text-align:center">Promedio diario de la semana · <b style="color:var(--teal);white-space:nowrap">${CAL.objetivo} kcal</b> · <b style="color:var(--text);white-space:nowrap">P ${MAC.prot}g</b> · <b style="color:var(--text);white-space:nowrap">HC ${MAC.hc}g</b> · <b style="color:var(--text);white-space:nowrap">G ${MAC.grasa}g</b></div>
+      <div style="margin-top:14px;font-size:14px;font-weight:800;color:var(--teal);text-align:center;line-height:1.3">Estas son las calorías y macronutrientes que debes comer en un día</div>
+      <div style="margin-top:8px;font-size:14px;color:var(--muted);text-align:center">Promedio diario de la semana · <b style="color:var(--text);white-space:nowrap">${CAL.objetivo} kcal</b></div>
+      <div style="margin-top:3px;font-size:14px;font-weight:700;color:var(--text);text-align:center"><span style="white-space:nowrap">P ${MAC.prot}g</span> · <span style="white-space:nowrap">HC ${MAC.hc}g</span> · <span style="white-space:nowrap">G ${MAC.grasa}g</span></div>
     </div>`:''}
 
     ${esPlanPC()?`<div style="padding:6px 4px" onclick="abrirInvitar()">
