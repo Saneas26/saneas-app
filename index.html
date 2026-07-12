@@ -1182,7 +1182,15 @@ function abrirInvitar(){
   if(!esPlanPC()){ abrirDetalle('Saneamigos','<div class="empty">El programa Saneamigos es solo para el plan Completo o Premium 🙂</div>'); return; }
   const d=Number(CLIENTE.descuento_invitados||0); const n=Math.round(d/10);
   abrirDetalle('Saneamigos', `
-    <p style="color:var(--muted);font-size:14px;margin:0 0 12px">Por cada amigo o amiga que ya sea cliente <b>Completo o Premium</b> y añadas aquí, te descontamos <b>10€</b> de tu cuota. Hasta 6 (¡el Completo sale gratis!).</p>
+    <p style="color:var(--muted);font-size:14px;margin:0 0 12px">Por cada amigo o amiga que ya sea cliente <b>Completo o Premium</b> y añadas aquí, te descontamos <b>10€</b> de tu cuota mensual. Hasta 6 (¡el Completo sale gratis!).</p>
+    <div style="background:#fff7ed;border:1px solid #fdba74;border-radius:14px;padding:13px 15px;margin-bottom:14px">
+      <div style="font-size:14px;font-weight:800;color:#9a3412;margin-bottom:6px">Antes de añadir a alguien, ten en cuenta:</div>
+      <ul style="margin:0;padding-left:18px;font-size:13.5px;color:#7c2d12;line-height:1.55">
+        <li>Solo puedes añadir a personas que <b>ya están pasando consulta con Óscar y pagando su cuota</b>.</li>
+        <li>No añadas a alguien con quien solo has hablado y todavía no es cliente.</li>
+        <li>No puedes añadirte a ti mismo/a.</li>
+      </ul>
+    </div>
     <div id="invBox" style="background:var(--light);border-radius:16px;padding:16px;text-align:center;margin-bottom:14px">
       <div style="font-size:14px;color:var(--muted)">Tus invitados</div>
       <div style="font-size:32px;font-weight:800;color:var(--teal)">${n}/6</div>
