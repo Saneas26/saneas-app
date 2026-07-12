@@ -1082,7 +1082,7 @@ function renderInicio(){
         <div style="flex:1"><div class="lbl">Gasto día</div><div style="font-size:19px;font-weight:800">${CAL.get}</div><div style="font-size:11px;color:var(--muted)">kcal</div></div>
         <div style="flex:1"><div class="lbl">Objetivo</div><div style="font-size:19px;font-weight:800;color:var(--teal)">${CAL.objetivo}</div><div style="font-size:11px;color:var(--muted)">${CAL.objLabel}</div></div>
       </div>
-      <div style="margin-top:12px;font-size:13px;color:var(--muted);text-align:center">Reparto diario · <b style="color:var(--text);white-space:nowrap">P ${MAC.prot}g</b> · <b style="color:var(--text);white-space:nowrap">HC ${MAC.hc}g</b> · <b style="color:var(--text);white-space:nowrap">G ${MAC.grasa}g</b></div>
+      <div style="margin-top:12px;font-size:13px;color:var(--muted);text-align:center">Promedio diario de la semana · <b style="color:var(--teal);white-space:nowrap">${CAL.objetivo} kcal</b> · <b style="color:var(--text);white-space:nowrap">P ${MAC.prot}g</b> · <b style="color:var(--text);white-space:nowrap">HC ${MAC.hc}g</b> · <b style="color:var(--text);white-space:nowrap">G ${MAC.grasa}g</b></div>
     </div>`:''}
 
     ${esPlanPC()?`<div style="padding:6px 4px" onclick="abrirInvitar()">
@@ -1275,7 +1275,7 @@ function pizarra(k,el){
     if(TOMAS_HOY.length===0) html='<div class="empty">No hay dieta asignada para hoy.</div>';
     else { const CAL=calcCalorias(), pctMap=repartoComidas(comidasCalDe(TOMAS_HOY));
       html=TOMAS_HOY.map(t=>{const i=TOMA_INFO[t.toma]||['🍴',t.toma];
-      return `<div class="meal"><div class="t">${i[0]} ${i[1]}</div><div class="d">${listar(t.texto)}</div>${CAL?lineaKcal(t.toma,pctMap,CAL.objetivo):''}</div>`;}).join(''); }
+      return `<div class="meal"><div class="t">${i[0]} ${i[1]}</div><div class="d">${listar(t.texto)}</div></div>`;}).join(''); }
   }else{
     html=`<p style="font-size:13px;color:var(--muted)">Tu próxima dieta y su lista de la compra aparecerán aquí cuando la tengas asignada.</p>`;
   }
@@ -1321,8 +1321,7 @@ async function renderDieta(){
       const recs=(t.toma_recetas||[]).map(x=>x.recetas).filter(Boolean);
       prods.forEach(p=>PRODUCTOS_CACHE[p.id]=p); recs.forEach(r=>RECETAS_CACHE[r.id]=r);
       return `<div class="card"><div class="plato">
-        <h4>${i[0]} ${i[1]}</h4><p>${listar(t.texto)}</p>${CAL?lineaKcal(t.toma,pctMap,CAL.objetivo):''}
-        ${prods.length?`<div class="relh">🛒 Artículos de tienda</div><div class="chips">${prods.map(p=>`<span class="chip shop link" onclick="verProducto('${p.id}')">🛒 ${p.nombre} ›</span>`).join('')}</div>`:''}
+        <h4>${i[0]} ${i[1]}</h4><p>${listar(t.texto)}</p>        ${prods.length?`<div class="relh">🛒 Artículos de tienda</div><div class="chips">${prods.map(p=>`<span class="chip shop link" onclick="verProducto('${p.id}')">🛒 ${p.nombre} ›</span>`).join('')}</div>`:''}
         ${recs.length?`<div class="relh">👩‍🍳 Recetas relacionadas</div><div class="chips">${recs.map(r=>`<span class="chip rec link" onclick="verReceta('${r.id}')">👩‍🍳 ${r.nombre} ›</span>`).join('')}</div>`:''}
       </div></div>`;}).join('')}`;
 }
