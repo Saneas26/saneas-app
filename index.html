@@ -51,34 +51,43 @@
   .brand small{font-weight:300;font-size:10px;display:block;opacity:.85;letter-spacing:1.5px}
   .avatar{width:36px;height:36px;border-radius:50%;background:#fff;color:var(--teal);display:flex;align-items:center;justify-content:center;font-weight:700;cursor:pointer}
   .screen{flex:1;overflow-y:auto;padding:16px 14px 96px}
-  h2.sec{font-size:13px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin:18px 4px 8px;font-weight:700}
+  h2.sec{font-size:18px;color:var(--dark);margin:20px 4px 10px;font-weight:800}
   .card{background:var(--white);border-radius:18px;padding:16px;box-shadow:var(--shadow);margin-bottom:14px}
   .aviso{background:linear-gradient(135deg,#3890a4,#2f7f92);color:#fff;border-radius:18px;padding:15px 18px;margin:6px 0 14px;box-shadow:var(--shadow);font-size:14px;font-weight:600;line-height:1.4;display:flex;gap:10px;align-items:flex-start}
   .aviso.urgente{background:linear-gradient(135deg,#d97757,#c15f3c)}
   .aviso .ico{font-size:20px;line-height:1.2;flex:none}
-  .card h3{font-size:15px;font-weight:700;margin-bottom:8px}
+  .card h3{font-size:16px;font-weight:800;margin-bottom:8px}
   .agenda{background:linear-gradient(135deg,var(--teal),#2b7180);color:#fff}
   .agenda h3{color:#fff}
   .agenda .row{display:flex;justify-content:space-between;font-size:14px;padding:5px 0;border-top:1px solid rgba(255,255,255,.18)}
   .agenda .row span:last-child{font-weight:700}
-  .agenda .today{background:rgba(255,255,255,.16);border-radius:10px;padding:8px 10px;margin-top:10px;font-size:13px;text-align:center;font-weight:500}
+  .agenda .today{background:rgba(255,255,255,.16);border-radius:10px;padding:9px 11px;margin-top:10px;font-size:14px;text-align:center;font-weight:500}
   .choices{display:flex;gap:6px;margin-bottom:12px}
-  .choice{flex:1;background:var(--white);border:2px solid var(--light);border-radius:14px;padding:9px 4px;text-align:center;font-size:11px;font-weight:700;color:var(--muted);cursor:pointer;line-height:1.25}
+  .choice{flex:1;background:var(--white);border:2px solid var(--light);border-radius:14px;padding:10px 4px;text-align:center;font-size:14px;font-weight:700;color:var(--muted);cursor:pointer;line-height:1.2}
   .choice .ic{font-size:20px;display:block;margin-bottom:3px}
   .choice.active{background:var(--teal);color:#fff;border-color:var(--teal)}
   .meal{display:flex;gap:10px;padding:9px 0;border-bottom:1px dashed #dbe6e9}
   .meal:last-child{border-bottom:none}
-  .meal .t{font-size:13.5px;font-weight:700;color:var(--teal);min-width:86px;line-height:1.2;word-break:normal;overflow-wrap:normal}
-  .meal .d{font-size:13px}
+  .meal .t{font-size:16px;font-weight:700;color:var(--teal);min-width:94px;line-height:1.2;word-break:normal;overflow-wrap:normal}
+  .meal .d{font-size:14px;line-height:1.35}
   .shop li{font-size:13px;padding:5px 0;list-style:none;display:flex;justify-content:space-between;border-bottom:1px dashed #dbe6e9}
-  .evo .lbl{font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase}
+  .evo .lbl{font-size:16px;color:var(--dark);font-weight:800;margin-bottom:2px}
   .evo .stat{display:flex;justify-content:space-around;margin-top:6px}
   .evo .stat div{display:flex;flex-direction:column;text-align:center}
-  .evo .stat .k{font-size:10px;color:var(--muted)}
-  .evo .stat .v{font-size:16px;font-weight:700}
+  .evo .stat .k{font-size:14px;color:var(--muted)}
+  .evo .stat .v{font-size:18px;font-weight:800}
   .evo .v.now{color:var(--teal)}.evo .v.goal{color:var(--green)}
-  .hitomsg{background:#eaf6f9;color:var(--dark);font-size:13px;font-weight:600;text-align:center;padding:9px 10px;border-radius:10px;margin-top:12px}
-  .verobj{display:block;width:100%;text-align:center;margin-top:12px;background:none;border:2px solid var(--light);border-radius:12px;padding:10px;font-family:inherit;font-weight:700;font-size:13px;color:var(--teal);cursor:pointer}
+  .evo-split{display:flex;align-items:stretch;margin-top:16px}
+  .evo-col{flex:1;min-width:0}
+  .evo-div{width:1px;background:#e2eef1;margin:0 8px;align-self:stretch}
+  .evo-actions{display:flex;flex-direction:column;gap:10px;margin-top:16px}
+  .erow{display:flex;align-items:center;gap:12px;width:100%;background:#f4f8f9;border:none;border-radius:14px;padding:14px 16px;font-family:inherit;font-size:16px;font-weight:700;color:var(--dark);cursor:pointer;text-align:left}
+  .erow:active{background:#e8f1f3}
+  .erow .ei{font-size:20px;flex:none}
+  .erow .et{flex:1}
+  .erow .ec{font-size:22px;color:var(--teal);flex:none;line-height:1}
+  .hitomsg{background:#eaf6f9;color:var(--dark);font-size:14px;font-weight:600;text-align:center;padding:10px 12px;border-radius:12px;margin-top:14px}
+  .verobj{display:block;width:100%;text-align:center;margin-top:12px;background:none;border:2px solid var(--light);border-radius:12px;padding:11px;font-family:inherit;font-weight:700;font-size:14px;color:var(--teal);cursor:pointer}
   .orow{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px dashed #dbe6e9;font-size:14px}
   .orow b{white-space:nowrap}
   .hgrid{display:grid;grid-template-columns:1fr 1fr;gap:4px 14px}
@@ -93,7 +102,7 @@
   .steps .big{font-size:26px;font-weight:700;color:var(--teal)}
   .steps input{flex:1;min-width:0;padding:9px 11px;border:1.5px solid #cfe1e6;border-radius:12px;font-size:15px;outline:none;background:#fff}
   .steps button{background:var(--teal);color:#fff;border:none;border-radius:12px;padding:9px 16px;font-weight:700;font-size:14px;cursor:pointer;white-space:nowrap}
-  .steps .smsg{font-size:12.5px;color:var(--muted);margin-top:8px}
+  .steps .smsg{font-size:14px;color:var(--muted);margin-top:8px}
   .glasses{display:flex;gap:4px;margin-top:6px;flex-wrap:wrap}
   .glasses span{width:16px;height:20px;border-radius:0 0 5px 5px;border:2px solid var(--teal)}
   .glasses span.full{background:var(--teal)}
@@ -1037,13 +1046,13 @@ function renderInicio(){
 
   document.getElementById('s-inicio').innerHTML=`
     <p style="font-size:20px;font-weight:700;margin:4px 6px 2px">Hola, ${CLIENTE.nombre||''}${esEmbajador()?` <img src="${SANEAMIGO_BADGE}" title="Embajador Saneas" style="height:24px;vertical-align:-5px">`:''} 👋</p>
-    <p style="font-size:13px;color:var(--muted);margin:0 6px 4px">Semana ${fmt(CLIENTE.semana)} en Saneas · ${fmt(CLIENTE.nivel)}</p>
+    <p style="font-size:14px;color:var(--muted);margin:0 6px 4px">Semana ${fmt(CLIENTE.semana)} en Saneas · ${fmt(CLIENTE.nivel)}</p>
 
     ${avisoTarjeta()}
 
     <div class="card agenda">
       <h3>📅 Tu agenda</h3>
-      <div style="font-size:13px;font-weight:600;margin:-2px 0 8px;opacity:.95">Hoy es ${hoy.toLocaleDateString('es-ES',{day:'numeric',month:'long'})}</div>
+      <div style="font-size:14px;font-weight:600;margin:-2px 0 8px;opacity:.95">Hoy es ${hoy.toLocaleDateString('es-ES',{day:'numeric',month:'long'})}</div>
       <div class="row"><span>Próxima consulta</span><span>${fechaLarga(fechaProximaConsulta())}</span></div>
       <div class="row"><span>Próxima renovación</span><span>${fechaCorta(CLIENTE.fecha_renovacion)}</span></div>
       <div class="today">${esConsulta
@@ -1070,32 +1079,35 @@ function renderInicio(){
         </div>
       </div>
       <div class="bar"><span style="width:${prog}%"></span></div>
-      <div class="evo" style="margin-top:14px;display:flex">
-        <div style="flex:1"><div class="lbl">Grasa %</div><div class="stat">
+      <div class="evo-split">
+        <div class="evo-col"><div class="evo"><div class="lbl">Grasa %</div><div class="stat">
           <div><span class="k">Ini</span><span class="v">${fmt(grasaIni)}</span></div>
           <div><span class="k">Hoy</span><span class="v now">${fmt(grasaHoy)}</span></div>
-          <div><span class="k">Meta</span><span class="v goal">${metaGrasa!=null?r1(metaGrasa):'—'}</span></div></div></div>
-        <div style="flex:1"><div class="lbl">IMC</div><div class="stat">
+          <div><span class="k">Meta</span><span class="v goal">${metaGrasa!=null?r1(metaGrasa):'—'}</span></div>
+        </div></div></div>
+        <div class="evo-div"></div>
+        <div class="evo-col"><div class="evo"><div class="lbl">IMC</div><div class="stat">
           <div><span class="k">Ini</span><span class="v">${fmt(imcIni)}</span></div>
           <div><span class="k">Hoy</span><span class="v now">${fmt(imcHoy)}</span></div>
-          <div><span class="k">Meta</span><span class="v goal">${metaImc!=null?r1(metaImc):'—'}</span></div></div></div>
+          <div><span class="k">Meta</span><span class="v goal">${metaImc!=null?r1(metaImc):'—'}</span></div>
+        </div></div></div>
       </div>
       ${hito&&hito.texto?`<div class="hitomsg">${hito.texto}</div>`:''}
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button class="verobj" onclick="verObjetivos()">🎯 Objetivos</button>
-        <button class="verobj" onclick="verHistorial()">📊 Evolución</button>
-        <button class="verobj" onclick="abrirCompartir()">📤 Compartir</button>
+      <div class="evo-actions">
+        <button class="erow" onclick="verObjetivos()"><span class="ei">🎯</span><span class="et">Tus objetivos</span><span class="ec">›</span></button>
+        <button class="erow" onclick="verHistorial()"><span class="ei">📊</span><span class="et">Ver evolución completa</span><span class="ec">›</span></button>
+        <button class="erow" onclick="abrirCompartir()"><span class="ei">📤</span><span class="et">Compartir progreso</span><span class="ec">›</span></button>
       </div>
     </div>
 
     ${CAL?`<h2 class="sec">🔥 Tus calorías</h2>
     <div class="card">
       <div style="display:flex;gap:10px;text-align:center">
-        <div style="flex:1"><div class="lbl">Basal</div><div style="font-size:19px;font-weight:800">${CAL.tmb}</div><div style="font-size:11px;color:var(--muted)">kcal</div></div>
-        <div style="flex:1"><div class="lbl">Gasto día</div><div style="font-size:19px;font-weight:800">${CAL.get}</div><div style="font-size:11px;color:var(--muted)">kcal</div></div>
-        <div style="flex:1"><div class="lbl">Objetivo</div><div style="font-size:19px;font-weight:800;color:var(--teal)">${CAL.objetivo}</div><div style="font-size:11px;color:var(--muted)">${CAL.objLabel}</div></div>
+        <div style="flex:1"><div style="font-size:14px;color:var(--muted);font-weight:700">Basal</div><div style="font-size:20px;font-weight:800">${CAL.tmb}</div><div style="font-size:14px;color:var(--muted)">kcal</div></div>
+        <div style="flex:1"><div style="font-size:14px;color:var(--muted);font-weight:700">Gasto día</div><div style="font-size:20px;font-weight:800">${CAL.get}</div><div style="font-size:14px;color:var(--muted)">kcal</div></div>
+        <div style="flex:1"><div style="font-size:14px;color:var(--muted);font-weight:700">Objetivo</div><div style="font-size:20px;font-weight:800;color:var(--teal)">${CAL.objetivo}</div><div style="font-size:14px;color:var(--muted)">${CAL.objLabel}</div></div>
       </div>
-      <div style="margin-top:12px;font-size:13px;color:var(--muted);text-align:center">Promedio diario de la semana · <b style="color:var(--teal);white-space:nowrap">${CAL.objetivo} kcal</b> · <b style="color:var(--text);white-space:nowrap">P ${MAC.prot}g</b> · <b style="color:var(--text);white-space:nowrap">HC ${MAC.hc}g</b> · <b style="color:var(--text);white-space:nowrap">G ${MAC.grasa}g</b></div>
+      <div style="margin-top:12px;font-size:14px;color:var(--muted);text-align:center">Promedio diario de la semana · <b style="color:var(--teal);white-space:nowrap">${CAL.objetivo} kcal</b> · <b style="color:var(--text);white-space:nowrap">P ${MAC.prot}g</b> · <b style="color:var(--text);white-space:nowrap">HC ${MAC.hc}g</b> · <b style="color:var(--text);white-space:nowrap">G ${MAC.grasa}g</b></div>
     </div>`:''}
 
     ${esPlanPC()?`<div style="padding:6px 4px" onclick="abrirInvitar()">
@@ -1114,7 +1126,7 @@ function renderInicio(){
     <div class="card water">
       <div class="drop">💧</div>
       <div style="flex:1"><h3 style="margin:0">Agua de hoy</h3>
-        <div><span class="big">${litros} L</span> <span style="font-size:13px;color:var(--muted)">${aguaL!=null?'≈ '+vasos+' vasos':'registra tu peso'}</span></div>
+        <div><span class="big">${litros} L</span> <span style="font-size:14px;color:var(--muted)">${aguaL!=null?'≈ '+vasos+' vasos':'registra tu peso'}</span></div>
         <div class="glasses">${glasses}</div></div>
     </div>
 
@@ -1122,7 +1134,7 @@ function renderInicio(){
       <div class="foot">👟</div>
       <div style="flex:1">
         <h3 style="margin:0">Pasos de hoy</h3>
-        <div><span class="big" id="pasosTotal">${PASOS_HOY.toLocaleString('es-ES')}</span> <span style="font-size:13px;color:var(--muted)">/ 8.800 pasos</span></div>
+        <div><span class="big" id="pasosTotal">${PASOS_HOY.toLocaleString('es-ES')}</span> <span style="font-size:14px;color:var(--muted)">/ 8.800 pasos</span></div>
         <div class="bar"><span id="pasosBar" style="width:${Math.min(100,Math.round(PASOS_HOY/8800*100))}%"></span></div>
         <div class="smsg" id="pasosMsg"></div>
         <div style="display:flex;gap:8px;margin-top:10px">
