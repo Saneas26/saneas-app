@@ -1270,6 +1270,11 @@ async function dibujarPost(conBadge){
     if(conBadge){ try{ const badge=await _img(SANEAMIGO_BADGE); ctx.drawImage(badge, xGap-bs/2, by, bs, bs); dibujada=true; }catch(e){} }
     if(!dibujada){ ctx.save(); ctx.fillStyle='#f5c542'; ctx.beginPath(); ctx.arc(xGap, by+bs/2, bs/2, 0, 7); ctx.fill(); _estrella(ctx,xGap,by+bs/2,bs*0.32,'#0b5b52'); ctx.restore(); }
   }
+  // ── CTA web: saneas.es bien visible (para que el cliente potencial sepa dónde ir) ──
+  { const url='saneas.es'; ctx.textAlign='center'; ctx.font='800 44px Montserrat, sans-serif';
+    const uw=ctx.measureText(url).width, pad=48, pillW=uw+pad*2, pillH=68, px=W/2-pillW/2, py=1272;
+    ctx.fillStyle='#ffab73'; _rr(ctx,px,py,pillW,pillH,34); ctx.fill();
+    ctx.fillStyle='#0b5b52'; ctx.fillText(url, W/2, py+46); }
   cv._conBadge=conBadge;
 }
 async function _postBlob(){
