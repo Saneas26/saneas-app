@@ -1201,11 +1201,17 @@ function abrirCompartir(){
   abrirDetalle('Comparte tu evolución', `
     <div style="text-align:center">
       <canvas id="postCanvas" width="1080" height="1350" style="width:100%;max-width:300px;border-radius:16px;box-shadow:var(--shadow)"></canvas>
-      <div style="display:flex;gap:8px;justify-content:center;margin-top:12px">
-        <button class="btn" style="flex:0 0 auto" id="btnShare" onclick="compartirPost()">📤 Compartir</button>
-        <button class="verobj" onclick="descargarPost()">⬇️ Descargar</button>
+      <div style="display:flex;gap:10px;margin-top:14px">
+        <button class="btn" style="flex:1" id="btnShare" onclick="compartirPost()">📤 Compartir</button>
+        <button class="btn" style="flex:1;background:#fff;color:var(--teal);border:2px solid var(--teal);box-shadow:none" onclick="descargarPost()">⬇️ Descargar</button>
       </div>
-      <p style="font-size:14px;color:var(--muted);margin-top:8px">Compártelo en Instagram, TikTok o Facebook 💚</p>
+      <p style="font-size:14px;font-weight:800;color:var(--dark);margin-top:14px;line-height:1.35">Compártelo en Instagram, TikTok, Facebook o WhatsApp</p>
+      <div style="display:flex;gap:16px;justify-content:center;margin-top:10px;align-items:center">
+        <svg width="34" height="34" viewBox="0 0 24 24" aria-label="Instagram"><defs><linearGradient id="igg" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#feda75"/><stop offset=".5" stop-color="#d62976"/><stop offset="1" stop-color="#4f5bd5"/></linearGradient></defs><rect width="24" height="24" rx="6" fill="url(#igg)"/><rect x="5" y="5" width="14" height="14" rx="4.5" fill="none" stroke="#fff" stroke-width="1.8"/><circle cx="12" cy="12" r="3.3" fill="none" stroke="#fff" stroke-width="1.8"/><circle cx="16.6" cy="7.4" r="1.1" fill="#fff"/></svg>
+        <svg width="34" height="34" viewBox="0 0 24 24" aria-label="TikTok"><rect width="24" height="24" rx="6" fill="#000"/><path fill="#fff" d="M17.4 8.6a3.7 3.7 0 0 1-2.3-.8v4.9a3.95 3.95 0 1 1-3.95-3.95c.18 0 .35.02.52.05v2.03a1.95 1.95 0 1 0 1.43 1.87V5.1h1.95a3.7 3.7 0 0 0 2.88 3.5z"/></svg>
+        <svg width="34" height="34" viewBox="0 0 24 24" aria-label="Facebook"><path fill="#1877F2" d="M24 12a12 12 0 1 0-13.88 11.85v-8.38H7.08V12h3.04V9.36c0-3 1.79-4.66 4.53-4.66 1.31 0 2.68.24 2.68.24v2.95h-1.51c-1.49 0-1.95.92-1.95 1.87V12h3.32l-.53 3.47h-2.79v8.38A12 12 0 0 0 24 12z"/></svg>
+        <svg width="34" height="34" viewBox="0 0 32 32" aria-label="WhatsApp"><path fill="#25D366" d="M16 3.2C9 3.2 3.4 8.8 3.4 15.7c0 2.5.7 4.8 1.9 6.8L3 29.2l7-1.9c1.9 1 4.1 1.6 6 1.6 6.9 0 12.5-5.6 12.5-12.5S22.9 3.2 16 3.2z"/><path fill="#fff" d="M12.6 9.7c-.25-.55-.5-.56-.74-.57h-.63c-.22 0-.58.08-.88.4-.3.32-1.15 1.12-1.15 2.74s1.18 3.18 1.34 3.4c.16.22 2.28 3.65 5.62 4.98 2.78 1.1 3.34.88 3.95.82.6-.05 1.95-.8 2.22-1.57.28-.77.28-1.43.2-1.57-.08-.13-.3-.2-.63-.37-.33-.16-1.95-.96-2.25-1.07-.3-.11-.52-.16-.74.17-.22.33-.85 1.06-1.04 1.28-.19.22-.38.24-.71.08-.33-.16-1.4-.52-2.66-1.64-.98-.88-1.65-1.96-1.84-2.29-.19-.33-.02-.5.14-.66.15-.15.33-.38.5-.58.16-.19.22-.33.33-.55.11-.22.05-.41-.03-.58-.08-.16-.72-1.8-1.02-2.46z"/></svg>
+      </div>
     </div>`);
   setTimeout(()=>dibujarPost(true),80);
 }
@@ -1221,45 +1227,35 @@ async function dibujarPost(conBadge){
   ctx.fillStyle='rgba(255,255,255,0.06)'; ctx.beginPath(); ctx.arc(920,150,300,0,7); ctx.fill();
   ctx.beginPath(); ctx.arc(120,1250,240,0,7); ctx.fill();
   ctx.textAlign='center';
-  ctx.fillStyle='#fff'; ctx.font='800 66px Montserrat, sans-serif'; ctx.fillText('Saneas', W/2, 135);
-  ctx.fillStyle='rgba(255,255,255,.9)'; ctx.font='600 34px Nunito, sans-serif'; ctx.fillText('nutrición para todos los bolsillos', W/2, 184);
+  ctx.fillStyle='#fff'; ctx.font='800 82px Montserrat, sans-serif'; ctx.fillText('Saneas', W/2, 142);
+  ctx.fillStyle='rgba(255,255,255,.95)'; ctx.font='600 42px Nunito, sans-serif'; ctx.fillText('nutrición para todos los bolsillos', W/2, 198);
   // ── Peso siempre como titular ─────────────────────────────
   const pesoIni=(PRIMERO&&PRIMERO.peso!=null)?Number(PRIMERO.peso):(CLIENTE.peso_inicial!=null?Number(CLIENTE.peso_inicial):null);
   const pesoHoy=(ULTIMO&&ULTIMO.peso!=null)?Number(ULTIMO.peso):null;
   const perdido=(pesoIni!=null&&pesoHoy!=null)?(pesoIni-pesoHoy):null;
   const semanas=CLIENTE.semana||null;
-  ctx.fillStyle='#e6fffa'; ctx.font='700 40px Nunito, sans-serif'; ctx.fillText('MI EVOLUCIÓN', W/2, 292);
+  ctx.fillStyle='#ffab73'; ctx.font='800 50px Montserrat, sans-serif'; ctx.fillText('MI EVOLUCIÓN', W/2, 288);
   if(perdido!=null && perdido>0){
-    ctx.fillStyle='#a7f3d0'; ctx.font='900 200px Montserrat, sans-serif'; ctx.fillText('−'+r1(perdido).toString().replace('.',','), W/2, 500);
-    ctx.fillStyle='#fff'; ctx.font='800 60px Montserrat, sans-serif'; ctx.fillText('kg menos', W/2, 572);
-    ctx.fillStyle='rgba(255,255,255,.92)'; ctx.font='600 40px Nunito, sans-serif'; ctx.fillText('de peso'+(semanas?(' · '+semanas+' sem'):''), W/2, 632);
+    ctx.fillStyle='#a7f3d0'; ctx.font='900 200px Montserrat, sans-serif'; ctx.fillText('−'+r1(perdido).toString().replace('.',','), W/2, 498);
+    ctx.fillStyle='#fff'; ctx.font='800 58px Montserrat, sans-serif'; ctx.fillText('kg menos de peso', W/2, 572);
   } else {
-    ctx.fillStyle='#a7f3d0'; ctx.font='900 120px Montserrat, sans-serif'; ctx.fillText('¡En marcha!', W/2, 500);
-    ctx.fillStyle='rgba(255,255,255,.9)'; ctx.font='600 40px Nunito, sans-serif'; ctx.fillText('Mi cambio con Saneas', W/2, 590);
+    ctx.fillStyle='#a7f3d0'; ctx.font='900 120px Montserrat, sans-serif'; ctx.fillText('¡En marcha!', W/2, 498);
+    ctx.fillStyle='rgba(255,255,255,.92)'; ctx.font='600 42px Nunito, sans-serif'; ctx.fillText('Mi cambio con Saneas', W/2, 566);
   }
-  // ── Métricas de apoyo, en orden fijo: grasa, visceral, agua, proteína, músculo ──
-  // Solo se muestran las que han mejorado de verdad (para que la tarjeta sea comercial).
-  const SUP=[
-    {f:'grasa_corporal', down:true,  cu:'%',   chip:'grasa'},
-    {f:'grasa_visceral', down:true,  cu:'',    chip:'g. visceral'},
-    {f:'agua',           down:false, cu:'%',   chip:'agua'},
-    {f:'proteina',       down:false, cu:'%',   chip:'proteína'},
-    {f:'masa_muscular',  down:false, cu:' kg', chip:'músculo'},
+  // ── 4 cajas destacadas: grasa visceral, agua, músculo, semanas ──
+  const _delta=(f)=>{ const i=(PRIMERO&&PRIMERO[f]!=null)?Number(PRIMERO[f]):null; const h=(ULTIMO&&ULTIMO[f]!=null)?Number(ULTIMO[f]):null; if(i==null||h==null||isNaN(i)||isNaN(h)) return null; return h-i; };
+  const _metric=(f,unit,downGood)=>{ const d=_delta(f); if(d==null) return {txt:'—', arrow:'', color:'#e6fffa'}; if(Math.abs(d)<0.05) return {txt:'0'+unit, arrow:'', color:'#e6fffa'}; const mejora= downGood ? d<0 : d>0; const mag=r1(Math.abs(d)).toString().replace('.',','); const sign=d<0?'−':'+'; return {txt:sign+mag+unit, arrow: mejora?(downGood?'▼':'▲'):(downGood?'▲':'▼'), color: mejora?'#34d399':'#f87171'}; };
+  const _cajas=[
+    {label:'Grasa visceral', m:_metric('grasa_visceral','',true)},
+    {label:'Agua', m:_metric('agua','%',false)},
+    {label:'Músculo', m:_metric('masa_muscular',' kg',false)},
+    {label:'Semanas', m:{txt:(semanas?String(semanas):'—'), arrow:'', color:'#e6fffa'}}
   ];
-  const chips=[];
-  for(const p of SUP){
-    const ini=(PRIMERO&&PRIMERO[p.f]!=null)?Number(PRIMERO[p.f]):null;
-    const hoy=(ULTIMO&&ULTIMO[p.f]!=null)?Number(ULTIMO[p.f]):null;
-    if(ini==null||hoy==null||isNaN(ini)||isNaN(hoy)) continue;
-    const d=p.down?(ini-hoy):(hoy-ini);
-    if(d>0.05) chips.push((p.down?'−':'+')+r1(d).toString().replace('.',',')+p.cu+' '+p.chip);
-  }
-  ctx.font='700 36px Nunito, sans-serif'; let cy=720;
-  chips.slice(0,5).forEach(txt=>{
-    const w=ctx.measureText(txt).width+70;
-    ctx.fillStyle='rgba(255,255,255,.15)'; _rr(ctx,W/2-w/2,cy-50,w,68,34); ctx.fill();
-    ctx.fillStyle='#fff'; ctx.fillText(txt,W/2,cy);
-    cy+=80;
+  const _bw=470,_bh=150,_gx=30,_gy=28,_x0=(W-(_bw*2+_gx))/2,_y0=648;
+  _cajas.forEach((b,i)=>{ const col=i%2,row=(i/2)|0; const x=_x0+col*(_bw+_gx), y=_y0+row*(_bh+_gy);
+    ctx.fillStyle='rgba(255,255,255,.15)'; _rr(ctx,x,y,_bw,_bh,28); ctx.fill();
+    ctx.fillStyle='rgba(255,255,255,.92)'; ctx.font='700 30px Nunito, sans-serif'; ctx.fillText(b.label, x+_bw/2, y+52);
+    ctx.fillStyle=b.m.color; ctx.font='900 58px Montserrat, sans-serif'; ctx.fillText((b.m.arrow?b.m.arrow+' ':'')+b.m.txt, x+_bw/2, y+122);
   });
   ctx.fillStyle='#fff'; ctx.font='800 48px Montserrat, sans-serif';
   _wrap(ctx, (perdido>0?'Paso a paso, lo estoy logrando con Saneas 💚':'Hoy empiezo mi cambio con Saneas 💚'), W/2, 1090, 950, 60);
