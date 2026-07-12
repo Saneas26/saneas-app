@@ -114,8 +114,8 @@
   .daysel{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:6px}
   .daysel button{white-space:nowrap;border:none;background:var(--white);color:var(--muted);padding:8px 14px;border-radius:20px;font-family:inherit;font-weight:700;font-size:14px;box-shadow:var(--shadow);cursor:pointer}
   .daysel button.active{background:var(--teal);color:#fff}
-  .plato h4{font-size:14px;color:var(--teal);font-weight:700;margin-bottom:4px}
-  .plato p{font-size:14px;line-height:1.45}
+  .plato h4{font-size:16px;color:var(--teal);font-weight:800;margin-bottom:4px}
+  .plato p{font-size:14px;line-height:1.45;font-weight:600;color:var(--dark)}
   .relh{font-size:14px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);font-weight:700;margin:8px 0 5px}
   .chips{display:flex;gap:6px;flex-wrap:wrap}
   .chip{font-size:14px;padding:6px 10px;border-radius:20px;font-weight:500}
@@ -1336,9 +1336,9 @@ async function renderDieta(){
   const CAL=calcCalorias();
   const pctMap=repartoComidas(comidasCalDe(tomas));
   cont.innerHTML=`
-    <p style="font-size:20px;font-weight:700;margin:4px 6px 2px">Tu dieta</p>
-    <p style="font-size:14px;color:var(--muted);margin:0 6px 10px">${fmt(DIETA.nombre_plan)}</p>
-    ${CAL?`<div class="card" style="text-align:center;padding:12px"><div style="font-size:14px;color:var(--muted)">Objetivo del día (${CAL.objLabel})</div><div style="font-size:22px;font-weight:800;color:var(--teal)">${CAL.objetivo} kcal</div><div style="font-size:14px;color:var(--muted);margin-top:2px"><span style="white-space:nowrap">P ${macrosDe(CAL.objetivo).prot}g</span> · <span style="white-space:nowrap">HC ${macrosDe(CAL.objetivo).hc}g</span> · <span style="white-space:nowrap">G ${macrosDe(CAL.objetivo).grasa}g</span></div></div>`:''}
+    <p style="font-size:18px;font-weight:800;margin:4px 6px 2px">Tu dieta</p>
+    <p style="font-size:16px;font-weight:800;color:#d97757;margin:0 6px 10px">${fmt(DIETA.nombre_plan)}</p>
+    ${CAL?`<div class="card" style="text-align:center;padding:12px"><div style="font-size:14px;color:var(--muted);font-weight:700">Objetivo del día (${CAL.objLabel})</div><div style="font-size:22px;font-weight:800;color:var(--teal)">${CAL.objetivo} kcal</div><div style="font-size:14px;font-weight:700;color:var(--text);margin-top:2px"><span style="white-space:nowrap">P ${macrosDe(CAL.objetivo).prot}g</span> · <span style="white-space:nowrap">HC ${macrosDe(CAL.objetivo).hc}g</span> · <span style="white-space:nowrap">G ${macrosDe(CAL.objetivo).grasa}g</span></div></div>`:''}
     <div class="daysel">${dias.map(d=>`<button class="${d[0]===DIA_SEL?'active':''}" onclick="selDia('${d[0]}')">${d[1]}</button>`).join('')}</div>
     ${tomas.length===0?'<div class="empty">Sin comidas para este día.</div>':tomas.map(t=>{
       const i=TOMA_INFO[t.toma]||['🍴',t.toma];
