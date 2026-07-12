@@ -113,6 +113,8 @@
   #altaMsg.err{color:var(--bad)} #altaMsg.ok{color:var(--good)}
   .baja-btn{position:absolute;top:16px;right:64px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.55);color:#fff;padding:7px 14px;border-radius:999px;font-size:13px;font-weight:700}
   .baja-btn:hover{background:var(--bad);border-color:var(--bad)}
+  .sc-btn{position:absolute;top:16px;right:172px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.55);color:#fff;padding:7px 14px;border-radius:999px;font-size:13px;font-weight:700}
+  .sc-btn:hover{background:var(--orange);border-color:var(--orange)}
   .hdr-btn{background:#fff;border:2px solid var(--line);border-radius:999px;padding:8px 15px;font-weight:700;font-size:13px;color:var(--teal-d)}
   .hdr-btn:hover{border-color:var(--teal)}
   /* Informe / Renovar / Opiniones (modales) */
@@ -520,7 +522,22 @@ function pintarFicha(cli,regs){
   const ed=edad(cli.fecha_nacimiento);
   const gen=norm(cli.genero).startsWith('m')?'Mujer':'Hombre';
   const plazaTxt=cli.plaza?`${pref(cli.dia_consulta)}${cli.plaza}`:'sin plaza';
-  const estTxt=cli.suscripcion_estado||'—';
+  // Estado real de suscripción (por fecha de renovación, no por el campo Mollie)
+  const _hoy0=new Date();_hoy0.setHours(0,0,0,0);
+  const _fr=cli.fecha_renovacion?new Date(cli.fecha_renovacion+'T00:00:00'):null;
+  const estTxt = norm(cli.suscripcion_estado)==='cancelada'?'Cancelada'
+    : (_fr&&_fr>_hoy0)?'Al corriente'
+    : _fr?'Renovación vencida':'Sin suscripción';
+  const estCol = (_fr&&_fr>_hoy0)?'var(--good)':(_fr?'var(--bad)':'var(--muted)');
+  // Último envío de datos (registro real, no "sin consulta") y si ya envió esta semana
+  const _fmt=f=>String(f||'').split('-').reverse().join('/');
+  const _lunesW=new Date(_hoy0); _lunesW.setDate(_hoy0.getDate()-((_hoy0.getDay()+6)%7));
+  const _enviadoSem=reales.some(r=>r.fecha&&new Date(r.fecha+'T00:00:00')>=_lunesW);
+  let envioTxt,envioCol;
+  if(!act){ envioTxt='sin envíos aún'; envioCol='var(--muted)'; }
+  else { const fe=new Date(act.fecha+'T00:00:00'); const dd=Math.round((_hoy0-fe)/86400000);
+    const cuando=dd<=0?'hoy':dd===1?'ayer':'hace '+dd+' días';
+    envioTxt=_fmt(act.fecha)+' · '+cuando; envioCol=dd<=1?'var(--good)':dd<=7?'var(--orange)':'var(--bad)'; }
   const pesoHoy=val(cli,act,'peso');
   let estado='—';
   if(o&&pesoHoy!=null){estado=pesoHoy>o.POb?'Obesidad':pesoHoy>o.PO1?'Sobrepeso':pesoHoy<o.PO2?'Bajo peso':'Peso saludable';}
@@ -614,13 +631,15 @@ function pintarFicha(cli,regs){
   el('ficha').innerHTML=`
     <div class="fh">
       <button class="x" onclick="cerrarFicha()">×</button>
+      <button class="sc-btn" onclick="sinConsultaFicha('${cli.id}', '${(nom||'este cliente').replace(/'/g,'')}')">Sin consulta</button>
       <button class="baja-btn" onclick="darBaja('${cli.id}', '${(nom||'este cliente').replace(/'/g,'')}')">Dar de baja</button>
       <h3>${nom||'Cliente'}</h3>
       <div class="sub">
         <span>${gen}${ed!=null?' · '+ed+' años':''}</span>
         <span>${DIAS.find(d=>d[0]===norm(cli.dia_consulta))?.[1]||'—'} · ${plazaTxt}</span>
-        <span>${sem}${fechaAct?' · '+fechaAct:''}</span>
-        <span>Suscripción: ${estTxt}</span>
+        <span>${sem}</span>
+        <span>Suscripción: <b style="color:${estCol}">${estTxt}</b></span>
+        <span>Último envío: <b style="color:${envioCol}">${envioTxt}</b>${_enviadoSem?'':' · <b style="color:#ffd08a">aún no esta semana</b>'}</span>
         <span id="fActividad">Actividad: cargando…</span>
       </div>
     </div>
@@ -734,6 +753,15 @@ async function darBaja(id,nombre){
   const {status,data}=await api('baja',{cliente_id:id});
   if(status!==200){toast(data.error||'Error al dar de baja');return;}
   cerrarFicha(); toast('Cliente dado de baja'); await cargar();
+}
+async function sinConsultaFicha(id,nombre){
+  if(!confirm('Marcar SIN CONSULTA esta semana para '+nombre+'?\n\nEn su registro y evolución quedará esta semana como "sin datos".')) return;
+  const res=await rpc('panel_sin_consulta',{p_cliente_id:id,secret:SYNC_SECRET});
+  if(!res||res.error||res.ok!==true){ toast((res&&res.error)||'No se pudo marcar sin consulta'); return; }
+  toast('Marcado sin consulta esta semana');
+  // Recargar la ficha para reflejarlo
+  const {status,data}=await api('ficha',{cliente_id:id});
+  if(status===200){ pintarFicha(data.cliente,data.registros||[]); }
 }
 
 // ---------- Informe del día ----------
