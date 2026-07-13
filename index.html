@@ -429,6 +429,12 @@ function deadlinePasado(){ return canariasMin() > 540; }   // 9:00 = 540 min
 function esDiaConsultaHoy(){ try{ const wd=new Intl.DateTimeFormat('en-US',{timeZone:'Atlantic/Canary',weekday:'long'}).format(new Date()).toLowerCase(); return (DIA_EN_ES[wd]||'')===((CLIENTE&&CLIENTE.dia_consulta)||'').toLowerCase().trim(); }catch(e){ return false; } }
 function consultaProcesada(){ const t=new Date(); t.setHours(0,0,0,0); const s=(CLIENTE&&CLIENTE.fecha_proxima_consulta)||null; if(!s) return false; const sd=new Date(String(s).slice(0,10)+'T00:00:00'); return !isNaN(sd)&&sd>t; }
 function consultaHoyPendiente(){ return esDiaConsultaHoy() && !consultaProcesada(); }
+// ¿Envió sus datos a tiempo para la consulta de hoy? (registro del ciclo actual y NO fuera de plazo)
+function enviadoATiempo(){
+  if(!ULTIMO || ULTIMO.enviado_tarde || !ULTIMO.fecha) return false;
+  const f=new Date(String(ULTIMO.fecha).slice(0,10)+'T00:00:00'); const t=new Date(); t.setHours(0,0,0,0);
+  const dd=Math.round((t-f)/86400000); return dd>=0 && dd<=6;
+}
 // Muestra los alimentos (separados por | o comas) como listado con saltos de fila
 function listar(t){ if(!t) return '';
   const items=String(t).split(/\s*\|\s*|\n+/).map(x=>x.trim()).filter(Boolean);
@@ -760,11 +766,14 @@ async function cargarMensajes(){ try{ const {data}=await sb.from('mensajes_tarje
 function diffDias(f){ if(!f) return null; const d=new Date(String(f).slice(0,10)+'T00:00:00'); if(isNaN(d)) return null; const t=new Date(); t.setHours(0,0,0,0); return Math.round((d-t)/86400000); }
 function avisoTarjeta(){
   const nom=(CLIENTE.nombre||'').split(' ')[0]||'';
-  // Día de consulta: antes de las 9:00 recordamos subir datos; después, "evaluando"
+  // Día de consulta: antes de las 10:00 (Madrid) recordamos subir datos; después, según haya enviado a tiempo o no
   if(consultaHoyPendiente()){
-    if(deadlinePasado())
-      return `<div class="card aviso"><span class="ico">📊</span><span>Estamos evaluando tus datos, en breve recibirás el reporte.</span></div>`;
-    return `<div class="card aviso urgente"><span class="ico">⏰</span><span>Hola ${nom}, hoy tenemos consulta: sube tus datos antes de las 9:00 (hora canaria · 10:00 Madrid) 🕙</span></div>`;
+    if(deadlinePasado()){
+      if(enviadoATiempo())
+        return `<div class="card aviso"><span class="ico">📊</span><span>Estamos evaluando tus datos, en breve recibirás el reporte.</span></div>`;
+      return `<div class="card aviso urgente"><span class="ico">⚠️</span><span>Esta semana tus datos no han llegado a tiempo. Organízate para que tus datos siempre estén antes de las 10:00 de la mañana. Puedes enviarlos cualquier día de la semana y a cualquier hora, siempre que lleguen antes de las 10:00 de la mañana del día de tu consulta.</span></div>`;
+    }
+    return `<div class="card aviso urgente"><span class="ico">⏰</span><span>Hola ${nom}, hoy tenemos consulta: sube tus datos antes de las 10:00 (hora Madrid) 🕙</span></div>`;
   }
   const dc=diffDias(fechaProximaConsulta()), dr=diffDias(CLIENTE.fecha_renovacion);
   const cand=[];
@@ -1108,9 +1117,11 @@ function renderInicio(){
       <div class="row" style="font-weight:800"><span>Próxima renovación</span><span>${fechaCorta(CLIENTE.fecha_renovacion)}</span></div>
       <div class="today">${consultaHoyPendiente()
         ? (deadlinePasado()
-            ? '📊 Estamos evaluando tus datos, en breve recibirás el reporte.'
-            : '📣 ¡Hoy es tu día de consulta! Envía tus datos antes de las 9:00 (hora canaria · 10:00 Madrid) 🕙')
-        : 'Hoy no es día de consulta. Recuerda enviar tus datos el '+fmt(CLIENTE.dia_consulta)+' antes de las 9:00 (hora canaria) 🕙'}</div>
+            ? (enviadoATiempo()
+                ? '📊 Estamos evaluando tus datos, en breve recibirás el reporte.'
+                : '⚠️ Esta semana tus datos no han llegado a tiempo. Organízate para que siempre estén antes de las 10:00 de la mañana. Puedes enviarlos cualquier día y hora, siempre que lleguen antes de las 10:00 del día de tu consulta.')
+            : '📣 ¡Hoy es tu día de consulta! Envía tus datos antes de las 10:00 (hora Madrid) 🕙')
+        : 'Hoy no es día de consulta. Recuerda enviar tus datos antes de las 10:00 (hora Madrid) del '+fmt(CLIENTE.dia_consulta)+', tu día de consulta 🕙'}</div>
       ${(CAL&&(CAL.get-CAL.objetivo)>0)?`<div class="today" style="margin-top:8px;background:#fff;color:#d97757;font-weight:800">🎯 Esta semana tu objetivo es bajar <span style="font-size:16px">${CAL.get-CAL.objetivo} g</span></div>`:''}
     </div>
 
