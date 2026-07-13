@@ -763,14 +763,6 @@ async function sumarPasos(){ const inp=document.getElementById('pasosInput'); if
 // ---- Tarjeta de aviso automática (prioridad: consulta > renovación > mensaje del pool) ----
 let MENSAJES=[];
 async function cargarMensajes(){ try{ const {data}=await sb.from('mensajes_tarjeta').select('mensaje,importancia').eq('activo',true); MENSAJES=data||[]; }catch(e){ MENSAJES=[]; } }
-// Frase motivacional (para no repetir el mensaje principal en la tarjeta de agenda)
-function fraseMotivacional(){
-  const nom=((CLIENTE&&CLIENTE.nombre)||'').split(' ')[0]||'';
-  const fallback='La constancia vence al impulso. El cambio real no ocurre en un día de dieta perfecta, sino en los cien días que decidiste no tirar la toalla.';
-  const pool=(MENSAJES||[]).filter(m=>m&&m.mensaje);
-  const txt=pool.length? (pool[Math.floor(Math.random()*pool.length)].mensaje||fallback) : fallback;
-  return '💬 '+String(txt).replace(/\{nombre\}/gi,nom).replace(/\s*\{kg\}\s*/gi,' ');
-}
 function diffDias(f){ if(!f) return null; const d=new Date(String(f).slice(0,10)+'T00:00:00'); if(isNaN(d)) return null; const t=new Date(); t.setHours(0,0,0,0); return Math.round((d-t)/86400000); }
 function avisoTarjeta(){
   const nom=(CLIENTE.nombre||'').split(' ')[0]||'';
@@ -1124,7 +1116,7 @@ function renderInicio(){
       <div class="row" style="font-weight:800"><span>Próxima consulta</span><span>${fechaLarga(fechaProximaConsulta())}</span></div>
       <div class="row" style="font-weight:800"><span>Próxima renovación</span><span>${fechaCorta(CLIENTE.fecha_renovacion)}</span></div>
       <div class="today">${consultaHoyPendiente()
-        ? fraseMotivacional()  /* el mensaje de consulta ya sale arriba (tarjeta principal); aquí no lo repetimos */
+        ? '💬 La constancia vence al impulso. El cambio real no ocurre en un día de dieta perfecta, sino en los cien días que decidiste no tirar la toalla.'  /* el mensaje de consulta ya sale arriba; aquí una frase fija, no aleatoria */
         : 'Hoy no es día de consulta. Recuerda enviar tus datos antes de las 10:00 (hora Madrid) del '+fmt(CLIENTE.dia_consulta)+', tu día de consulta 🕙'}</div>
       ${(CAL&&(CAL.get-CAL.objetivo)>0)?`<div class="today" style="margin-top:8px;background:#fff;color:#d97757;font-weight:800">🎯 Esta semana tu objetivo es bajar <span style="font-size:16px">${CAL.get-CAL.objetivo} g</span></div>`:''}
     </div>
