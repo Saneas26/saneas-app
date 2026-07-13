@@ -1200,11 +1200,11 @@ function renderInicio(){
       <div class="foot">👟</div>
       <div style="flex:1">
         <h3 style="margin:0">Reto de hoy</h3>
-        <div><span class="big" id="pasosTotal">${PASOS_SEM.toLocaleString('es-ES')}</span> <span style="font-size:14px;color:var(--dark);font-weight:700">/ 61.600 pasos</span></div>
+        <div><span class="big" id="pasosTotal">${PASOS_HOY.toLocaleString('es-ES')}</span> <span style="font-size:14px;color:var(--dark);font-weight:700">/ 8.800 pasos</span></div>
         <div class="bar"><span id="pasosBar" style="width:${Math.min(100,Math.round(PASOS_SEM/61600*100))}%"></span></div>
         <div class="smsg" id="pasosMsg"></div>
         <div style="display:flex;gap:8px;margin-top:10px">
-          <input id="pasosInput" type="number" inputmode="numeric" min="1" placeholder="Añade los pasos que llevas">
+          <input id="pasosInput" type="number" inputmode="numeric" min="1" placeholder="Añade los pasos que hiciste hoy">
           <button onclick="sumarPasos()">Sumar</button>
         </div>
       </div>
