@@ -550,7 +550,8 @@ function pintarFicha(cli,regs){
   if(!act){ envioTxt='sin envíos aún'; envioCol='var(--muted)'; }
   else { const fe=new Date(act.fecha+'T00:00:00'); const dd=Math.round((_hoy0-fe)/86400000);
     const cuando=dd<=0?'hoy':dd===1?'ayer':'hace '+dd+' días';
-    envioTxt=_fmt(act.fecha)+' · '+cuando; envioCol=dd<=1?'var(--good)':dd<=7?'var(--orange)':'var(--bad)'; }
+    const _he=act.hora_envio?(' a las '+new Date(act.hora_envio).toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit',timeZone:'Atlantic/Canary'})):'';
+    envioTxt=_fmt(act.fecha)+_he+' · '+cuando; envioCol=dd<=1?'var(--good)':dd<=7?'var(--orange)':'var(--bad)'; }
   // ¿El registro de esta semana llegó fuera de plazo? (después de las 9:00 h canaria)
   const _regSem=reales.find(r=>r.fecha&&new Date(r.fecha+'T00:00:00')>=_lunesW);
   const _tarde=!!(_regSem&&_regSem.enviado_tarde);
