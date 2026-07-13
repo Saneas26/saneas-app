@@ -410,15 +410,25 @@ function fechaLarga(d){ if(!d) return '—'; const x=new Date(d+'T00:00:00'); re
 // Próxima consulta = próxima fecha (hoy o futura) que cae en el día de consulta del cliente (modelo semanal)
 const DIA_NUM={'domingo':0,'lunes':1,'martes':2,'miércoles':3,'miercoles':3,'jueves':4,'viernes':5,'sábado':6,'sabado':6};
 function fechaProximaConsulta(){
+  const t=new Date(); t.setHours(0,0,0,0);
+  // Si hay una cita futura ya fijada (p.ej. tras "consulta pasada"), esa manda
+  const stored=(CLIENTE&&CLIENTE.fecha_proxima_consulta)||null;
+  if(stored){ const sd=new Date(String(stored).slice(0,10)+'T00:00:00'); if(!isNaN(sd)&&sd>t) return String(stored).slice(0,10); }
   const dc=((CLIENTE&&CLIENTE.dia_consulta)||'').toLowerCase().trim();
   if(dc in DIA_NUM){
-    const t=new Date(); t.setHours(0,0,0,0);
     const add=(DIA_NUM[dc]-t.getDay()+7)%7;
     const d=new Date(t); d.setDate(t.getDate()+add);
     return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
   }
-  return (CLIENTE&&CLIENTE.fecha_proxima_consulta)||null;
+  return stored;
 }
+// ---- Hora límite de consulta: 9:00 hora canaria (10:00 Madrid) ----
+const DIA_EN_ES={monday:'lunes',tuesday:'martes',wednesday:'miercoles',thursday:'jueves',friday:'viernes',saturday:'sabado',sunday:'domingo'};
+function canariasMin(){ try{ const s=new Intl.DateTimeFormat('en-GB',{timeZone:'Atlantic/Canary',hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date()); const p=s.split(':'); return (+p[0])*60+(+p[1]); }catch(e){ const d=new Date(); return d.getHours()*60+d.getMinutes(); } }
+function deadlinePasado(){ return canariasMin() > 540; }   // 9:00 = 540 min
+function esDiaConsultaHoy(){ try{ const wd=new Intl.DateTimeFormat('en-US',{timeZone:'Atlantic/Canary',weekday:'long'}).format(new Date()).toLowerCase(); return (DIA_EN_ES[wd]||'')===((CLIENTE&&CLIENTE.dia_consulta)||'').toLowerCase().trim(); }catch(e){ return false; } }
+function consultaProcesada(){ const t=new Date(); t.setHours(0,0,0,0); const s=(CLIENTE&&CLIENTE.fecha_proxima_consulta)||null; if(!s) return false; const sd=new Date(String(s).slice(0,10)+'T00:00:00'); return !isNaN(sd)&&sd>t; }
+function consultaHoyPendiente(){ return esDiaConsultaHoy() && !consultaProcesada(); }
 // Muestra los alimentos (separados por | o comas) como listado con saltos de fila
 function listar(t){ if(!t) return '';
   const items=String(t).split(/\s*\|\s*|\n+/).map(x=>x.trim()).filter(Boolean);
@@ -750,6 +760,12 @@ async function cargarMensajes(){ try{ const {data}=await sb.from('mensajes_tarje
 function diffDias(f){ if(!f) return null; const d=new Date(String(f).slice(0,10)+'T00:00:00'); if(isNaN(d)) return null; const t=new Date(); t.setHours(0,0,0,0); return Math.round((d-t)/86400000); }
 function avisoTarjeta(){
   const nom=(CLIENTE.nombre||'').split(' ')[0]||'';
+  // Día de consulta: antes de las 9:00 recordamos subir datos; después, "evaluando"
+  if(consultaHoyPendiente()){
+    if(deadlinePasado())
+      return `<div class="card aviso"><span class="ico">📊</span><span>Estamos evaluando tus datos, en breve recibirás el reporte.</span></div>`;
+    return `<div class="card aviso urgente"><span class="ico">⏰</span><span>Hola ${nom}, hoy tenemos consulta: sube tus datos antes de las 9:00 (hora canaria · 10:00 Madrid) 🕙</span></div>`;
+  }
   const dc=diffDias(fechaProximaConsulta()), dr=diffDias(CLIENTE.fecha_renovacion);
   const cand=[];
   if(dc!=null&&dc>=0&&dc<=2) cand.push({t:'consulta',d:dc});
@@ -1090,9 +1106,11 @@ function renderInicio(){
       <div style="font-size:14px;font-weight:700;margin:-2px 0 8px">Hoy es ${hoy.toLocaleDateString('es-ES',{day:'numeric',month:'long'})}</div>
       <div class="row" style="font-weight:800"><span>Próxima consulta</span><span>${fechaLarga(fechaProximaConsulta())}</span></div>
       <div class="row" style="font-weight:800"><span>Próxima renovación</span><span>${fechaCorta(CLIENTE.fecha_renovacion)}</span></div>
-      <div class="today">${esConsulta
-        ?'📣 ¡Hoy es tu día de consulta! Envía tus datos antes de las 10:00 🕙'
-        :'Hoy no es día de consulta. Recuerda enviar tus datos el '+fmt(CLIENTE.dia_consulta)+' antes de las 10:00 🕙'}</div>
+      <div class="today">${consultaHoyPendiente()
+        ? (deadlinePasado()
+            ? '📊 Estamos evaluando tus datos, en breve recibirás el reporte.'
+            : '📣 ¡Hoy es tu día de consulta! Envía tus datos antes de las 9:00 (hora canaria · 10:00 Madrid) 🕙')
+        : 'Hoy no es día de consulta. Recuerda enviar tus datos el '+fmt(CLIENTE.dia_consulta)+' antes de las 9:00 (hora canaria) 🕙'}</div>
       ${(CAL&&(CAL.get-CAL.objetivo)>0)?`<div class="today" style="margin-top:8px;background:#fff;color:#d97757;font-weight:800">🎯 Esta semana tu objetivo es bajar <span style="font-size:16px">${CAL.get-CAL.objetivo} g</span></div>`:''}
     </div>
 
@@ -1605,6 +1623,8 @@ async function guardarRegistro(){
   // Edad metabólica = edad × (1 + (%grasa − ideal)/100)   (ideal: hombre 19, mujer 24)
   const edadHoy=edadEn(row.fecha);
   if(edadHoy!=null && g!=null){ const ideal=String(CLIENTE.genero||'').toLowerCase().startsWith('m')?24:19; row.edad_metabolica=Math.round(edadHoy*(1+(g-ideal)/100)); }
+  // Envío tarde: si hoy es su día de consulta y ya pasaron las 9:00 (hora canaria) → cuenta como "Sin Consulta" en el panel (los datos sí se guardan)
+  row.enviado_tarde = (esDiaConsultaHoy() && deadlinePasado());
   const {data:yaSem}=await sb.from('registros').select('id').eq('cliente_id',CLIENTE.id).gte('fecha',lunesStr).order('fecha',{ascending:false}).limit(1);
   const corrige=yaSem&&yaSem.length;
   let error;

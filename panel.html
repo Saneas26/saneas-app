@@ -126,6 +126,8 @@
   .baja-btn:hover{background:var(--bad);border-color:var(--bad)}
   .sc-btn{position:absolute;top:16px;right:172px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.55);color:#fff;padding:7px 14px;border-radius:999px;font-size:13px;font-weight:700}
   .sc-btn:hover{background:var(--orange);border-color:var(--orange)}
+  .cp-btn{width:100%;background:var(--teal);color:#fff;border:0;border-radius:10px;padding:11px;font-weight:800;font-size:14px;cursor:pointer}
+  .cp-btn:hover{background:var(--teal-d)}
   .hdr-btn{background:#fff;border:2px solid var(--line);border-radius:999px;padding:8px 15px;font-weight:700;font-size:13px;color:var(--teal-d)}
   .hdr-btn:hover{border-color:var(--teal)}
   /* Informe / Renovar / Opiniones (modales) */
@@ -549,6 +551,9 @@ function pintarFicha(cli,regs){
   else { const fe=new Date(act.fecha+'T00:00:00'); const dd=Math.round((_hoy0-fe)/86400000);
     const cuando=dd<=0?'hoy':dd===1?'ayer':'hace '+dd+' días';
     envioTxt=_fmt(act.fecha)+' · '+cuando; envioCol=dd<=1?'var(--good)':dd<=7?'var(--orange)':'var(--bad)'; }
+  // ¿El registro de esta semana llegó fuera de plazo? (después de las 9:00 h canaria)
+  const _regSem=reales.find(r=>r.fecha&&new Date(r.fecha+'T00:00:00')>=_lunesW);
+  const _tarde=!!(_regSem&&_regSem.enviado_tarde);
   const pesoHoy=val(cli,act,'peso');
   let estado='—';
   if(o&&pesoHoy!=null){estado=pesoHoy>o.POb?'Obesidad':pesoHoy>o.PO1?'Sobrepeso':pesoHoy<o.PO2?'Bajo peso':'Peso saludable';}
@@ -651,9 +656,11 @@ function pintarFicha(cli,regs){
         <span>${sem}</span>
         <span>Suscripción: <b style="color:${estCol}">${estTxt}</b></span>
         <span>Último envío: <b style="color:${envioCol}">${envioTxt}</b>${_enviadoSem?'':' · <b style="color:#ffd08a">aún no esta semana</b>'}</span>
+        ${_tarde?`<span><b style="color:#ffd08a">⚠️ SIN CONSULTA · datos enviados fuera de plazo</b></span>`:''}
         <span id="fActividad">Actividad: cargando…</span>
       </div>
     </div>
+    <div style="padding:12px 22px 0"><button class="cp-btn" onclick="consultaPasadaFicha('${cli.id}', '${(nom||'este cliente').replace(/'/g,'')}')">✅ Consulta pasada · fijar próxima cita (+7 días)</button></div>
     <div class="fbody">
       <div class="kpis">${kpis}</div>
       ${calSec}
@@ -773,6 +780,15 @@ async function sinConsultaFicha(id,nombre){
   // Recargar la ficha para reflejarlo
   const {status,data}=await api('ficha',{cliente_id:id});
   if(status===200){ pintarFicha(data.cliente,data.registros||[]); }
+}
+async function consultaPasadaFicha(id,nombre){
+  if(!confirm('¿Marcar la consulta de '+nombre+' como pasada?\n\nSu próxima cita pasará a ser dentro de 7 días (mismo día la semana que viene).')) return;
+  const res=await rpc('panel_consulta_pasada',{p_cliente_id:id,secret:SYNC_SECRET});
+  if(!res||res.error||res.ok!==true){ toast((res&&res.error)||'No se pudo marcar la consulta'); return; }
+  toast('Consulta pasada · próxima cita fijada');
+  const {status,data}=await api('ficha',{cliente_id:id});
+  if(status===200){ pintarFicha(data.cliente,data.registros||[]); }
+  const c=CLIENTES.find(x=>x.id===id); if(c&&res.proxima_cita)c.fecha_proxima_consulta=res.proxima_cita;
 }
 
 // ---------- Informe del día ----------
