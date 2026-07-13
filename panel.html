@@ -660,13 +660,17 @@ function pintarFicha(cli,regs){
         <span id="fActividad">Actividad: cargando…</span>
       </div>
     </div>
-    <div style="padding:12px 22px 0"><button class="cp-btn" onclick="consultaPasadaFicha('${cli.id}', '${(nom||'este cliente').replace(/'/g,'')}')">✅ Consulta pasada · fijar próxima cita (+7 días)</button></div>
+    <div style="padding:12px 22px 0"><button class="cp-btn" onclick="consultaPasadaFicha('${cli.id}', '${(nom||'este cliente').replace(/'/g,'')}')">✅ Consulta pasada · fijar próxima cita (+7 días)</button><div id="fCita" style="margin-top:8px;font-size:14px;font-weight:700"></div></div>
     <div class="fbody">
       <div class="kpis">${kpis}</div>
       ${calSec}
       <div class="sec">
         <h4>Objetivos y perímetros (actual vs objetivo)</h4>
         ${o?`<table class="obj"><thead><tr><th>Parámetro</th><th>Actual</th><th>Objetivo</th><th>Estado</th></tr></thead><tbody>${objRows}</tbody></table>`:'<p class="empty-msg">Falta la altura del cliente para calcular objetivos.</p>'}
+      </div>
+      <div class="sec">
+        <h4>Pliegues y perímetros (inicial vs último medido)</h4>
+        <div id="fMedidas"><p class="vacio">Cargando…</p></div>
       </div>
       ${dietaSec}
       <div class="sec">
@@ -676,6 +680,34 @@ function pintarFicha(cli,regs){
         :'<p class="empty-msg">Este cliente aún no tiene registros de evolución.</p>'}
       </div>
     </div>`;
+  cargarMedidasCita(cli.id);
+}
+const PER_DEF=[['per_cintura','Cintura'],['per_cadera','Cadera'],['per_hombro','Hombros']];
+const PLI_DEF=[['pli_tricipital','Tríceps'],['pli_bicipital','Bíceps'],['pli_subescapular','Subescapular'],['pli_suprailiaco','Suprailíaco'],['pli_abdominal','Abdominal'],['pli_cuadricipital','Cuádriceps']];
+function _fmtCita(s){ return String(s||'').slice(0,10).split('-').reverse().join('/'); }
+function tablaMedidas(titulo,ini,ult,defs,u){
+  if(!ini&&!ult) return '';
+  const fIni=ini&&ini.fecha?_fmtCita(ini.fecha):'—', fUlt=ult&&ult.fecha?_fmtCita(ult.fecha):'—';
+  let rows='';
+  for(const kv of defs){ const k=kv[0],l=kv[1];
+    const vi=ini&&ini[k]!=null?r1(ini[k])+u:'—';
+    const vu=ult&&ult[k]!=null?r1(ult[k])+u:'—';
+    let d='—'; if(ini&&ini[k]!=null&&ult&&ult[k]!=null){ const dd=r1(ult[k]-ini[k]); d=(dd>0?'+':'')+dd; }
+    rows+=`<tr><td class="p">${l}</td><td>${vi}</td><td>${vu}</td><td>${d}</td></tr>`;
+  }
+  return `<h4 style="margin:14px 0 6px;font-size:14px">${titulo}</h4><table><thead><tr><th>Parámetro</th><th>Inicial<br><span class="mini">${fIni}</span></th><th>Último<br><span class="mini">${fUlt}</span></th><th>Δ</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+async function cargarMedidasCita(id){
+  let res=null; try{ res=await rpc('panel_medidas',{p_cliente_id:id,secret:SYNC_SECRET}); }catch(e){}
+  const cEl=el('fCita');
+  if(cEl){ const fc=res&&res.fecha_proxima_consulta; cEl.innerHTML=fc?`<span style="color:var(--good)">📅 Próxima cita fijada: <b>${_fmtCita(fc)}</b></span>`:''; }
+  const mEl=el('fMedidas');
+  if(mEl){
+    if(!res||res.ok!==true){ mEl.innerHTML='<p class="vacio">—</p>'; return; }
+    const per=tablaMedidas('Perímetros',res.per_ini,res.per_ult,PER_DEF,' cm');
+    const pli=tablaMedidas('Pliegues',res.pli_ini,res.pli_ult,PLI_DEF,' mm');
+    mEl.innerHTML=(per||pli)?(per+pli):'<p class="empty-msg">Aún no hay perímetros ni pliegues registrados.</p>';
+  }
 }
 function objRow(label,actual,obj,down,u){
   let estado='<span class="mini">—</span>';
