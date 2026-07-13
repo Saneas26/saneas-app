@@ -655,7 +655,7 @@ function pintarFicha(cli,regs){
         <span>${gen}${ed!=null?' · '+ed+' años':''}</span>
         <span>${DIAS.find(d=>d[0]===norm(cli.dia_consulta))?.[1]||'—'} · ${plazaTxt}</span>
         <span>${sem}</span>
-        <span>Suscripción: <b style="color:${estCol}">${estTxt}</b></span>
+        <span>Suscripción: <b style="color:${estCol}">${estTxt}</b>${cli.fecha_renovacion?` · renueva <b>${_fmt(cli.fecha_renovacion)}</b>`:''}</span>
         <span>Último envío: <b style="color:${envioCol}">${envioTxt}</b>${_enviadoSem?'':' · <b style="color:#ffd08a">aún no esta semana</b>'}</span>
         ${_tarde?`<span><b style="color:#ffd08a">⚠️ SIN CONSULTA · datos enviados fuera de plazo</b></span>`:''}
         <span id="fActividad">Actividad: cargando…</span>
