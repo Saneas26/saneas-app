@@ -198,6 +198,10 @@
     #rotateGuard{display:flex;position:fixed;inset:0;z-index:99999;background:var(--teal);color:#fff;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px}
     .app{display:none!important}
   }
+  #dl-toast{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(.94);z-index:100000;display:inline-flex;align-items:center;gap:10px;background:rgba(26,46,53,.92);color:#fff;font-weight:800;font-size:15px;padding:14px 22px;border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,.28);opacity:0;visibility:hidden;pointer-events:none;transition:opacity .2s ease,transform .2s ease}
+  #dl-toast.show{opacity:1;visibility:visible;transform:translate(-50%,-50%) scale(1)}
+  #dl-toast .dl-spin{width:16px;height:16px;border-radius:50%;border:2.5px solid rgba(255,255,255,.35);border-top-color:#fff;animation:dl-rot .7s linear infinite}
+  @keyframes dl-rot{to{transform:rotate(360deg)}}
 </style>
 </head>
 <body>
@@ -1425,9 +1429,12 @@ async function renderDieta(){
   const CAL=calcCalorias();
   const pctMap=repartoComidas(comidasCalDe(tomas));
   cont.innerHTML=`
-    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin:4px 6px 2px">
-      <p style="font-size:18px;font-weight:800">Tu dieta</p>
-      <button onclick="abrirCompra(CLIENTE.dieta_actual_id)" style="display:inline-flex;align-items:center;gap:7px;background:#fff;color:var(--teal);border:2px solid var(--teal);border-radius:12px;padding:8px 13px;font-family:inherit;font-weight:800;font-size:14px;white-space:nowrap;cursor:pointer;box-shadow:0 2px 6px rgba(26,46,53,.10)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3890a4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1.5"/><circle cx="19" cy="21" r="1.5"/><path d="M1 1h3l2.6 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"/></svg>Lista de la compra</button>
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:4px 6px 2px">
+      <p style="font-size:18px;font-weight:800;margin:0">Tu dieta</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end">
+        <button onclick="abrirCompra(CLIENTE.dieta_actual_id)" style="display:inline-flex;align-items:center;gap:7px;background:#fff;color:var(--teal);border:2px solid var(--teal);border-radius:12px;padding:8px 13px;font-family:inherit;font-weight:800;font-size:14px;white-space:nowrap;cursor:pointer;box-shadow:0 2px 6px rgba(26,46,53,.10)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3890a4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1.5"/><circle cx="19" cy="21" r="1.5"/><path d="M1 1h3l2.6 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"/></svg>Lista de la compra</button>
+        ${DIETA.dieta_url?`<button onclick="descargarDieta()" style="display:inline-flex;align-items:center;gap:7px;background:#fff;color:var(--teal);border:2px solid var(--teal);border-radius:12px;padding:8px 13px;font-family:inherit;font-weight:800;font-size:14px;white-space:nowrap;cursor:pointer;box-shadow:0 2px 6px rgba(26,46,53,.10)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3890a4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Descarga Dieta</button>`:''}
+      </div>
     </div>
     <p style="font-size:16px;font-weight:800;color:#d97757;margin:0 6px 10px">${fmt(DIETA.nombre_plan)}</p>
     ${CAL?`<div class="card" style="text-align:center;padding:12px"><div style="font-size:14px;color:var(--muted);font-weight:700">Objetivo del día (${CAL.objLabel})</div><div style="font-size:22px;font-weight:800;color:var(--teal)">${CAL.objetivo} kcal</div><div style="font-size:14px;font-weight:700;color:var(--text);margin-top:2px"><span style="white-space:nowrap">P ${macrosDe(CAL.objetivo).prot}g</span> · <span style="white-space:nowrap">HC ${macrosDe(CAL.objetivo).hc}g</span> · <span style="white-space:nowrap">G ${macrosDe(CAL.objetivo).grasa}g</span></div></div>`:''}
@@ -1443,6 +1450,15 @@ async function renderDieta(){
       </div></div>`;}).join('')}`;
 }
 function selDia(d){DIA_SEL=d;renderDieta();}
+function descargarDieta(){
+  const url=DIETA&&DIETA.dieta_url;
+  if(!url) return;
+  let el=document.getElementById('dl-toast');
+  if(!el){ el=document.createElement('div'); el.id='dl-toast'; el.innerHTML='<span class="dl-spin"></span>Descargando…'; document.body.appendChild(el); }
+  el.classList.add('show');
+  clearTimeout(el._t); el._t=setTimeout(()=>el.classList.remove('show'),3000);
+  const a=document.createElement('a'); a.href=url; a.target='_blank'; a.rel='noopener'; document.body.appendChild(a); a.click(); a.remove();
+}
 
 // ====== LISTA DE LA COMPRA (dieta actual + próxima) ======
 let COMPRA_DIETA=null;
