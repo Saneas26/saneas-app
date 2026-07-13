@@ -523,7 +523,7 @@ function nuevoDatos(planId){
 }
 async function crearYpagar(planId){
   const g=id=>document.getElementById(id).value.trim();
-  const email=g('n_email'),tel=g('n_tel'),nombre=g('n_nombre'),ap1=g('n_ap1'),dni=g('n_dni');
+  const email=g('n_email').toLowerCase(),tel=g('n_tel'),nombre=g('n_nombre'),ap1=g('n_ap1'),dni=g('n_dni');
   if(!email||!tel||!nombre||!ap1||!dni){setMsg('nuevoMsg','Rellena email, teléfono, nombre, primer apellido y DNI.','err');return;}
   const btn=document.getElementById('btnCrearPagar');btn.disabled=true;btn.textContent='Creando...';
   try{
@@ -560,7 +560,7 @@ function elegirPlanManual(planId){
 const telPass = t => String(t||'').replace(/\D/g,'').slice(-9);   // teléfono → últimos 9 dígitos (hace de contraseña)
 
 async function login(){
-  const email=val('l_email'),tel=val('l_tel');
+  const email=val('l_email').toLowerCase(),tel=val('l_tel');
   if(!email||!tel){setMsg('loginMsg','Introduce email y teléfono.','err');return;}
   const btn=document.getElementById('btnLogin');btn.disabled=true;btn.textContent='Entrando...';
   // CASO 1 · ya tiene cuenta en la app nueva → entra directo
@@ -610,7 +610,7 @@ async function intentarAccesoExistente(email,tel){
 
 // Registro paso 1: verificar email+teléfono contra los clientes dados de alta
 async function verificar(){
-  const email=val('v_email'),tel=val('v_tel');
+  const email=val('v_email').toLowerCase(),tel=val('v_tel');
   if(!email||!tel){setMsg('verifMsg','Introduce email y teléfono.','err');return;}
   const btn=document.getElementById('btnVerif');btn.disabled=true;btn.textContent='Verificando...';
   const {data,error}=await sb.rpc('verificar_acceso',{p_email:email,p_telefono:tel});
