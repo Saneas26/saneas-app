@@ -30,6 +30,17 @@
   header .sp{flex:1}
   header .count{font-size:13px;color:var(--muted)}
   header .out{font-size:13px;color:var(--muted);background:none;border:0;text-decoration:underline}
+  /* Cabecera adaptada solo para móvil (no cambia nada en ordenador) */
+  @media(max-width:760px){
+    header{padding:10px 12px;gap:8px;flex-wrap:wrap}
+    header .logo{font-size:18px}
+    header .out{order:1;margin-left:auto;font-size:14px}
+    header .sp{display:none}
+    .dias{order:2;width:100%;margin-left:0;gap:6px}
+    .dias button{flex:1;text-align:center;padding:8px 4px;font-size:13px}
+    .hdr-btn,.alta-btn{order:3;flex:1 1 44%;text-align:center;padding:10px 8px;font-size:13px}
+    header .count{order:4;width:100%;text-align:center;margin-top:2px}
+  }
   main{max-width:1180px;margin:0 auto;padding:26px}
   h2.t{font-size:15px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:14px;font-weight:800}
   /* Rejilla de plazas */
