@@ -1637,7 +1637,7 @@ async function guardarRegistro(){
   const hoy=new Date(); const dow=(hoy.getDay()+6)%7;
   const lunes=new Date(hoy); lunes.setDate(hoy.getDate()-dow);
   const lunesStr=lunes.toISOString().slice(0,10);
-  const row={cliente_id:CLIENTE.id,fecha:hoy.toISOString().slice(0,10),semana:CLIENTE.semana||null};
+  const row={cliente_id:CLIENTE.id,fecha:hoy.toISOString().slice(0,10),semana:CLIENTE.semana||null,hora_envio:hoy.toISOString()};
   campos.forEach(c=>row[c]=num(document.getElementById('f_'+c).value));
   // ---- Datos calculados automáticamente (el cliente no los rellena) ----
   const g=row.grasa_corporal;
