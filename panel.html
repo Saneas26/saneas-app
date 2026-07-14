@@ -146,6 +146,19 @@
   #cambiar button{padding:11px 18px;border-radius:9px;border:0;font-weight:700}
   #cbMsg{font-size:13px;margin-top:8px;min-height:16px}
   #cbMsg.err{color:var(--bad)} #cbMsg.ok{color:var(--good)}
+  #fixrenov{position:fixed;inset:0;background:rgba(16,50,58,.45);z-index:46;display:none;align-items:center;justify-content:center}
+  #fixrenov.show{display:flex}
+  #fixrenov .box{background:#fff;border-radius:16px;padding:24px;width:400px;max-width:94vw}
+  #fixrenov h3{font-size:18px;color:var(--teal-d);margin-bottom:4px}
+  #fixrenov .sub{font-size:13px;color:var(--muted);margin-bottom:14px}
+  #fixrenov input{width:100%;padding:11px;border:2px solid var(--line);border-radius:9px;font-size:14px}
+  #fixrenov label{display:block;font-size:12px;font-weight:700;color:var(--muted);margin:10px 0 4px}
+  #fixrenov .foot{display:flex;justify-content:space-between;margin-top:16px}
+  #fixrenov button{padding:11px 18px;border-radius:9px;border:0;font-weight:700}
+  #frMsg{font-size:13px;margin-top:8px;min-height:16px}
+  #frMsg.err{color:var(--bad)} #frMsg.ok{color:var(--good)}
+  .fixr-btn{margin-left:8px;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.5);color:#fff;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap}
+  .fixr-btn:hover{background:rgba(255,255,255,.34)}
   #informe .box,#opiniones .box{background:var(--bg);border-radius:16px;width:680px;max-width:96vw;max-height:90vh;overflow-y:auto}
   #informe .ihead,#opiniones .ihead{background:linear-gradient(135deg,#0f8a9c,#0b6875);color:#fff;padding:18px 22px;position:sticky;top:0;display:flex;justify-content:space-between;align-items:center}
   #informe .ihead h3,#opiniones .ihead h3{font-size:19px}
@@ -334,6 +347,21 @@
     <div class="foot">
       <button class="btn-cerrar" onclick="cerrarCambiar()">Cancelar</button>
       <button class="btn-renovar" id="btnCambiar" onclick="guardarCambiarPlaza()">Guardar cambio</button>
+    </div>
+  </div>
+</div>
+
+<!-- Corregir fecha de renovación -->
+<div id="fixrenov">
+  <div class="box">
+    <h3>Corregir renovación</h3>
+    <div class="sub" id="frSub"></div>
+    <label>Nueva fecha de renovación</label>
+    <input type="date" id="fr_fecha">
+    <div id="frMsg"></div>
+    <div class="foot">
+      <button class="btn-cerrar" onclick="cerrarFixRenov()">Cancelar</button>
+      <button class="btn-renovar" id="btnFixRenov" onclick="guardarFixRenov()">Guardar fecha</button>
     </div>
   </div>
 </div>
@@ -708,7 +736,7 @@ function pintarFicha(cli,regs){
         <span>${gen}${ed!=null?' · '+ed+' años':''}</span>
         <span>${DIAS.find(d=>d[0]===norm(cli.dia_consulta))?.[1]||'—'} · ${plazaTxt}</span>
         <span>${sem}</span>
-        <span>Suscripción: <b style="color:${estCol}">${estTxt}</b>${cli.fecha_renovacion?` · renueva <b>${_fmt(cli.fecha_renovacion)}</b>`:''}</span>
+        <span>Suscripción: <b style="color:${estCol}">${estTxt}</b>${cli.fecha_renovacion?` · renueva <b>${_fmt(cli.fecha_renovacion)}</b>`:''}<button class="fixr-btn" onclick="abrirFixRenov('${cli.id}')">✏️ Corregir</button></span>
         <span>Último envío: <b style="color:${envioCol}">${envioTxt}</b>${_enviadoSem?'':' · <b style="color:#ffd08a">aún no esta semana</b>'}</span>
         ${_tarde?`<span><b style="color:#ffd08a">⚠️ SIN CONSULTA · datos enviados fuera de plazo</b></span>`:''}
         <span id="fActividad">Actividad: cargando…</span>
@@ -862,6 +890,32 @@ async function guardarCambiarPlaza(){
   cerrarCambiar(); cerrarFicha();
   toast('Día y plaza actualizados'+citaMsg);
   DIA_ACT=dia; marcarDia(); await cargar();
+}
+// ---------- Corregir fecha de renovación (errores al renovar) ----------
+let FR_ID=null;
+function abrirFixRenov(id){
+  FR_ID=id;
+  const c=FICHA_CLI||CLIENTES.find(x=>x.id===id)||{};
+  const act=c.fecha_renovacion?_fmtCita(c.fecha_renovacion):'sin fecha';
+  el('frSub').textContent=`${(c.nombre||'')} ${(c.apellido||'')} · ahora renueva ${act}`.trim();
+  el('fr_fecha').value=String(c.fecha_renovacion||'').slice(0,10);
+  const m=el('frMsg'); m.textContent=''; m.className='';
+  el('fixrenov').classList.add('show');
+}
+function cerrarFixRenov(){ el('fixrenov').classList.remove('show'); }
+async function guardarFixRenov(){
+  const f=el('fr_fecha').value, m=el('frMsg');
+  if(!f){ m.className='err'; m.textContent='Elige una fecha.'; return; }
+  const b=el('btnFixRenov'); b.disabled=true; b.textContent='Guardando…';
+  const r=await rpc('panel_fijar_renovacion',{p_cliente_id:FR_ID,p_fecha:f,secret:SYNC_SECRET});
+  b.disabled=false; b.textContent='Guardar fecha';
+  if(!r||!r.ok){ m.className='err'; m.textContent=(r&&r.error)||'No se pudo guardar'; return; }
+  cerrarFixRenov();
+  toast('Renovación corregida · '+_fmtCita(f));
+  const c=CLIENTES.find(x=>x.id===FR_ID); if(c)c.fecha_renovacion=f;
+  const {status,data}=await api('ficha',{cliente_id:FR_ID});
+  if(status===200){ pintarFicha(data.cliente,data.registros||[]); }
+  await cargar();
 }
 async function quitarPlaza(){}
 function cerrarAsig(){el('asig').classList.remove('show');ASIG_CTX=null;}
