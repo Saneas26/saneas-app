@@ -757,6 +757,20 @@ function mostrarSplash(){
 }
 async function registrarAcceso(){ try{ if(CLIENTE&&CLIENTE.id) await sb.from('accesos').insert({cliente_id:CLIENTE.id}); }catch(e){console.error('acceso',e);} }
 
+// ---- Notificaciones push (Web Push) ----
+const VAPID_PUB='BHOoBIztagSU5gGdWI-z76JI40CN1nWbix5rZgh2NQzRL8X7Zp51_UsY9JY69lr9ToBcZyb8QyaEZdCGLBc-aTg';
+function _b64ToU8(s){ const p='='.repeat((4-s.length%4)%4); const b=atob((s+p).replace(/-/g,'+').replace(/_/g,'/')); const a=new Uint8Array(b.length); for(let i=0;i<b.length;i++)a[i]=b.charCodeAt(i); return a; }
+async function initPush(){ try{
+  if(!('serviceWorker' in navigator)||!('PushManager' in window)||!CLIENTE||!CLIENTE.id) return;
+  const reg=await navigator.serviceWorker.register('sw.js');
+  if(!('Notification' in window)||Notification.permission==='denied') return;
+  const perm=Notification.permission==='granted'?'granted':await Notification.requestPermission();
+  if(perm!=='granted') return;
+  const sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:_b64ToU8(VAPID_PUB)});
+  const j=sub.toJSON();
+  await sb.from('push_subs').upsert({cliente_id:CLIENTE.id,endpoint:j.endpoint,p256dh:j.keys.p256dh,auth:j.keys.auth},{onConflict:'endpoint'});
+}catch(e){ console.error('push',e); } }
+
 // ---- Reto de pasos (semanal: 61.600 = 8.800/día × 7; reinicia domingo 00:00) ----
 const META_DIA=8800, META_SEMANA=61600;
 let PASOS_HOY=0, PASOS_SEM=0;
