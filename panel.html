@@ -122,12 +122,14 @@
   .btn-alta{background:var(--teal);color:#fff}
   #altaMsg{font-size:13px;margin-top:10px;min-height:18px}
   #altaMsg.err{color:var(--bad)} #altaMsg.ok{color:var(--good)}
-  .baja-btn{position:absolute;top:16px;right:64px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.55);color:#fff;padding:7px 14px;border-radius:999px;font-size:13px;font-weight:700}
+  .fh-actions{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;padding-right:44px}
+  .baja-btn,.sc-btn{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.55);color:#fff;padding:7px 14px;border-radius:999px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap}
   .baja-btn:hover{background:var(--bad);border-color:var(--bad)}
-  .sc-btn{position:absolute;top:16px;right:172px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.55);color:#fff;padding:7px 14px;border-radius:999px;font-size:13px;font-weight:700}
   .sc-btn:hover{background:var(--orange);border-color:var(--orange)}
   .cp-btn{width:100%;background:var(--teal);color:#fff;border:0;border-radius:10px;padding:11px;font-weight:800;font-size:14px;cursor:pointer}
   .cp-btn:hover{background:var(--teal-d)}
+  .cp-row{display:flex;gap:8px}
+  .cp-row .cp-btn{flex:1;width:auto;padding:9px 8px;font-size:13px}
   .hdr-btn{background:#fff;border:2px solid var(--line);border-radius:999px;padding:8px 15px;font-weight:700;font-size:13px;color:var(--teal-d)}
   .hdr-btn:hover{border-color:var(--teal)}
   /* Informe / Renovar / Opiniones (modales) */
@@ -696,9 +698,11 @@ function pintarFicha(cli,regs){
   el('ficha').innerHTML=`
     <div class="fh">
       <button class="x" onclick="cerrarFicha()">×</button>
-      <button class="sc-btn" onclick="enviarAviso('${cli.id}', '${(nom||'este cliente').replace(/'/g,'')}')">🔔 Aviso</button>
-      <button class="sc-btn" onclick="sinConsultaFicha('${cli.id}', '${(nom||'este cliente').replace(/'/g,'')}')">Sin consulta</button>
-      <button class="baja-btn" onclick="darBaja('${cli.id}', '${(nom||'este cliente').replace(/'/g,'')}')">Dar de baja</button>
+      <div class="fh-actions">
+        <button class="sc-btn" onclick="enviarAviso('${cli.id}', '${(nom||'este cliente').replace(/'/g,'')}')">🔔 Aviso</button>
+        <button class="sc-btn" onclick="sinConsultaFicha('${cli.id}', '${(nom||'este cliente').replace(/'/g,'')}')">Sin consulta</button>
+        <button class="baja-btn" onclick="darBaja('${cli.id}', '${(nom||'este cliente').replace(/'/g,'')}')">Dar de baja</button>
+      </div>
       <h3>${nom||'Cliente'}</h3>
       <div class="sub">
         <span>${gen}${ed!=null?' · '+ed+' años':''}</span>
@@ -710,7 +714,7 @@ function pintarFicha(cli,regs){
         <span id="fActividad">Actividad: cargando…</span>
       </div>
     </div>
-    <div style="padding:12px 22px 0"><button class="cp-btn" onclick="consultaPasadaFicha('${cli.id}', '${(nom||'este cliente').replace(/'/g,'')}')">✅ Consulta pasada · fijar próxima cita (+7 días)</button> <button class="cp-btn" style="background:var(--orange)" onclick="abrirCambiarPlaza('${cli.id}')">🔄 Cambiar día / plaza</button><div id="fCita" style="margin-top:8px;font-size:14px;font-weight:700"></div></div>
+    <div style="padding:12px 22px 0"><div class="cp-row"><button class="cp-btn" onclick="consultaPasadaFicha('${cli.id}', '${(nom||'este cliente').replace(/'/g,'')}')">✅ Consulta pasada (+7 días)</button><button class="cp-btn" style="background:var(--orange)" onclick="abrirCambiarPlaza('${cli.id}')">🔄 Cambiar día / plaza</button></div><div id="fCita" style="margin-top:8px;font-size:14px;font-weight:700"></div></div>
     <div class="fbody">
       <div class="kpis">${kpis}</div>
       ${calSec}
@@ -800,10 +804,11 @@ async function asignar(id){
 }
 
 // ---------- Cambiar día y plaza ----------
-let CB_ID=null;
+let CB_ID=null, CB_DIA0=null;
 function abrirCambiarPlaza(id){
   CB_ID=id;
   const c=CLIENTES.find(x=>x.id===id)||FICHA_CLI||{};
+  CB_DIA0=norm(c.dia_consulta);
   const actual=c.plaza?`${pref(c.dia_consulta)}${c.plaza}`:'sin plaza';
   el('cbSub').textContent=`${(c.nombre||'')} ${(c.apellido||'')} · ahora está en ${actual}`.trim();
   el('cb_dia').innerHTML=DIAS.map(([k,l])=>`<option value="${k}"${norm(c.dia_consulta)===k?' selected':''}>${l}</option>`).join('');
@@ -823,14 +828,33 @@ function pintarPlazasCb(sel){
   el('cb_plaza').innerHTML=html;
 }
 function cerrarCambiar(){ el('cambiar').classList.remove('show'); }
+// Próxima cita al mover de día: la fecha del NUEVO día en la semana que viene
+// (esta semana ya pasó consulta). Ej.: hoy martes, se pasa al viernes -> viernes que viene.
+function proximaCitaPara(diaKey){
+  const idx=DIAS.findIndex(d=>d[0]===norm(diaKey)); if(idx<0) return null;
+  const targetJs=idx+1; // lunes=1 … viernes=5
+  const t=new Date(); const base=new Date(t.getFullYear(),t.getMonth(),t.getDate());
+  const jsToday=base.getDay(); // 0=domingo … 6=sábado
+  const mondayOffset=(jsToday===0?-6:1-jsToday);
+  const monday=new Date(base); monday.setDate(base.getDate()+mondayOffset);
+  const target=new Date(monday); target.setDate(monday.getDate()+(targetJs-1)+7);
+  const y=target.getFullYear(), m=String(target.getMonth()+1).padStart(2,'0'), d=String(target.getDate()).padStart(2,'0');
+  return y+'-'+m+'-'+d;
+}
 async function guardarCambiarPlaza(){
   const dia=el('cb_dia').value, pl=el('cb_plaza').value;
   const b=el('btnCambiar'); b.disabled=true; b.textContent='Guardando…';
   const {status,data}=await api('asignar',{cliente_id:CB_ID, dia, plaza: pl===''?null:Number(pl)});
+  if(status!==200){ b.disabled=false; b.textContent='Guardar cambio'; const m=el('cbMsg'); m.className='err'; m.textContent=data.error||'Error al cambiar'; return; }
+  let citaMsg='';
+  if(dia!==CB_DIA0){
+    const f=proximaCitaPara(dia);
+    if(f){ const r=await rpc('panel_fijar_cita',{p_cliente_id:CB_ID,p_fecha:f,secret:SYNC_SECRET});
+      if(r&&r.ok){ const c=CLIENTES.find(x=>x.id===CB_ID); if(c)c.fecha_proxima_consulta=f; citaMsg=' · próxima cita '+_fmtCita(f); } }
+  }
   b.disabled=false; b.textContent='Guardar cambio';
-  if(status!==200){ const m=el('cbMsg'); m.className='err'; m.textContent=data.error||'Error al cambiar'; return; }
   cerrarCambiar(); cerrarFicha();
-  toast('Día y plaza actualizados');
+  toast('Día y plaza actualizados'+citaMsg);
   DIA_ACT=dia; marcarDia(); await cargar();
 }
 async function quitarPlaza(){}
