@@ -931,13 +931,19 @@ async function sinConsultaFicha(id,nombre){
 async function consultaPasadaFicha(id,nombre){
   const cli=FICHA_CLI||CLIENTES.find(x=>x.id===id)||{};
   const diaL=DIAS.find(d=>d[0]===norm(cli.dia_consulta))?.[1]||'día de consulta';
-  if(!confirm('¿Marcar la consulta de '+nombre+' como pasada?\n\nSu próxima cita pasará al próximo '+diaL+' (7 días sobre su día de consulta).')) return;
+  if(!confirm('¿Marcar la consulta de '+nombre+' como pasada?\n\n· Su próxima cita pasará al próximo '+diaL+'.\n· Su dieta avanzará a la siguiente del plan.')) return;
   const res=await rpc('panel_consulta_pasada',{p_cliente_id:id,secret:SYNC_SECRET});
   if(!res||res.error||res.ok!==true){ toast((res&&res.error)||'No se pudo marcar la consulta'); return; }
   // La próxima cita cae en su DÍA DE CONSULTA (no hoy+7): 7 días sobre su día.
   const f=proximaCitaPara(cli.dia_consulta);
   if(f){ await rpc('panel_fijar_cita',{p_cliente_id:id,p_fecha:f,secret:SYNC_SECRET}); }
-  toast('Consulta pasada · próxima cita '+(f?_fmtCita(f):'fijada'));
+  // La dieta avanza: la que estaba de "próxima" pasa a ser la actual.
+  const d=await rpc('panel_avanzar_dieta',{p_cliente_id:id,secret:SYNC_SECRET});
+  const dietaMsg=(d&&d.ok&&d.avanzada)?(' · dieta → '+(d.actual||'—')):'';
+  toast('Consulta pasada · próxima cita '+(f?_fmtCita(f):'fijada')+dietaMsg);
+  if(d&&d.ok&&d.fin){ alert('⚠️ '+nombre+' ha llegado al final de la secuencia de dietas.\n\n'+(d.avanzada
+    ?('Su dieta es ahora "'+(d.actual||'—')+'", pero ya no hay ninguna siguiente que asignarle como próxima.')
+    :'No hay dieta siguiente, así que se ha dejado como estaba.')+'\n\nAsígnale tú la dieta que corresponda.'); }
   const {status,data}=await api('ficha',{cliente_id:id});
   if(status===200){ pintarFicha(data.cliente,data.registros||[]); }
   const c=CLIENTES.find(x=>x.id===id); if(c)c.fecha_proxima_consulta=(f||res.proxima_cita);
