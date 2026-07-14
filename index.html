@@ -840,6 +840,7 @@ async function iniciarSesion(){
   registrarAcceso();              // contar la entrada del cliente
   cargarMensajes();               // pool de mensajes para la tarjeta de aviso
   cargarPasos();                  // pasos de hoy (reto 8.800)
+  initPush();                     // notificaciones push (pide permiso 1 vez)
   document.getElementById('avatar').textContent=((CLIENTE.nombre||'?')[0]||'?').toUpperCase()+((CLIENTE.apellido||'')[0]||'').toUpperCase();
   const {data:regs}=await sb.from('registros').select('*').eq('cliente_id',user.id).order('semana',{ascending:false,nullsFirst:false}).order('fecha',{ascending:false}).limit(1);
   ULTIMO=(regs&&regs[0])||null;
