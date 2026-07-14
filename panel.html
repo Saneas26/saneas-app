@@ -133,6 +133,17 @@
   /* Informe / Renovar / Opiniones (modales) */
   #informe,#renovar,#opiniones{position:fixed;inset:0;background:rgba(16,50,58,.45);z-index:46;display:none;align-items:center;justify-content:center}
   #informe.show,#renovar.show,#opiniones.show{display:flex}
+  #cambiar{position:fixed;inset:0;background:rgba(16,50,58,.45);z-index:46;display:none;align-items:center;justify-content:center}
+  #cambiar.show{display:flex}
+  #cambiar .box{background:#fff;border-radius:16px;padding:24px;width:440px;max-width:94vw;max-height:90vh;overflow-y:auto}
+  #cambiar h3{font-size:18px;color:var(--teal-d);margin-bottom:4px}
+  #cambiar .sub{font-size:13px;color:var(--muted);margin-bottom:14px}
+  #cambiar select{width:100%;padding:11px;border:2px solid var(--line);border-radius:9px;font-size:14px}
+  #cambiar label{display:block;font-size:12px;font-weight:700;color:var(--muted);margin:10px 0 4px}
+  #cambiar .foot{display:flex;justify-content:space-between;margin-top:16px}
+  #cambiar button{padding:11px 18px;border-radius:9px;border:0;font-weight:700}
+  #cbMsg{font-size:13px;margin-top:8px;min-height:16px}
+  #cbMsg.err{color:var(--bad)} #cbMsg.ok{color:var(--good)}
   #informe .box,#opiniones .box{background:var(--bg);border-radius:16px;width:680px;max-width:96vw;max-height:90vh;overflow-y:auto}
   #informe .ihead,#opiniones .ihead{background:linear-gradient(135deg,#0f8a9c,#0b6875);color:#fff;padding:18px 22px;position:sticky;top:0;display:flex;justify-content:space-between;align-items:center}
   #informe .ihead h3,#opiniones .ihead h3{font-size:19px}
@@ -305,6 +316,23 @@
   <div class="box">
     <div class="ihead"><h3 id="opTit">Opiniones de clientes</h3><button class="x" onclick="cerrarOpiniones()">×</button></div>
     <div class="ibody" id="opBody"><p class="vacio">Cargando…</p></div>
+  </div>
+</div>
+
+<!-- Cambiar día y plaza -->
+<div id="cambiar">
+  <div class="box">
+    <h3>Cambiar día y plaza</h3>
+    <div class="sub" id="cbSub"></div>
+    <label>Día de consulta</label>
+    <select id="cb_dia" onchange="pintarPlazasCb()"></select>
+    <label>Plaza</label>
+    <select id="cb_plaza"></select>
+    <div id="cbMsg"></div>
+    <div class="foot">
+      <button class="btn-cerrar" onclick="cerrarCambiar()">Cancelar</button>
+      <button class="btn-renovar" id="btnCambiar" onclick="guardarCambiarPlaza()">Guardar cambio</button>
+    </div>
   </div>
 </div>
 
@@ -682,7 +710,7 @@ function pintarFicha(cli,regs){
         <span id="fActividad">Actividad: cargando…</span>
       </div>
     </div>
-    <div style="padding:12px 22px 0"><button class="cp-btn" onclick="consultaPasadaFicha('${cli.id}', '${(nom||'este cliente').replace(/'/g,'')}')">✅ Consulta pasada · fijar próxima cita (+7 días)</button><div id="fCita" style="margin-top:8px;font-size:14px;font-weight:700"></div></div>
+    <div style="padding:12px 22px 0"><button class="cp-btn" onclick="consultaPasadaFicha('${cli.id}', '${(nom||'este cliente').replace(/'/g,'')}')">✅ Consulta pasada · fijar próxima cita (+7 días)</button> <button class="cp-btn" style="background:var(--orange)" onclick="abrirCambiarPlaza('${cli.id}')">🔄 Cambiar día / plaza</button><div id="fCita" style="margin-top:8px;font-size:14px;font-weight:700"></div></div>
     <div class="fbody">
       <div class="kpis">${kpis}</div>
       ${calSec}
@@ -769,6 +797,41 @@ async function asignar(id){
   const {status,data}=await api('asignar',{cliente_id:id,dia:DIA_ACT,plaza});
   if(status!==200){toast(data.error||'Error');return;}
   cerrarAsig(); toast('Plaza asignada'); await cargar();
+}
+
+// ---------- Cambiar día y plaza ----------
+let CB_ID=null;
+function abrirCambiarPlaza(id){
+  CB_ID=id;
+  const c=CLIENTES.find(x=>x.id===id)||FICHA_CLI||{};
+  const actual=c.plaza?`${pref(c.dia_consulta)}${c.plaza}`:'sin plaza';
+  el('cbSub').textContent=`${(c.nombre||'')} ${(c.apellido||'')} · ahora está en ${actual}`.trim();
+  el('cb_dia').innerHTML=DIAS.map(([k,l])=>`<option value="${k}"${norm(c.dia_consulta)===k?' selected':''}>${l}</option>`).join('');
+  pintarPlazasCb(c.plaza);
+  const m=el('cbMsg'); m.textContent=''; m.className='';
+  el('cambiar').classList.add('show');
+}
+function pintarPlazasCb(sel){
+  const dia=el('cb_dia').value;
+  const ocup={};
+  CLIENTES.forEach(c=>{ if(norm(c.dia_consulta)===dia && c.plaza && c.id!==CB_ID) ocup[Number(c.plaza)]=`${c.nombre||''} ${c.apellido||''}`.trim(); });
+  let html='<option value="">— sin plaza —</option>';
+  for(let n=1;n<=NPLAZAS;n++){
+    const o=ocup[n];
+    html+=`<option value="${n}"${(sel&&Number(sel)===n)?' selected':''}${o?' disabled':''}>${pref(dia)}${n} · ${o?'ocupada ('+esc(o)+')':'libre'}</option>`;
+  }
+  el('cb_plaza').innerHTML=html;
+}
+function cerrarCambiar(){ el('cambiar').classList.remove('show'); }
+async function guardarCambiarPlaza(){
+  const dia=el('cb_dia').value, pl=el('cb_plaza').value;
+  const b=el('btnCambiar'); b.disabled=true; b.textContent='Guardando…';
+  const {status,data}=await api('asignar',{cliente_id:CB_ID, dia, plaza: pl===''?null:Number(pl)});
+  b.disabled=false; b.textContent='Guardar cambio';
+  if(status!==200){ const m=el('cbMsg'); m.className='err'; m.textContent=data.error||'Error al cambiar'; return; }
+  cerrarCambiar(); cerrarFicha();
+  toast('Día y plaza actualizados');
+  DIA_ACT=dia; marcarDia(); await cargar();
 }
 async function quitarPlaza(){}
 function cerrarAsig(){el('asig').classList.remove('show');ASIG_CTX=null;}
