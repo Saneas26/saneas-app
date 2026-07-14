@@ -67,7 +67,8 @@
           transform:translateX(100%);transition:transform .25s;overflow-y:auto}
   #ficha.show{transform:none}
   .fh{background:linear-gradient(135deg,#0f8a9c,#0b6875);color:#fff;padding:22px 26px;position:sticky;top:0;z-index:2}
-  .fh .x{position:absolute;top:16px;right:18px;background:rgba(255,255,255,.2);border:0;color:#fff;width:34px;height:34px;border-radius:50%;font-size:18px}
+  .fh-acts{display:flex;gap:8px;justify-content:flex-end;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+  .fh .x{background:rgba(255,255,255,.2);border:0;color:#fff;width:34px;height:34px;border-radius:50%;font-size:18px;flex-shrink:0}
   .fh h3{font-size:24px;margin-bottom:4px}
   .fh .sub{font-size:13px;opacity:.9;display:flex;gap:14px;flex-wrap:wrap}
   .fbody{padding:22px 26px 60px}
@@ -122,17 +123,17 @@
   .btn-alta{background:var(--teal);color:#fff}
   #altaMsg{font-size:13px;margin-top:10px;min-height:18px}
   #altaMsg.err{color:var(--bad)} #altaMsg.ok{color:var(--good)}
-  .baja-btn{position:absolute;top:16px;right:64px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.55);color:#fff;padding:7px 14px;border-radius:999px;font-size:13px;font-weight:700}
+  .baja-btn{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.55);color:#fff;padding:7px 14px;border-radius:999px;font-size:13px;font-weight:700;white-space:nowrap}
   .baja-btn:hover{background:var(--bad);border-color:var(--bad)}
-  .sc-btn{position:absolute;top:16px;right:172px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.55);color:#fff;padding:7px 14px;border-radius:999px;font-size:13px;font-weight:700}
+  .sc-btn{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.55);color:#fff;padding:7px 14px;border-radius:999px;font-size:13px;font-weight:700;white-space:nowrap}
   .sc-btn:hover{background:var(--orange);border-color:var(--orange)}
   .cp-btn{width:100%;background:var(--teal);color:#fff;border:0;border-radius:10px;padding:11px;font-weight:800;font-size:14px;cursor:pointer}
   .cp-btn:hover{background:var(--teal-d)}
   .hdr-btn{background:#fff;border:2px solid var(--line);border-radius:999px;padding:8px 15px;font-weight:700;font-size:13px;color:var(--teal-d)}
   .hdr-btn:hover{border-color:var(--teal)}
   /* Informe / Renovar / Opiniones (modales) */
-  #informe,#renovar,#opiniones{position:fixed;inset:0;background:rgba(16,50,58,.45);z-index:46;display:none;align-items:center;justify-content:center}
-  #informe.show,#renovar.show,#opiniones.show{display:flex}
+  #informe,#renovar,#opiniones,#cambiar{position:fixed;inset:0;background:rgba(16,50,58,.45);z-index:46;display:none;align-items:center;justify-content:center}
+  #informe.show,#renovar.show,#opiniones.show,#cambiar.show{display:flex}
   #informe .box,#opiniones .box{background:var(--bg);border-radius:16px;width:680px;max-width:96vw;max-height:90vh;overflow-y:auto}
   #informe .ihead,#opiniones .ihead{background:linear-gradient(135deg,#0f8a9c,#0b6875);color:#fff;padding:18px 22px;position:sticky;top:0;display:flex;justify-content:space-between;align-items:center}
   #informe .ihead h3,#opiniones .ihead h3{font-size:19px}
@@ -158,17 +159,21 @@
   .tag-cad{color:var(--bad);font-weight:800}.tag-hoy{color:var(--orange);font-weight:800}
   .rank b{color:var(--teal);font-weight:800}
   .vacio{color:var(--muted);font-size:13px}
-  #renovar .box{background:#fff;border-radius:16px;padding:24px;width:440px;max-width:94vw;max-height:90vh;overflow-y:auto}
-  #renovar h3{font-size:18px;color:var(--teal-d);margin-bottom:4px}
-  #renovar .sub{font-size:13px;color:var(--muted);margin-bottom:14px}
-  #renovar input,#renovar select{width:100%;padding:11px;border:2px solid var(--line);border-radius:9px;font-size:14px}
-  #renovar label{display:block;font-size:12px;font-weight:700;color:var(--muted);margin:10px 0 4px}
+  #renovar .box,#cambiar .box{background:#fff;border-radius:16px;padding:24px;width:440px;max-width:94vw;max-height:90vh;overflow-y:auto}
+  #renovar h3,#cambiar h3{font-size:18px;color:var(--teal-d);margin-bottom:4px}
+  #renovar .sub,#cambiar .sub{font-size:13px;color:var(--muted);margin-bottom:14px}
+  #renovar input,#renovar select,#cambiar input,#cambiar select{width:100%;padding:11px;border:2px solid var(--line);border-radius:9px;font-size:14px}
+  #renovar label,#cambiar label{display:block;font-size:12px;font-weight:700;color:var(--muted);margin:10px 0 4px}
   #renovar .list{max-height:220px;overflow-y:auto;margin-top:6px}
   #renovar .row{display:flex;justify-content:space-between;align-items:center;padding:9px;border-radius:8px;cursor:pointer}
   #renovar .row:hover{background:var(--soft)} #renovar .row.sel{background:var(--soft);border:1px solid var(--teal)}
-  #renovar .foot{display:flex;justify-content:space-between;margin-top:16px}
-  #renovar button{padding:11px 18px;border-radius:9px;border:0;font-weight:700}
+  #renovar .foot,#cambiar .foot{display:flex;justify-content:space-between;margin-top:16px}
+  #renovar button,#cambiar button{padding:11px 18px;border-radius:9px;border:0;font-weight:700}
   .btn-renovar{background:var(--teal);color:#fff}
+  #cbMsg{font-size:13px;margin-top:8px;min-height:16px}
+  #cbMsg.err{color:var(--bad)} #cbMsg.ok{color:var(--good)}
+  .fbody-acts{display:flex;gap:10px;padding:12px 22px 0}
+  .fbody-acts button{flex:1}
   /* Selectores de dieta en la ficha */
   .dieta-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
   @media(max-width:560px){.dieta-grid{grid-template-columns:1fr}}
@@ -215,7 +220,6 @@
   <div class="sp"></div>
   <button class="hdr-btn" onclick="abrirInforme()">📋 Informe del día</button>
   <button class="hdr-btn" onclick="abrirOpiniones()">💬 Opiniones</button>
-  <button class="hdr-btn" onclick="enviarAviso(null,null)">🔔 Aviso a todos</button>
   <button class="hdr-btn" onclick="abrirRenovar()">🔄 Renovar</button>
   <button class="alta-btn" onclick="abrirAlta()">＋ Dar de alta</button>
   <div class="count" id="count"></div>
@@ -333,6 +337,23 @@
   </div>
 </div>
 
+<!-- Cambiar día y plaza -->
+<div id="cambiar">
+  <div class="box">
+    <h3>Cambiar día y plaza</h3>
+    <div class="sub" id="cbSub"></div>
+    <label>Día de consulta</label>
+    <select id="cb_dia" onchange="pintarPlazasCb()"></select>
+    <label>Plaza</label>
+    <select id="cb_plaza"></select>
+    <div id="cbMsg"></div>
+    <div class="foot">
+      <button class="btn-cerrar" onclick="cerrarCambiar()">Cancelar</button>
+      <button class="btn-renovar" id="btnCambiar" onclick="guardarCambiarPlaza()">Guardar cambio</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -359,15 +380,6 @@ async function api(action,extra={}){
   return {status:r.status,data:await r.json().catch(()=>({}))};
 }
 async function rpc(fn,body){ try{ const r=await fetch(SUPABASE_URL+'/rest/v1/rpc/'+fn,{method:'POST',headers:{'Content-Type':'application/json','apikey':PUBLISHABLE,'Authorization':'Bearer '+PUBLISHABLE},body:JSON.stringify(body)}); return await r.json(); }catch(e){ return null; } }
-async function enviarAviso(clienteId,nombre){
-  const cuerpo=prompt('Mensaje del aviso para '+(nombre||'TODOS los clientes con la app')+':'); if(!cuerpo) return;
-  try{
-    const r=await fetch(SUPABASE_URL+'/functions/v1/enviar-push',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({secret:SYNC_SECRET,titulo:'Saneas',cuerpo,cliente_id:clienteId||undefined})});
-    const d=await r.json().catch(()=>({}));
-    toast(d.ok?('🔔 Aviso enviado a '+(d.enviados||0)+' dispositivo(s)'+(d.enviados?'':' — ese cliente aún no activó las notificaciones')):('Error: '+(d.error||r.status)));
-  }catch(e){ toast('Error al enviar el aviso'); }
-}
 function toast(m){const t=el('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200);}
 
 // ---------- Login ----------
@@ -401,14 +413,6 @@ async function cargar(){
   render();
 }
 
-function tarifaCli(c){
-  const p=norm(c.plan), n=norm(c.nivel);
-  if(p.includes('premium')||n.includes('premium')) return {label:'Premium',color:'#7c3aed'};
-  if(p.includes('prueba')||p.includes('trial')) return {label:'Prueba',color:'#868e96'};
-  if(p.includes('basic')||n.includes('basic')) return {label:'Básico',color:'#3b5bdb'};
-  if(p.includes('completo')||/nivel\s*[123]/.test(n)) return {label:'Completo',color:'#0f8a9c'};
-  return {label:'',color:''};
-}
 function render(){
   const delDia=CLIENTES.filter(c=>norm(c.dia_consulta)===DIA_ACT);
   el('tituloDia').textContent='Plazas · '+DIAS.find(d=>d[0]===DIA_ACT)[1];
@@ -427,12 +431,10 @@ function render(){
       let dot;
       if(!_fr){ dot='pend'; }
       else { const dd=Math.round((_fr-_hoy)/86400000); dot = dd<=0?'canc' : dd<=3?'pend' : 'activa'; }
-      const _t=tarifaCli(c);
       html+=`<button class="plaza full" onclick="abrirFicha('${c.id}')">
         <span class="dot ${dot}"></span>
         <div class="cod">${PREF}${n}</div>
-        <div class="nm">${esc(c.nombre)} ${esc(c.apellido||'')}</div>
-        ${_t.label?`<div style="display:inline-block;margin-top:3px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.3px;padding:1px 6px;border-radius:6px;color:${_t.color};background:${_t.color}1a">${_t.label}</div>`:''}</button>`;
+        <div class="nm">${esc(c.nombre)} ${esc(c.apellido||'')}</div></button>`;
     }else{
       html+=`<button class="plaza empty" onclick="abrirAsig(${n})">
         <div class="cod">${PREF}${n}</div><div class="nm">Libre</div></button>`;
@@ -570,8 +572,7 @@ function pintarFicha(cli,regs){
   if(!act){ envioTxt='sin envíos aún'; envioCol='var(--muted)'; }
   else { const fe=new Date(act.fecha+'T00:00:00'); const dd=Math.round((_hoy0-fe)/86400000);
     const cuando=dd<=0?'hoy':dd===1?'ayer':'hace '+dd+' días';
-    const _he=act.hora_envio?(' a las '+new Date(act.hora_envio).toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit',timeZone:'Atlantic/Canary'})):'';
-    envioTxt=_fmt(act.fecha)+_he+' · '+cuando; envioCol=dd<=1?'var(--good)':dd<=7?'var(--orange)':'var(--bad)'; }
+    envioTxt=_fmt(act.fecha)+' · '+cuando; envioCol=dd<=1?'var(--good)':dd<=7?'var(--orange)':'var(--bad)'; }
   // ¿El registro de esta semana llegó fuera de plazo? (después de las 9:00 h canaria)
   const _regSem=reales.find(r=>r.fecha&&new Date(r.fecha+'T00:00:00')>=_lunesW);
   const _tarde=!!(_regSem&&_regSem.enviado_tarde);
@@ -667,32 +668,32 @@ function pintarFicha(cli,regs){
       </div>`;
   el('ficha').innerHTML=`
     <div class="fh">
-      <button class="x" onclick="cerrarFicha()">×</button>
-      <button class="sc-btn" onclick="enviarAviso('${cli.id}', '${(nom||'este cliente').replace(/'/g,'')}')">🔔 Aviso</button>
-      <button class="sc-btn" onclick="sinConsultaFicha('${cli.id}', '${(nom||'este cliente').replace(/'/g,'')}')">Sin consulta</button>
-      <button class="baja-btn" onclick="darBaja('${cli.id}', '${(nom||'este cliente').replace(/'/g,'')}')">Dar de baja</button>
+      <div class="fh-acts">
+        <button class="sc-btn" onclick="sinConsultaFicha('${cli.id}', '${(nom||'este cliente').replace(/'/g,'')}')">Sin consulta</button>
+        <button class="baja-btn" onclick="darBaja('${cli.id}', '${(nom||'este cliente').replace(/'/g,'')}')">Dar de baja</button>
+        <button class="x" onclick="cerrarFicha()">×</button>
+      </div>
       <h3>${nom||'Cliente'}</h3>
       <div class="sub">
         <span>${gen}${ed!=null?' · '+ed+' años':''}</span>
         <span>${DIAS.find(d=>d[0]===norm(cli.dia_consulta))?.[1]||'—'} · ${plazaTxt}</span>
         <span>${sem}</span>
-        <span>Suscripción: <b style="color:${estCol}">${estTxt}</b>${cli.fecha_renovacion?` · renueva <b>${_fmt(cli.fecha_renovacion)}</b>`:''}</span>
+        <span>Suscripción: <b style="color:${estCol}">${estTxt}</b></span>
         <span>Último envío: <b style="color:${envioCol}">${envioTxt}</b>${_enviadoSem?'':' · <b style="color:#ffd08a">aún no esta semana</b>'}</span>
         ${_tarde?`<span><b style="color:#ffd08a">⚠️ SIN CONSULTA · datos enviados fuera de plazo</b></span>`:''}
         <span id="fActividad">Actividad: cargando…</span>
       </div>
     </div>
-    <div style="padding:12px 22px 0"><button class="cp-btn" onclick="consultaPasadaFicha('${cli.id}', '${(nom||'este cliente').replace(/'/g,'')}')">✅ Consulta pasada · fijar próxima cita (+7 días)</button><div id="fCita" style="margin-top:8px;font-size:14px;font-weight:700"></div></div>
+    <div class="fbody-acts">
+      <button class="cp-btn" onclick="consultaPasadaFicha('${cli.id}', '${(nom||'este cliente').replace(/'/g,'')}')">✅ Consulta pasada · cita +7 días</button>
+      <button class="cp-btn" style="background:var(--orange)" onclick="abrirCambiarPlaza('${cli.id}')">🔄 Cambiar día / plaza</button>
+    </div>
     <div class="fbody">
       <div class="kpis">${kpis}</div>
       ${calSec}
       <div class="sec">
         <h4>Objetivos y perímetros (actual vs objetivo)</h4>
         ${o?`<table class="obj"><thead><tr><th>Parámetro</th><th>Actual</th><th>Objetivo</th><th>Estado</th></tr></thead><tbody>${objRows}</tbody></table>`:'<p class="empty-msg">Falta la altura del cliente para calcular objetivos.</p>'}
-      </div>
-      <div class="sec">
-        <h4>Pliegues y perímetros (inicial vs último medido)</h4>
-        <div id="fMedidas"><p class="vacio">Cargando…</p></div>
       </div>
       ${dietaSec}
       <div class="sec">
@@ -702,34 +703,6 @@ function pintarFicha(cli,regs){
         :'<p class="empty-msg">Este cliente aún no tiene registros de evolución.</p>'}
       </div>
     </div>`;
-  cargarMedidasCita(cli.id);
-}
-const PER_DEF=[['per_cintura','Cintura'],['per_cadera','Cadera'],['per_hombro','Hombros']];
-const PLI_DEF=[['pli_tricipital','Tríceps'],['pli_bicipital','Bíceps'],['pli_subescapular','Subescapular'],['pli_suprailiaco','Suprailíaco'],['pli_abdominal','Abdominal'],['pli_cuadricipital','Cuádriceps']];
-function _fmtCita(s){ return String(s||'').slice(0,10).split('-').reverse().join('/'); }
-function tablaMedidas(titulo,ini,ult,defs,u){
-  if(!ini&&!ult) return '';
-  const fIni=ini&&ini.fecha?_fmtCita(ini.fecha):'—', fUlt=ult&&ult.fecha?_fmtCita(ult.fecha):'—';
-  let rows='';
-  for(const kv of defs){ const k=kv[0],l=kv[1];
-    const vi=ini&&ini[k]!=null?r1(ini[k])+u:'—';
-    const vu=ult&&ult[k]!=null?r1(ult[k])+u:'—';
-    let d='—'; if(ini&&ini[k]!=null&&ult&&ult[k]!=null){ const dd=r1(ult[k]-ini[k]); d=(dd>0?'+':'')+dd; }
-    rows+=`<tr><td class="p">${l}</td><td>${vi}</td><td>${vu}</td><td>${d}</td></tr>`;
-  }
-  return `<h4 style="margin:14px 0 6px;font-size:14px">${titulo}</h4><table><thead><tr><th>Parámetro</th><th>Inicial<br><span class="mini">${fIni}</span></th><th>Último<br><span class="mini">${fUlt}</span></th><th>Δ</th></tr></thead><tbody>${rows}</tbody></table>`;
-}
-async function cargarMedidasCita(id){
-  let res=null; try{ res=await rpc('panel_medidas',{p_cliente_id:id,secret:SYNC_SECRET}); }catch(e){}
-  const cEl=el('fCita');
-  if(cEl){ const fc=res&&res.fecha_proxima_consulta; cEl.innerHTML=fc?`<span style="color:var(--good)">📅 Próxima cita fijada: <b>${_fmtCita(fc)}</b></span>`:''; }
-  const mEl=el('fMedidas');
-  if(mEl){
-    if(!res||res.ok!==true){ mEl.innerHTML='<p class="vacio">—</p>'; return; }
-    const per=tablaMedidas('Perímetros',res.per_ini,res.per_ult,PER_DEF,' cm');
-    const pli=tablaMedidas('Pliegues',res.pli_ini,res.pli_ult,PLI_DEF,' mm');
-    mEl.innerHTML=(per||pli)?(per+pli):'<p class="empty-msg">Aún no hay perímetros ni pliegues registrados.</p>';
-  }
 }
 function objRow(label,actual,obj,down,u){
   let estado='<span class="mini">—</span>';
@@ -834,6 +807,40 @@ async function sinConsultaFicha(id,nombre){
   // Recargar la ficha para reflejarlo
   const {status,data}=await api('ficha',{cliente_id:id});
   if(status===200){ pintarFicha(data.cliente,data.registros||[]); }
+}
+// ---------- Cambiar día y plaza ----------
+let CB_ID=null;
+function abrirCambiarPlaza(id){
+  CB_ID=id;
+  const c=CLIENTES.find(x=>x.id===id)||FICHA_CLI||{};
+  const actual=c.plaza?`${pref(c.dia_consulta)}${c.plaza}`:'sin plaza';
+  el('cbSub').textContent=`${(c.nombre||'')} ${(c.apellido||'')} · ahora está en ${actual}`.trim();
+  el('cb_dia').innerHTML=DIAS.map(([k,l])=>`<option value="${k}"${norm(c.dia_consulta)===k?' selected':''}>${l}</option>`).join('');
+  pintarPlazasCb(c.plaza);
+  const m=el('cbMsg'); m.textContent=''; m.className='';
+  el('cambiar').classList.add('show');
+}
+function pintarPlazasCb(sel){
+  const dia=el('cb_dia').value;
+  const ocup={};
+  CLIENTES.forEach(c=>{ if(norm(c.dia_consulta)===dia && c.plaza && c.id!==CB_ID) ocup[Number(c.plaza)]=`${c.nombre||''} ${c.apellido||''}`.trim(); });
+  let html='<option value="">— sin plaza —</option>';
+  for(let n=1;n<=NPLAZAS;n++){
+    const o=ocup[n];
+    html+=`<option value="${n}"${(sel&&Number(sel)===n)?' selected':''}${o?' disabled':''}>${pref(dia)}${n} · ${o?'ocupada ('+esc(o)+')':'libre'}</option>`;
+  }
+  el('cb_plaza').innerHTML=html;
+}
+function cerrarCambiar(){ el('cambiar').classList.remove('show'); }
+async function guardarCambiarPlaza(){
+  const dia=el('cb_dia').value, pl=el('cb_plaza').value;
+  const b=el('btnCambiar'); b.disabled=true; b.textContent='Guardando…';
+  const {status,data}=await api('asignar',{cliente_id:CB_ID, dia, plaza: pl===''?null:Number(pl)});
+  b.disabled=false; b.textContent='Guardar cambio';
+  if(status!==200){ const m=el('cbMsg'); m.className='err'; m.textContent=data.error||'Error al cambiar'; return; }
+  cerrarCambiar(); cerrarFicha();
+  toast('Día y plaza actualizados');
+  DIA_ACT=dia; marcarDia(); await cargar();
 }
 async function consultaPasadaFicha(id,nombre){
   if(!confirm('¿Marcar la consulta de '+nombre+' como pasada?\n\nSu próxima cita pasará a ser dentro de 7 días (mismo día la semana que viene).')) return;
