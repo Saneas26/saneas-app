@@ -779,7 +779,29 @@ function _inicioSemana(){ const d=new Date(_hoyCanarias()+'T12:00:00Z'); d.setUT
 async function cargarPasos(){ try{ if(!CLIENTE||!CLIENTE.id) return; const {data}=await sb.from('pasos').select('pasos,fecha').eq('cliente_id',CLIENTE.id).gte('fecha',_inicioSemana()); const hoy=_hoyCanarias(); PASOS_SEM=(data||[]).reduce((s,r)=>s+(+r.pasos||0),0); PASOS_HOY=(data||[]).filter(r=>r.fecha===hoy).reduce((s,r)=>s+(+r.pasos||0),0); pintarPasos(); }catch(e){ console.error('pasos',e); } }
 function pintarPasos(){ const el=document.getElementById('pasosTotal'); if(!el) return; el.textContent=PASOS_HOY.toLocaleString('es-ES'); const pct=Math.min(100,Math.round(PASOS_SEM/META_SEMANA*100)); const b=document.getElementById('pasosBar'); if(b) b.style.width=pct+'%'; const m=document.getElementById('pasosMsg'); if(m){ m.textContent = PASOS_SEM>=META_SEMANA ? '✅ ¡Reto de la semana conseguido! 🎉' : ('Te quedan '+(META_SEMANA-PASOS_SEM).toLocaleString('es-ES')+' pasos para esta semana 👟'); } }
 async function sumarPasos(){ const inp=document.getElementById('pasosInput'); if(!inp) return; const v=parseInt(inp.value,10); if(!v||v<=0){ inp.focus(); return; } const btn=inp.nextElementSibling; inp.disabled=true; if(btn) btn.disabled=true; try{ await sb.from('pasos').insert({cliente_id:CLIENTE.id, fecha:_hoyCanarias(), pasos:v}); PASOS_HOY+=v; PASOS_SEM+=v; inp.value=''; pintarPasos(); }catch(e){ alert('No se pudieron guardar los pasos, inténtalo de nuevo.'); } inp.disabled=false; if(btn) btn.disabled=false; inp.focus(); }
-async function sumarPasos(){ const inp=document.getElementById('pasosInput'); if(!inp) return; const v=parseInt(inp.value,10); if(!v||v<=0){ inp.focus(); return; } const btn=inp.nextElementSibling; inp.disabled=true; if(btn) btn.disabled=true; try{ await sb.from('pasos').insert({cliente_id:CLIENTE.id, fecha:_hoyCanarias(), pasos:v}); PASOS_SEM+=v; inp.value=''; pintarPasos(); }catch(e){ alert('No se pudieron guardar los pasos, inténtalo de nuevo.'); } inp.disabled=false; if(btn) btn.disabled=false; inp.focus(); }
+// ---- Tarjeta para activar las notificaciones (iOS exige un toque del usuario) ----
+function pintarPushCard(){
+  const el=document.getElementById('pushCard'); if(!el) return;
+  const esIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
+  const instalada=(window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches)||navigator.standalone===true;
+  const soporta=('serviceWorker' in navigator)&&('PushManager' in window)&&('Notification' in window);
+  let html='';
+  if(!soporta){
+    if(esIOS&&!instalada) html='<h3 style="margin:0 0 6px">🔔 Avisos de Saneas</h3><div style="font-size:14px;line-height:1.45">Para recibir notificaciones, añade la app a tu pantalla de inicio: toca <b>Compartir</b> y después <b>«Añadir a pantalla de inicio»</b>. Luego entra desde el icono y actívalas aquí.</div>';
+  } else if(Notification.permission==='default'){
+    html='<h3 style="margin:0 0 6px">🔔 Avisos de Saneas</h3><div style="font-size:14px;line-height:1.45;margin-bottom:10px">Activa las notificaciones para recibir tus recordatorios de consulta, renovación y tu reto semanal.</div><button class="btn" style="margin:0" onclick="activarPush()">Activar notificaciones</button>';
+  } else if(Notification.permission==='denied'){
+    html='<h3 style="margin:0 0 6px">🔔 Avisos de Saneas</h3><div style="font-size:14px;line-height:1.45">Las notificaciones están bloqueadas para Saneas. Actívalas en los ajustes de tu móvil (Notificaciones → Saneas) y vuelve a entrar.</div>';
+  }
+  if(html){ el.innerHTML=html; el.style.display='block'; } else { el.style.display='none'; }
+}
+async function activarPush(){
+  await initPush();
+  if(('Notification' in window)&&Notification.permission==='granted'){
+    const el=document.getElementById('pushCard');
+    if(el){ el.innerHTML='<div style="font-size:15px;font-weight:700">✅ Notificaciones activadas. Te avisaremos de tus consultas, renovaciones y retos 🎯</div>'; el.style.display='block'; setTimeout(()=>{ el.style.display='none'; },6000); }
+  } else { pintarPushCard(); }
+}
 
 // ---- Tarjeta de aviso automática (prioridad: consulta > renovación > mensaje del pool) ----
 let MENSAJES=[];
