@@ -668,6 +668,7 @@ function pintarFicha(cli,regs){
   el('ficha').innerHTML=`
     <div class="fh">
       <button class="x" onclick="cerrarFicha()">×</button>
+      <button class="sc-btn" onclick="enviarAviso('${cli.id}', '${(nom||'este cliente').replace(/'/g,'')}')">🔔 Aviso</button>
       <button class="sc-btn" onclick="sinConsultaFicha('${cli.id}', '${(nom||'este cliente').replace(/'/g,'')}')">Sin consulta</button>
       <button class="baja-btn" onclick="darBaja('${cli.id}', '${(nom||'este cliente').replace(/'/g,'')}')">Dar de baja</button>
       <h3>${nom||'Cliente'}</h3>
