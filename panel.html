@@ -923,13 +923,18 @@ async function sinConsultaFicha(id,nombre){
   if(status===200){ pintarFicha(data.cliente,data.registros||[]); }
 }
 async function consultaPasadaFicha(id,nombre){
-  if(!confirm('¿Marcar la consulta de '+nombre+' como pasada?\n\nSu próxima cita pasará a ser dentro de 7 días (mismo día la semana que viene).')) return;
+  const cli=FICHA_CLI||CLIENTES.find(x=>x.id===id)||{};
+  const diaL=DIAS.find(d=>d[0]===norm(cli.dia_consulta))?.[1]||'día de consulta';
+  if(!confirm('¿Marcar la consulta de '+nombre+' como pasada?\n\nSu próxima cita pasará al próximo '+diaL+' (7 días sobre su día de consulta).')) return;
   const res=await rpc('panel_consulta_pasada',{p_cliente_id:id,secret:SYNC_SECRET});
   if(!res||res.error||res.ok!==true){ toast((res&&res.error)||'No se pudo marcar la consulta'); return; }
-  toast('Consulta pasada · próxima cita fijada');
+  // La próxima cita cae en su DÍA DE CONSULTA (no hoy+7): 7 días sobre su día.
+  const f=proximaCitaPara(cli.dia_consulta);
+  if(f){ await rpc('panel_fijar_cita',{p_cliente_id:id,p_fecha:f,secret:SYNC_SECRET}); }
+  toast('Consulta pasada · próxima cita '+(f?_fmtCita(f):'fijada'));
   const {status,data}=await api('ficha',{cliente_id:id});
   if(status===200){ pintarFicha(data.cliente,data.registros||[]); }
-  const c=CLIENTES.find(x=>x.id===id); if(c&&res.proxima_cita)c.fecha_proxima_consulta=res.proxima_cita;
+  const c=CLIENTES.find(x=>x.id===id); if(c)c.fecha_proxima_consulta=(f||res.proxima_cita);
 }
 
 // ---------- Informe del día ----------
