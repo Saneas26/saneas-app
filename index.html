@@ -754,7 +754,8 @@ async function copiarRegistros(user){
 function saludo(){const h=new Date().getHours();return h<6?'Buenas noches':h<12?'Buenos días':h<20?'Buenas tardes':'Buenas noches';}
 function mostrarSplash(){
   const s=document.getElementById('splash');
-  document.getElementById('splashTxt').innerHTML=`${saludo()},<br><b>${CLIENTE.nombre||''}</b> 👋`;
+  document.getElementById('splashTxt').innerHTML=`${saludo()},`;
+  document.getElementById('splashNom').innerHTML=`${(CLIENTE.nombre||'').split(' ')[0]} 👋`;
   s.classList.remove('hidden'); void s.offsetWidth; s.classList.add('show');
   return new Promise(r=>setTimeout(r,2300));
 }
