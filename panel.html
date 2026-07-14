@@ -359,6 +359,15 @@ async function api(action,extra={}){
   return {status:r.status,data:await r.json().catch(()=>({}))};
 }
 async function rpc(fn,body){ try{ const r=await fetch(SUPABASE_URL+'/rest/v1/rpc/'+fn,{method:'POST',headers:{'Content-Type':'application/json','apikey':PUBLISHABLE,'Authorization':'Bearer '+PUBLISHABLE},body:JSON.stringify(body)}); return await r.json(); }catch(e){ return null; } }
+async function enviarAviso(clienteId,nombre){
+  const cuerpo=prompt('Mensaje del aviso para '+(nombre||'TODOS los clientes con la app')+':'); if(!cuerpo) return;
+  try{
+    const r=await fetch(SUPABASE_URL+'/functions/v1/enviar-push',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({secret:SYNC_SECRET,titulo:'Saneas',cuerpo,cliente_id:clienteId||undefined})});
+    const d=await r.json().catch(()=>({}));
+    toast(d.ok?('🔔 Aviso enviado a '+(d.enviados||0)+' dispositivo(s)'+(d.enviados?'':' — ese cliente aún no activó las notificaciones')):('Error: '+(d.error||r.status)));
+  }catch(e){ toast('Error al enviar el aviso'); }
+}
 function toast(m){const t=el('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200);}
 
 // ---------- Login ----------
