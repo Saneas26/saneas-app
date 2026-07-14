@@ -1510,7 +1510,7 @@ function descargarDieta(){
 }
 
 // ====== LISTA DE LA COMPRA (dieta actual + próxima) ======
-let COMPRA_DIETA=null;
+let COMPRA_DIETA=null, COMPRA_ITEMS=[], COMPRA_CHECKS={};
 function abrirCompra(dietaId){
   COMPRA_DIETA=dietaId||CLIENTE.dieta_actual_id||null;
   document.querySelectorAll('.screen').forEach(s=>s.classList.add('hidden'));
@@ -1538,30 +1538,50 @@ async function renderCompra(){
   const {data:d}=await sb.from('dietas').select('*').eq('id',id).maybeSingle();
   if(!d){ cont.innerHTML=header+'<div class="empty">No se encontró la dieta.</div>'; return; }
   const {data:items}=await sb.from('lista_compra').select('id,categoria,supermercado,producto').eq('nombre_plan',planBase(d.nombre_plan)).order('categoria').order('id');
-  cont.innerHTML=header+_seccionCompra(label,d,items||[],checkMap);
+  COMPRA_ITEMS=items||[]; COMPRA_CHECKS=checkMap;
+  cont.innerHTML=header+_seccionCompra(label,d,COMPRA_ITEMS,checkMap);
+}
+// Cuerpo de la lista, filtrado por supermercado ('' = todos, '__sin__' = sin asignar)
+function _cuerpoCompra(items,checkMap,sup){
+  const norma=it=>String(it.supermercado||'').trim();
+  const f = !sup ? items
+    : (sup==='__sin__' ? items.filter(it=>!norma(it)) : items.filter(it=>norma(it)===sup));
+  if(!f.length) return '<p style="font-size:14px;font-weight:600;color:var(--muted)">No hay artículos de ese supermercado en esta lista.</p>';
+  let body='';
+  const cats={}; f.forEach(it=>{ const c=it.categoria||'Otros'; (cats[c]=cats[c]||[]).push(it); });
+  Object.keys(cats).forEach(cat=>{
+    body+=`<div class="lc-cat">${cat}</div>`;
+    cats[cat].forEach(it=>{ const on=checkMap[it.id]===true;
+      body+=`<div class="lc-item${on?' done':''}" id="lc-${it.id}">
+        <div class="lc-name">${it.producto}${it.supermercado?`<div class="lc-sup">${it.supermercado}</div>`:''}</div>
+        <button class="lc-chk ${on?'on':'off'}" onclick="toggleCompra(${it.id},this)" aria-label="marcar como comprado">${on?'✓':'✕'}</button>
+      </div>`;
+    });
+  });
+  return body;
+}
+function filtrarCompra(){
+  const sup=(document.getElementById('lc_super')||{}).value||'';
+  const b=document.getElementById('lc-body');
+  if(b) b.innerHTML=_cuerpoCompra(COMPRA_ITEMS,COMPRA_CHECKS,sup);
 }
 function _seccionCompra(label,d,items,checkMap){
-  let body='';
-  if(!items.length){ body='<p style="font-size:14px;font-weight:600;color:var(--muted)">Sin artículos para esta dieta todavía.</p>'; }
-  else{
-    const cats={}; items.forEach(it=>{ const c=it.categoria||'Otros'; (cats[c]=cats[c]||[]).push(it); });
-    Object.keys(cats).forEach(cat=>{
-      body+=`<div class="lc-cat">${cat}</div>`;
-      cats[cat].forEach(it=>{ const on=checkMap[it.id]===true;
-        body+=`<div class="lc-item${on?' done':''}" id="lc-${it.id}">
-          <div class="lc-name">${it.producto}${it.supermercado?`<div class="lc-sup">${it.supermercado}</div>`:''}</div>
-          <button class="lc-chk ${on?'on':'off'}" onclick="toggleCompra(${it.id},this)" aria-label="marcar como comprado">${on?'✓':'✕'}</button>
-        </div>`;
-      });
-    });
-  }
   const url=d&&d.lista_compra_url;
   const btn = url
     ? `<a class="btn" style="display:block;text-align:center;text-decoration:none;margin-top:16px" href="${url}" target="_blank" rel="noopener">⬇️ Descargar la lista</a>`
     : `<button class="btn" disabled style="margin-top:16px;opacity:.55">⬇️ Descarga próximamente</button>`;
-  return `<h2 class="sec">${label}</h2>
-    <p style="font-size:16px;font-weight:800;color:#d97757;margin:0 6px 10px">${fmt(d&&d.nombre_plan)}</p>
-    <div class="card">${body}${btn}</div>`;
+  const head=`<h2 class="sec">${label}</h2>
+    <p style="font-size:16px;font-weight:800;color:#d97757;margin:0 6px 10px">${fmt(d&&d.nombre_plan)}</p>`;
+  if(!items.length) return head+`<div class="card"><p style="font-size:14px;font-weight:600;color:var(--muted)">Sin artículos para esta dieta todavía.</p>${btn}</div>`;
+  // Desplegable con los supermercados que aparecen en ESTA lista (sin opciones vacías)
+  const sups=[...new Set(items.map(it=>String(it.supermercado||'').trim()).filter(Boolean))]
+    .sort((a,b)=>a.localeCompare(b,'es'));
+  const haySin=items.some(it=>!String(it.supermercado||'').trim());
+  const opts=['<option value="">🏪 Todos los supermercados</option>']
+    .concat(sups.map(s=>`<option value="${s}">${s}</option>`))
+    .concat(haySin?['<option value="__sin__">Sin supermercado</option>']:[]).join('');
+  const sel=sups.length?`<select class="search" id="lc_super" onchange="filtrarCompra()" style="margin:0 6px 10px">${opts}</select>`:'';
+  return head+sel+`<div class="card"><div id="lc-body">${_cuerpoCompra(items,checkMap,'')}</div>${btn}</div>`;
 }
 async function toggleCompra(id, btn){
   const on=!btn.classList.contains('on');
