@@ -375,7 +375,7 @@
     <input id="rn_buscar" placeholder="Nombre y apellido…" oninput="buscarRenovar()">
     <div class="list" id="rn_list"></div>
     <label>Bono / plan pagado</label>
-    <select id="rn_bono">
+    <select id="rn_bono" onchange="actualizarDescuentoRenovar()">
       <option value="basico">Básico · 1 mes</option>
       <option value="completo_mensual" selected>Completo · 1 mes</option>
       <option value="completo_trimestral">Completo · 3 meses</option>
@@ -383,6 +383,9 @@
       <option value="completo_anual">Completo · 12 meses</option>
       <option value="premium">Premium · 1 mes</option>
     </select>
+    <label>Descuento (€)</label>
+    <input id="rn_desc" type="number" min="0" step="1" value="0">
+    <div id="rn_desc_hint" style="font-size:12px;color:var(--muted);margin-top:4px"></div>
     <div id="renovMsg"></div>
     <div class="foot">
       <button class="btn-cerrar" onclick="cerrarRenovar()">Cancelar</button>
@@ -1063,11 +1066,25 @@ async function abrirOpiniones(){
 function cerrarOpiniones(){el('opiniones').classList.remove('show');}
 
 // ---------- Renovar ----------
-let RENOV_SEL=null;
+let RENOV_SEL=null, RN_DESC_REQ=0;
 function abrirRenovar(){
   RENOV_SEL=null; el('rn_buscar').value=''; el('rn_bono').value='completo_mensual';
+  RN_DESC_REQ++; el('rn_desc').value=0; el('rn_desc_hint').textContent='';
   const m=el('renovMsg'); m.textContent='';m.className='';
   el('renovar').classList.add('show'); pintarRenovList(''); el('rn_buscar').focus();
+}
+// Pre-rellena el descuento Saneamigos (clientes.descuento_invitados) SOLO para
+// mensual Completo/Premium; para el resto, 0. El campo queda siempre editable.
+async function actualizarDescuentoRenovar(){
+  const bono=el('rn_bono').value, inp=el('rn_desc'), hint=el('rn_desc_hint');
+  const req=++RN_DESC_REQ;
+  if(!RENOV_SEL||!(bono==='completo_mensual'||bono==='premium')){ inp.value=0; hint.textContent=''; return; }
+  hint.textContent='Buscando descuento Saneamigos…';
+  const r=await rpc('panel_descuento_cliente',{p_cliente_id:RENOV_SEL.id,secret:SYNC_SECRET});
+  if(req!==RN_DESC_REQ) return;
+  const d=(r&&r.ok)?Number(r.descuento||0):0;
+  inp.value=d;
+  hint.textContent=d>0?`Descuento Saneamigos: ${d}€/mes (editable)`:'Sin descuento Saneamigos (puedes escribirlo a mano).';
 }
 function cerrarRenovar(){el('renovar').classList.remove('show');}
 function buscarRenovar(){pintarRenovList(el('rn_buscar').value);}
@@ -1080,7 +1097,7 @@ function pintarRenovList(q){
     return `<div class="row ${sel}" onclick="selRenovar('${c.id}','${esc((c.nombre+' '+(c.apellido||'')).replace(/'/g,''))}')"><span class="who">${esc(c.nombre)} ${esc(c.apellido||'')}</span><span class="where">${donde}</span></div>`;
   }).join('')||'<p class="vacio">Sin resultados</p>';
 }
-function selRenovar(id,nombre){RENOV_SEL={id,nombre};el('rn_buscar').value=nombre;pintarRenovList(nombre);}
+function selRenovar(id,nombre){RENOV_SEL={id,nombre};el('rn_buscar').value=nombre;pintarRenovList(nombre);actualizarDescuentoRenovar();}
 async function confirmarRenovar(){
   const m=el('renovMsg');
   if(!RENOV_SEL){m.className='err';m.textContent='Elige primero un cliente de la lista.';return;}
@@ -1091,7 +1108,20 @@ async function confirmarRenovar(){
   if(status!==200){m.className='err';m.textContent=data.error||'Error';return;}
   m.className='ok';m.textContent=`✅ ${RENOV_SEL.nombre}: ${data.plan||''} · +${data.meses} mes(es). Nueva caducidad: ${_fmtCita(data.fecha_renovacion)}`;
   toast('Renovación aplicada');
-  setTimeout(cerrarRenovar, 3000);   // se cierra solo a los 3s, sin esperar a Cancelar
+  // Emitir la factura (1 factura = 1 renovación pagada). Si falla, la renovación NO se rompe.
+  const desc=Math.max(0,Number(el('rn_desc').value)||0);
+  const hoy=new Date().toLocaleDateString('en-CA',{timeZone:'Atlantic/Canary'});
+  let fac=null; try{ fac=await rpc('crear_factura',{p_cliente_id:RENOV_SEL.id,p_bono:bono,p_fecha:hoy,p_descuento:desc,secret:SYNC_SECRET}); }catch(e){}
+  if(fac&&fac.ok){
+    m.textContent+=` · Factura ${fac.numero} (${fac.total}€)`+(fac.datos_fiscales_completos?'':' — ⚠️ faltan datos fiscales del cliente');
+    toast('Factura '+fac.numero+' emitida');
+    setTimeout(cerrarRenovar, 3000);   // se cierra solo a los 3s, sin esperar a Cancelar
+  }else{
+    m.className='err';
+    m.textContent+=` · ⚠️ Renovación aplicada pero la factura NO se emitió${fac&&fac.error?' ('+fac.error+')':''}. Apúntalo para emitirla a mano.`;
+    toast('⚠️ Factura NO emitida');
+    // no se cierra sola: que Óscar lo vea
+  }
   await cargar();
 }
 </script>
