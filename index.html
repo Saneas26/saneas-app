@@ -913,7 +913,7 @@ const PRODUCTOS_CACHE={}, RECETAS_CACHE={};
 
 // ====== OBJETIVOS (peso, grasa, IMC) ======
 const r1 = x => (x==null||isNaN(x))?'—':(Math.round(x*10)/10).toString().replace('.',',');
-function calcObjetivos(){
+function grasaReal(rec){ const alt=parseFloat(CLIENTE.altura), cin=PRIMERO?Number(PRIMERO.per_cintura):NaN; if(!alt||!cin||!PRIMERO||PRIMERO.peso==null||!rec||rec.peso==null) return null; const esMujer=String(CLIENTE.genero||'').toLowerCase().startsWith('m'); const gi=64-20*(alt/cin)+(esMujer?12:0); return gi-(Number(PRIMERO.peso)-Number(rec.peso)); } function calcObjetivos(){
   const alt=parseFloat(CLIENTE.altura), gen=String(CLIENTE.genero||'').toLowerCase();
   if(!alt) return null;
   const a2=alt*alt, esMujer=gen.startsWith('m');
@@ -978,7 +978,7 @@ function bloquesComposicion(o){
   const imcHoy=(peso&&alt)?+(peso/Math.pow(alt/100,2)).toFixed(1):null;
   let out='';
   // Grasa corporal
-  { const g=u.grasa_corporal; let m,ok=false;
+  { const g=grasaReal(u); let m,ok=false;
     if(g==null)m='Registra tu grasa corporal';
     else if(g<=o.grasaObj){m='✅ Objetivo cumplido';ok=true;}
     else m=`Te sobra ${r1(g-o.grasaObj)}% de grasa`;
@@ -1027,7 +1027,7 @@ function edadEn(fechaStr){
   return (e>0&&e<120)?e:null;
 }
 function edadMetabolica(rec){
-  const edad=edadEn(rec.fecha), g=rec.grasa_corporal;
+  const edad=edadEn(rec.fecha), g=grasaReal(rec);
   if(edad==null||g==null) return rec.edad_metabolica!=null?Math.round(rec.edad_metabolica):null;
   const ideal=String(CLIENTE.genero||'').toLowerCase().startsWith('m')?24:19;   // grasa ideal mujer/hombre
   return Math.round(edad*(1+(g-ideal)/100));
