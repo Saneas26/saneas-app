@@ -1089,8 +1089,10 @@ async function confirmarRenovar(){
   const {status,data}=await api('renovar',{cliente_id:RENOV_SEL.id,bono});
   btn.disabled=false;btn.textContent='Confirmar renovación';
   if(status!==200){m.className='err';m.textContent=data.error||'Error';return;}
-  m.className='ok';m.textContent=`✅ ${RENOV_SEL.nombre}: ${data.plan||''} · +${data.meses} mes(es). Nueva renovación: ${data.fecha_renovacion}`;
-  toast('Renovación aplicada'); await cargar();
+  m.className='ok';m.textContent=`✅ ${RENOV_SEL.nombre}: ${data.plan||''} · +${data.meses} mes(es). Nueva caducidad: ${_fmtCita(data.fecha_renovacion)}`;
+  toast('Renovación aplicada');
+  setTimeout(cerrarRenovar, 3000);   // se cierra solo a los 3s, sin esperar a Cancelar
+  await cargar();
 }
 </script>
 </body>
