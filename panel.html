@@ -533,7 +533,7 @@ function edad(fechaNac,ref){
   return e>=0&&e<120?e:null;
 }
 function edadMet(cli,rec){
-  const e=edad(cli.fecha_nacimiento,rec.fecha), g=rec.grasa_corporal;
+  const e=edad(cli.fecha_nacimiento,rec.fecha), g=grasaReal(cli,rec);
   if(e==null||g==null) return rec.edad_metabolica!=null?Math.round(rec.edad_metabolica):null;
   const ideal=norm(cli.genero).startsWith('m')?24:19;
   return Math.round(e*(1+(g-ideal)/100));
@@ -558,7 +558,7 @@ const PARAMS=[
   {k:'per_brazo',l:'Brazo',u:' cm',down:null},
   {k:'per_muslo',l:'Muslo',u:' cm',down:null},
 ];
-function val(cli,rec,k){ if(!rec)return null; if(k==='__edadmet')return edadMet(cli,rec);
+function grasaInicialSaneas(cli,ini){ const alt=Number(cli.altura), cin=ini?Number(ini.per_cintura):NaN; if(!alt||!cin) return null; return 64-20*(alt/cin)+(norm(cli.genero).startsWith('m')?12:0); } function grasaReal(cli,rec){ const rs=(FICHA_REGS||[]).filter(r=>!r.sin_consulta); const ini=rs[rs.length-1]||null; const gi=grasaInicialSaneas(cli,ini); if(gi==null||!ini||ini.peso==null||!rec||rec.peso==null) return null; return gi-(Number(ini.peso)-Number(rec.peso)); } function val(cli,rec,k){ if(!rec)return null; if(k==='__edadmet')return edadMet(cli,rec); if(k==='grasa_corporal') return grasaReal(cli,rec);
   let v=rec[k];
   if(k==='imc' && v==null && rec.peso!=null && Number(cli.altura)>0){ v=Math.round((Number(rec.peso)/Math.pow(Number(cli.altura)/100,2))*10)/10; }
   return v==null?null:Number(v); }
