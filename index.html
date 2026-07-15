@@ -1745,7 +1745,7 @@ async function guardarRegistro(){
   const lunes=new Date(hoy); lunes.setDate(hoy.getDate()-dow);
   const lunesStr=lunes.toISOString().slice(0,10);
   const row={cliente_id:CLIENTE.id,fecha:hoy.toISOString().slice(0,10),semana:CLIENTE.semana||null,hora_envio:hoy.toISOString()};
-  campos.forEach(c=>row[c]=num(document.getElementById('f_'+c).value));
+  campos.forEach(c=>{ const v=num(document.getElementById('f_'+c).value); if(v!==null) row[c]=v; });
   // Masa muscular / ósea: si la báscula las da en %, convertir a kg con el peso del día
   ['masa_muscular','masa_esqueletica'].forEach(k=>{ const chk=document.getElementById('f_'+k+'_pct'); if(chk&&chk.checked&&row[k]!=null&&row.peso!=null){ row[k]=Math.round(row.peso*(row[k]/100)*10)/10; } });
   // ---- Datos calculados automáticamente (el cliente no los rellena) ----
