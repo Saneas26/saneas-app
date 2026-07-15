@@ -1616,12 +1616,12 @@ function _seccionCompra(label,d,items,checkMap){
   // Desplegable con los supermercados que aparecen en ESTA lista (sin opciones vacías)
   const sups=[...new Set(items.map(it=>String(it.supermercado||'').trim()).filter(Boolean))]
     .sort((a,b)=>a.localeCompare(b,'es'));
-  const haySin=items.some(it=>!String(it.supermercado||'').trim());
+  const haySin=items.some(it=>!String(it.supermercado||'').trim()); const porDefecto=sups.includes('Mercadona')?'Mercadona':'';
   const opts=['<option value="">🏪 Todos los supermercados</option>']
-    .concat(sups.map(s=>`<option value="${s}">${s}</option>`))
+    .concat(sups.map(s=>`<option value="${s}"${s===porDefecto?' selected':''}>${s}</option>`))
     .concat(haySin?['<option value="__sin__">Sin supermercado</option>']:[]).join('');
   const sel=sups.length?`<select class="search" id="lc_super" onchange="filtrarCompra()" style="margin:0 6px 10px">${opts}</select>`:'';
-  return head+sel+`<div class="card"><div id="lc-body">${_cuerpoCompra(items,checkMap,'')}</div>${btn}</div>`;
+  return head+sel+`<div class="card"><div id="lc-body">${_cuerpoCompra(items,checkMap,porDefecto)}</div>${btn}</div>`;
 }
 async function toggleCompra(id, btn){
   const on=!btn.classList.contains('on');
