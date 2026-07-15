@@ -580,7 +580,7 @@ async function abrirFicha(id){
   await cargarDietas();
   const {status,data}=await api('ficha',{cliente_id:id});
   if(status!==200){el('ficha').innerHTML=`<div class="fh"><button class="x" onclick="cerrarFicha()">×</button><h3>Error</h3></div><div class="fbody"><p class="empty-msg">${data.error||''}</p></div>`;return;}
-  pintarFicha(data.cliente,data.registros||[]);
+  (FICHA_INVS=data.invitados||[], pintarFicha(data.cliente,data.registros||[]));
   rpc('accesos_resumen',{p_cliente:id,secret:'SANEAS_SYNC_2026'}).then(res=>{
     const e=el('fActividad'); if(!e) return;
     if(res&&res.dias_semana!=null){
@@ -606,7 +606,7 @@ async function guardarActividad(id,val){
   const c=CLIENTES.find(x=>x.id===id); if(c)c.estilo_vida=val;
 }
 
-let FICHA_CLI=null, FICHA_REGS=[];
+let FICHA_CLI=null, FICHA_REGS=[], FICHA_INVS=[];
 function pintarFicha(cli,regs){
   FICHA_CLI=cli; FICHA_REGS=regs;
   const o=calcObjetivos(cli);
@@ -742,7 +742,7 @@ function pintarFicha(cli,regs){
         <span>Suscripción: <b style="color:${estCol}">${estTxt}</b>${cli.fecha_renovacion?` · renueva <b>${_fmt(cli.fecha_renovacion)}</b>`:''}<button class="fixr-btn" onclick="abrirFixRenov('${cli.id}')">✏️ Corregir</button></span>
         <span>Último envío: <b style="color:${envioCol}">${envioTxt}</b>${_enviadoSem?'':' · <b style="color:#ffd08a">aún no esta semana</b>'}</span>
         ${_tarde?`<span><b style="color:#ffd08a">⚠️ SIN CONSULTA · datos enviados fuera de plazo</b></span>`:''}
-        <span id="fActividad">Actividad: cargando…</span>
+        <span id="fActividad">Actividad: cargando…</span>${(()=>{const _int=String(cli.plan_intervalo||'').toLowerCase();const _mod=_int==='1 month'?'Mensual':_int==='3 months'?'Trimestral (bono)':_int==='6 months'?'Semestral (bono)':_int==='12 months'?'Anual (bono)':(cli.plan_intervalo||'sin definir');const _imp=cli.plan_importe!=null?Number(cli.plan_importe):null;const _dto=Number(cli.descuento_invitados||0);const _fin=_imp!=null?Math.max(0,_imp-_dto):null;const _n=(FICHA_INVS||[]).length;const _lista=(FICHA_INVS||[]).map(x=>{const c=x.cliente;const _ok=c&&c.activo&&String(c.plan_intervalo||'').toLowerCase()==='1 month';return `<span style="display:inline-block;background:${_ok?'#123a2a':'#3a2a12'};color:${_ok?'#7fe0a8':'#ffc98a'};border-radius:10px;padding:2px 9px;margin:2px 4px 2px 0;font-size:12px">${_ok?'✓':'⚠'} ${esc(x.invitado_nombre||(c?c.nombre+' '+(c.apellido||''):'—'))}</span>`;}).join('');return `<div style="margin-top:8px;padding:9px 12px;background:rgba(255,255,255,.05);border-radius:10px;line-height:1.7"><span>Plan: <b>${esc(cli.plan||'—')}</b> · <b>${_mod}</b>${_imp!=null?` · cuota <b>${_imp}€</b>`:''}${_dto>0?` · descuento <b style="color:#7fe0a8">−${_dto}€</b>`:''}${_fin!=null?` · <b style="color:#ffd54a;font-size:15px">paga ${_fin}€</b>`:''}</span><br><span>Saneamigos: <b>${_n}</b>/6${_n?' · '+_lista:' <span style="color:var(--muted)">— ninguno</span>'}</span></div>`;})()}
       </div>
     </div>
     <div style="padding:12px 22px 0"><div class="cp-row"><button class="cp-btn" onclick="consultaPasadaFicha('${cli.id}', '${(nom||'este cliente').replace(/'/g,'')}')">✅ Consulta pasada (+7 días)</button><button class="cp-btn" style="background:var(--orange)" onclick="abrirCambiarPlaza('${cli.id}')">🔄 Cambiar día / plaza</button></div><div id="fCita" style="margin-top:8px;font-size:14px;font-weight:700"></div></div>
@@ -917,7 +917,7 @@ async function guardarFixRenov(){
   toast('Renovación corregida · '+_fmtCita(f));
   const c=CLIENTES.find(x=>x.id===FR_ID); if(c)c.fecha_renovacion=f;
   const {status,data}=await api('ficha',{cliente_id:FR_ID});
-  if(status===200){ pintarFicha(data.cliente,data.registros||[]); }
+  if(status===200){ (FICHA_INVS=data.invitados||[], pintarFicha(data.cliente,data.registros||[])); }
   await cargar();
 }
 async function quitarPlaza(){}
@@ -983,7 +983,7 @@ async function sinConsultaFicha(id,nombre){
   toast('Marcado sin consulta esta semana');
   // Recargar la ficha para reflejarlo
   const {status,data}=await api('ficha',{cliente_id:id});
-  if(status===200){ pintarFicha(data.cliente,data.registros||[]); }
+  if(status===200){ (FICHA_INVS=data.invitados||[], pintarFicha(data.cliente,data.registros||[])); }
 }
 async function consultaPasadaFicha(id,nombre){
   const cli=FICHA_CLI||CLIENTES.find(x=>x.id===id)||{};
@@ -1002,7 +1002,7 @@ async function consultaPasadaFicha(id,nombre){
     ?('Su dieta es ahora "'+(d.actual||'—')+'", pero ya no hay ninguna siguiente que asignarle como próxima.')
     :'No hay dieta siguiente, así que se ha dejado como estaba.')+'\n\nAsígnale tú la dieta que corresponda.'); }
   const {status,data}=await api('ficha',{cliente_id:id});
-  if(status===200){ pintarFicha(data.cliente,data.registros||[]); }
+  if(status===200){ (FICHA_INVS=data.invitados||[], pintarFicha(data.cliente,data.registros||[])); }
   const c=CLIENTES.find(x=>x.id===id); if(c)c.fecha_proxima_consulta=(f||res.proxima_cita);
 }
 
