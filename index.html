@@ -2180,6 +2180,32 @@ const PLAN_LIST=[
 ];
 let CUOTA=PLAN_LIST.find(p=>p.id==='completo_mensual')||PLAN_LIST[0];   // por defecto Completo Mensual
 function setCuota(id){CUOTA=PLAN_LIST.find(p=>p.id===id)||CUOTA;renderPagos();}
+// Tarjeta de tarifas (escaparate oscuro). Tocar una tarifa la selecciona y actualiza el importe a pagar.
+function _tarifaTile(id,tit,precio,nota,promo){
+  const sel=CUOTA&&CUOTA.id===id; const selectable=PLAN_LIST.some(p=>p.id===id);
+  const border=sel?'2px solid #34d399':'1px solid rgba(255,255,255,0.06)';
+  const pie=promo
+    ? `<div style="display:inline-block;font-size:10px;color:#34d399;font-weight:700;background:rgba(52,211,153,0.12);padding:2px 6px;border-radius:6px;margin-top:5px">${promo}</div>`
+    : `<div style="font-size:11px;color:#94a3b8;font-weight:500;margin-top:4px;line-height:1.2">${nota||''}</div>`;
+  return `<td style="width:50%;background:rgba(255,255,255,0.03);border:${border};border-radius:14px;padding:12px 10px;vertical-align:top;${selectable?'cursor:pointer':''}" ${selectable?`onclick="setCuota('${id}')"`:''}>
+      <div style="font-size:12px;color:#94a3b8;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">${tit}${sel?' ✓':''}</div>
+      <div style="font-size:26px;color:#fff;font-weight:800;line-height:1">${precio}€</div>${pie}</td>`;
+}
+function tarjetaTarifas(){
+  const vip=CUOTA&&CUOTA.id==='premium';
+  return `<div style="background:linear-gradient(135deg,#0f172a,#1e293b);border-radius:22px;padding:16px 12px;margin-top:6px;box-shadow:0 10px 30px rgba(0,0,0,.3)">
+    <div style="margin-bottom:12px"><span style="font-weight:800;font-size:24px;color:#34d399">Saneas</span><span style="font-weight:800;font-size:24px;color:#fff"> Tarifas</span></div>
+    <table style="width:100%;border-collapse:separate;border-spacing:8px">
+      <tr>${_tarifaTile('prueba','Prueba',15,'2 semanas')}${_tarifaTile('basico','Básico',30,'En modo automático')}</tr>
+      <tr>${_tarifaTile('completo_mensual','Mensual',60,'Mes a mes')}${_tarifaTile('completo_trimestral','Trimestre',170,'Pago trimestral')}</tr>
+      <tr>${_tarifaTile('completo_semestral','Bono 6 Meses',300,'','1 mes gratis')}${_tarifaTile('completo_anual','Bono 1 Año',600,'','2 meses gratis')}</tr>
+    </table>
+    <div onclick="setCuota('premium')" style="cursor:pointer;margin-top:6px;background:linear-gradient(90deg,rgba(147,51,234,.18),rgba(192,132,252,.05));border:${vip?'2px solid #34d399':'1px solid rgba(147,51,234,.4)'};border-radius:14px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center">
+      <div><div style="font-size:18px;color:#fff;font-weight:800;line-height:1.1">Tarifa VIP${vip?' ✓':''}</div><div style="font-size:12px;color:#c084fc;font-weight:500;margin-top:2px">Todas las consultas telefónicas</div></div>
+      <div style="text-align:right"><div style="font-size:26px;color:#c084fc;font-weight:800;line-height:1">120€</div><div style="font-size:11px;color:#94a3b8;margin-top:2px">al mes</div></div>
+    </div>
+  </div>`;
+}
 function copiar(txt){ if(navigator.clipboard) navigator.clipboard.writeText(txt); toast('Copiado: '+txt); }
 function toast(m){const t=document.createElement('div');t.textContent=m;
   t.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1a2e35;color:#fff;padding:10px 16px;border-radius:20px;font-size:14px;z-index:100;box-shadow:0 6px 20px rgba(0,0,0,.3)';
@@ -2228,7 +2254,8 @@ function renderPagos(target){
       ${activa&&CLIENTE&&CLIENTE.mollie_subscription_id?`<button class="verobj" onclick="cancelarSuscripcion()">Cancelar suscripción</button><p class="note">Al cancelar, la domiciliación se detiene sola.</p>`:''}
     </div>
     <div class="dsec">Elige tu bono</div>
-    <div class="card">${PLAN_LIST.map(p=>`<button class="verobj" style="display:flex;justify-content:space-between;text-align:left;${p.id===CUOTA.id?'border-color:var(--teal);color:var(--teal);background:var(--light)':''}" onclick="setCuota('${p.id}')"><span>${p.label}</span><b>${p.amount}€${p.sub}</b></button>`).join('')}</div>
+    ${tarjetaTarifas()}
+    <p class="note" style="margin:8px 6px 2px">Toca tu bono y págalo abajo 👇</p>
     <div class="dsec">Pago manual · sin comisiones · ${CUOTA.label} (${amt}€)</div>
     <div class="card">
       ${bizum(1,'Oscar BJ','689806987')}
