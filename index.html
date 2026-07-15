@@ -1156,6 +1156,8 @@ function renderInicio(){
     <p style="font-size:20px;font-weight:700;margin:4px 6px 2px">Hola, ${CLIENTE.nombre||''}${esEmbajador()?` <img src="${SANEAMIGO_BADGE}" title="Embajador Saneas" style="height:24px;vertical-align:-5px">`:''} 👋</p>
     <p style="font-size:16px;font-weight:800;color:var(--teal);margin:0 6px 8px">Semana ${fmt(CLIENTE.semana)} en Saneas · ${fmt(CLIENTE.nivel)}</p>
 
+    <div class="card" id="datosFaltanCard" style="display:none"></div>
+
     ${avisoTarjeta()}
 
     <div class="card" id="pushCard" style="display:none"></div>
@@ -1261,6 +1263,44 @@ function renderInicio(){
   pizarra('dieta',document.querySelector('#s-inicio .choice'));
   pintarPasos();
   pintarPushCard();
+  pintarDatosCard();
+}
+
+// ====== Datos fiscales incompletos (para poder facturar) ======
+function _faltanDatosFiscales(){
+  const c=CLIENTE||{}; const req=['dni','calle','codigo_postal','municipio','provincia'];
+  return req.filter(k=>!String(c[k]||'').trim());
+}
+function pintarDatosCard(){
+  const el=document.getElementById('datosFaltanCard'); if(!el) return;
+  if(!_faltanDatosFiscales().length){ el.style.display='none'; el.innerHTML=''; return; }
+  el.style.display=''; el.style.border='2px solid #ef9e92'; el.style.background='#fdecea';
+  el.innerHTML=`<div style="display:flex;gap:12px;align-items:flex-start">
+      <span style="font-size:22px;line-height:1">⚠️</span>
+      <div style="flex:1">
+        <div style="font-weight:800;color:#b42318;margin-bottom:2px">Falta tu DNI en tu Ficha Personal</div>
+        <div style="font-size:14px;color:var(--muted)">Complétalo para que Óscar pueda emitir tus facturas.</div>
+        <button class="btn" style="margin-top:10px" onclick="abrirMisDatos()">Completar mis datos</button>
+      </div></div>`;
+}
+function abrirMisDatos(){
+  const c=CLIENTE||{}; const falta=_faltanDatosFiscales();
+  const CAMPOS=[['dni','DNI (con letra)'],['calle','Calle y número'],['codigo_postal','Código postal'],['municipio','Municipio'],['provincia','Provincia']];
+  const rows=CAMPOS.filter(f=>falta.includes(f[0])).map(f=>`<div class="field"><label>${f[1]}</label><input id="md_${f[0]}" value="${String(c[f[0]]||'').replace(/"/g,'&quot;')}"></div>`).join('');
+  abrirDetalle('Completa tu Ficha Personal', `
+    <p style="color:var(--muted);font-size:14px;margin:0 0 12px">Solo te pedimos lo que falta. Estos datos aparecen en tus facturas.</p>
+    ${rows}
+    <div id="mdMsg" style="font-size:14px;min-height:18px;margin-top:6px"></div>
+    <button class="btn" id="btnMisDatos" onclick="guardarMisDatos()">Guardar</button>`);
+}
+async function guardarMisDatos(){
+  const msg=document.getElementById('mdMsg'); const upd={};
+  for(const k of _faltanDatosFiscales()){ const inp=document.getElementById('md_'+k); const v=inp?inp.value.trim():''; if(!v){ msg.style.color='var(--bad)'; msg.textContent='Rellena todos los campos.'; return; } upd[k]=v; }
+  if(upd.dni && !/[A-Za-z]$/.test(upd.dni)){ msg.style.color='var(--bad)'; msg.textContent='El DNI debe incluir la letra (ej. 12345678Z).'; return; }
+  const btn=document.getElementById('btnMisDatos'); if(btn){ btn.disabled=true; btn.textContent='Guardando…'; }
+  const {error}=await sb.from('clientes').update(upd).eq('id',CLIENTE.id);
+  if(error){ if(btn){ btn.disabled=false; btn.textContent='Guardar'; } msg.style.color='var(--bad)'; msg.textContent='Error: '+error.message; return; }
+  Object.assign(CLIENTE,upd); cerrarDetalle(); renderInicio();
 }
 
 // ====== SANEAMIGOS (invitar) ======
