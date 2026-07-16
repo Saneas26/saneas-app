@@ -125,6 +125,9 @@
   .daysel button{white-space:nowrap;border:none;background:var(--white);color:var(--muted);padding:8px 14px;border-radius:20px;font-family:inherit;font-weight:700;font-size:14px;box-shadow:var(--shadow);cursor:pointer}
   .daysel button.active{background:var(--teal);color:#fff}
   .plato h4{font-size:16px;color:var(--teal);font-weight:800;margin-bottom:4px}
+  /* Dieta completa: subtitulos (En pie, Desayuno...) 3px mas grandes. Clase aparte:
+     .plato la comparte la pantalla Dieta y ahi se queda como estaba. */
+  .plato.dc h4{font-size:19px}
   .plato p{font-size:14px;line-height:1.45;font-weight:600;color:var(--dark)}
   .relh{font-size:14px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);font-weight:700;margin:8px 0 5px}
   .chips{display:flex;gap:6px;flex-wrap:wrap}
@@ -1527,7 +1530,7 @@ async function verDietaCompleta(dietaId){
     if(!tomas.length) continue;
     // Nombre del dia: 32px, mismo naranja, y aire suficiente para que se vea el salto de dia.
     html+=`<div style="font-size:32px;font-weight:800;color:#d97757;line-height:1.15;margin:38px 0 14px;padding-top:14px;border-top:2px solid #f0e4de">${nom}</div>`;
-    tomas.forEach(t=>{ const i=TOMA_INFO[t.toma]||['🍴',t.toma]; html+=`<div class="plato" style="padding:8px 0;border-bottom:1px dashed #dbe6e9"><h4>${i[0]} ${i[1]}</h4><p>${listar(t.texto)}</p></div>`; });
+    tomas.forEach(t=>{ const i=TOMA_INFO[t.toma]||['🍴',t.toma]; html+=`<div class="plato dc" style="padding:8px 0;border-bottom:1px dashed #dbe6e9"><h4>${i[0]} ${i[1]}</h4><p>${listar(t.texto)}</p></div>`; });
   }
   abrirDetalle('Dieta completa', html||'<div class="empty">Esta dieta aún no tiene comidas cargadas.</div>');
 }
