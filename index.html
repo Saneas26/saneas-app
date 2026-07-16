@@ -781,10 +781,12 @@ async function registrarAcceso(){ try{ if(CLIENTE&&CLIENTE.id) await sb.from('ac
 // ---- Notificaciones push (Web Push) ----
 const VAPID_PUB='BHOoBIztagSU5gGdWI-z76JI40CN1nWbix5rZgh2NQzRL8X7Zp51_UsY9JY69lr9ToBcZyb8QyaEZdCGLBc-aTg';
 function _b64ToU8(s){ const p='='.repeat((4-s.length%4)%4); const b=atob((s+p).replace(/-/g,'+').replace(/_/g,'/')); const a=new Uint8Array(b.length); for(let i=0;i<b.length;i++)a[i]=b.charCodeAt(i); return a; }
-async function initPush(){ try{
+async function initPush(soloSiYaConcedido){ try{
   if(!('serviceWorker' in navigator)||!('PushManager' in window)||!CLIENTE||!CLIENTE.id) return;
   const reg=await navigator.serviceWorker.register('sw.js');
   if(!('Notification' in window)||Notification.permission==='denied') return;
+  // soloSiYaConcedido: refresca la suscripcion sin abrir el popup. Para la pantalla de bloqueo.
+  if(soloSiYaConcedido && Notification.permission!=='granted') return;
   const perm=Notification.permission==='granted'?'granted':await Notification.requestPermission();
   if(perm!=='granted') return;
   const sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:_b64ToU8(VAPID_PUB)});
@@ -803,6 +805,8 @@ async function sumarPasos(){ const inp=document.getElementById('pasosInput'); if
 // ---- Tarjeta para activar las notificaciones (iOS exige un toque del usuario) ----
 function pintarPushCard(){
   const el=document.getElementById('pushCard'); if(!el) return;
+  // El dia de consulta ya tiene su aviso arriba hablando de las 10:00. No repetirlo.
+  if(typeof consultaHoyPendiente==='function' && consultaHoyPendiente()){ el.style.display='none'; return; }
   const esIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
   const instalada=(window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches)||navigator.standalone===true;
   const soporta=('serviceWorker' in navigator)&&('PushManager' in window)&&('Notification' in window);
@@ -810,9 +814,20 @@ function pintarPushCard(){
   if(!soporta){
     if(esIOS&&!instalada) html='<h3 style="margin:0 0 6px">🔔 Avisos de Saneas</h3><div style="font-size:14px;line-height:1.45">Para recibir notificaciones, añade la app a tu pantalla de inicio: toca <b>Compartir</b> y después <b>«Añadir a pantalla de inicio»</b>. Luego entra desde el icono y actívalas aquí.</div>';
   } else if(Notification.permission==='default'){
-    html='<h3 style="margin:0 0 6px">🔔 Avisos de Saneas</h3><div style="font-size:14px;line-height:1.45;margin-bottom:10px">Activa las notificaciones para recibir tus recordatorios de consulta, renovación y tu reto semanal.</div><button class="btn" style="margin:0" onclick="activarPush()">Activar notificaciones</button>';
+    html='<h3 style="margin:0 0 8px;font-size:17px">🔔 Que no se te escape la consulta</h3>'
+      +'<div style="font-size:14px;line-height:1.55;margin-bottom:9px">Tus datos tienen que llegar <b>antes de las 10:00</b> del día de tu consulta. Si no llegan, esa semana te quedas sin ella.</div>'
+      +'<div style="font-size:14px;line-height:1.55;margin-bottom:9px">Con los avisos puestos te recuerdo la tarde antes, y otra vez por la mañana si todavía no me han llegado. Y te aviso de tu renovación con tiempo, para que no te pille de sorpresa.</div>'
+      +'<div style="font-size:13px;line-height:1.5;color:var(--muted);margin-bottom:12px;padding-left:10px;border-left:3px solid var(--light)">Nada más. Ni publicidad, ni mensajes a deshora. Y los quitas cuando quieras.</div>'
+      +'<button class="btn" style="margin:0" onclick="activarPush()">Activar avisos</button>';
   } else if(Notification.permission==='denied'){
-    html='<h3 style="margin:0 0 6px">🔔 Avisos de Saneas</h3><div style="font-size:14px;line-height:1.45">Las notificaciones están bloqueadas para Saneas. Actívalas en los ajustes de tu móvil (Notificaciones → Saneas) y vuelve a entrar.</div>';
+    // No hay forma de abrir los ajustes desde la web. Lo unico util es darle la ruta exacta de SU movil.
+    const ruta = esIOS
+      ? 'Ajustes <span style="color:#9ab5bd">›</span> Notificaciones <span style="color:#9ab5bd">›</span> <b>Saneas</b><br><span style="color:#9ab5bd">›</span> Permitir notificaciones'
+      : 'Ajustes <span style="color:#9ab5bd">›</span> Aplicaciones <span style="color:#9ab5bd">›</span> <b>Saneas</b><br><span style="color:#9ab5bd">›</span> Notificaciones <span style="color:#9ab5bd">›</span> Permitir';
+    html='<h3 style="margin:0 0 8px;font-size:17px">🔔 Tienes los avisos apagados</h3>'
+      +'<div style="font-size:14px;line-height:1.55;margin-bottom:10px">Así no puedo recordarte el envío de las 10:00 ni tu consulta. Desde aquí ya no puedo pedírtelo: tiene que ser en los ajustes de tu '+(esIOS?'iPhone':'móvil')+'.</div>'
+      +'<div style="background:var(--light);border-radius:10px;padding:11px 13px;font-size:14px;line-height:1.9;color:var(--dark);margin-bottom:10px">'+ruta+'</div>'
+      +'<div style="font-size:13px;line-height:1.5;color:var(--muted)">Vuelve aquí después y ya está.</div>';
   }
   if(html){ el.innerHTML=html; el.style.display='block'; } else { el.style.display='none'; }
 }
@@ -820,7 +835,7 @@ async function activarPush(){
   await initPush();
   if(('Notification' in window)&&Notification.permission==='granted'){
     const el=document.getElementById('pushCard');
-    if(el){ el.innerHTML='<div style="font-size:15px;font-weight:700">✅ Notificaciones activadas. Te avisaremos de tus consultas, renovaciones y retos 🎯</div>'; el.style.display='block'; setTimeout(()=>{ el.style.display='none'; },6000); }
+    if(el){ el.innerHTML='<div style="font-size:15px;font-weight:700">✅ Listo. Te aviso la tarde antes de cada consulta y si tus datos no me han llegado por la mañana.</div>'; el.style.display='block'; setTimeout(()=>{ el.style.display='none'; },6000); }
   } else { pintarPushCard(); }
 }
 
@@ -834,27 +849,29 @@ function avisoTarjeta(){
   if(consultaHoyPendiente()){
     if(deadlinePasado()){
       if(enviadoATiempo())
-        return `<div class="card aviso"><span class="ico">📊</span><span>Estamos evaluando tus datos, en breve recibirás el reporte.</span></div>`;
-      return `<div class="card aviso urgente"><span class="ico">⚠️</span><span>Esta semana tus datos no han llegado a tiempo. Organízate para que tus datos siempre estén antes de las 10:00 de la mañana. Puedes enviarlos cualquier día de la semana y a cualquier hora, siempre que lleguen antes de las 10:00 de la mañana del día de tu consulta.</span></div>`;
+        return `<div class="card aviso"><span class="ico">📊</span><span>Ya tengo tus datos, ${nom}. Estoy con ellos y en un rato tienes tu informe.</span></div>`;
+      return `<div class="card aviso"><span class="ico">📅</span><span>${nom}, esta semana no me llegaron tus datos a tiempo, así que tu consulta pasa a la semana que viene. Nos vemos el ${fmt(CLIENTE.dia_consulta)}. Puedes mandármelos cualquier día y a cualquier hora: solo tienen que estar antes de las 10:00 del día de tu consulta.</span></div>`;
     }
-    return `<div class="card aviso urgente"><span class="ico">⏰</span><span>Hola ${nom}, hoy tenemos consulta: sube tus datos antes de las 10:00 (hora Madrid) 🕙</span></div>`;
+    return `<div class="card aviso"><span class="ico">👋</span><span>Hola ${nom}, hoy tenemos consulta. Cuando te venga bien, mándame tus datos antes de las 10:00 y te preparo el informe.</span></div>`;
   }
   const dc=diffDias(fechaProximaConsulta()), dr=diffDias(CLIENTE.fecha_renovacion);
   const cand=[];
   if(dc!=null&&dc>=0&&dc<=2) cand.push({t:'consulta',d:dc});
   if(dr!=null&&dr>=0&&dr<=2) cand.push({t:'renov',d:dr});
   cand.sort((a,b)=> (a.d-b.d) || (a.t==='consulta'?-1:1));
-  let txt='', urgente=false;
-  // Naranja de urgencia: cuando falta 1 día o es hoy para consulta/renovación
-  if(cand.length && cand[0].d<=1) urgente=true;
+  let txt='', urgente=false, icoCand='';
+  // El naranja SOLO para la renovación cuando falta 1 día o menos. Su día de consulta no es una alarma.
   if(cand.length){
     const c=cand[0], cuando=c.d===0?'hoy':(c.d===1?'mañana':'en 2 días');
-    if(c.t==='consulta') txt = c.d===0
-      ? `Hola ${nom}, hoy tenemos consulta: sube tus datos antes de las 10:00 🕙`
-      : `Hola ${nom}, recuerda que ${cuando} tenemos consulta y hay que subir los datos 🕙`;
-    else txt = c.d===0
-      ? `Hola ${nom}, hoy caduca tu suscripción y toca renovar 🔔`
-      : `Hola ${nom}, recuerda que ${cuando} caduca tu suscripción y toca renovar 🔔`;
+    if(c.t==='consulta'){ icoCand='🗓️';
+      txt = c.d===0
+        ? `Hola ${nom}, hoy tenemos consulta. Cuando te venga bien, mándame tus datos antes de las 10:00.`
+        : `${nom}, ${cuando} tenemos consulta. Puedes mandarme tus datos ya si quieres: solo tienen que estar antes de las 10:00.`;
+    } else { icoCand='🔔'; urgente = c.d<=1;
+      txt = c.d===0
+        ? `${nom}, hoy toca renovar tu cuota. En cuanto la tengas, seguimos donde lo dejamos.`
+        : `${nom}, ${cuando} toca renovar tu cuota. Te lo digo con tiempo para que no te pille de sorpresa.`;
+    }
   } else {
     let pool=(MENSAJES||[]).slice();
     const pIni=(PRIMERO&&PRIMERO.peso!=null)?PRIMERO.peso:CLIENTE.peso_inicial;
@@ -868,7 +885,7 @@ function avisoTarjeta(){
         .replace(/\{nombre\}/gi,nom).replace(/\{kg\}/gi,String(kg).replace('.',','));
   }
   if(!txt) return '';
-  const ico = urgente ? '⏰' : '💬';
+  const ico = icoCand || (urgente ? '⏰' : '💬');
   return `<div class="card aviso${urgente?' urgente':''}"><span class="ico">${ico}</span><span>${txt}</span></div>`;
 }
 
@@ -878,7 +895,7 @@ async function iniciarSesion(){
   let {data:cli}=await sb.from('clientes').select('*').eq('id',user.id).maybeSingle();
   if(!cli){ cli=await linkCliente(user); }   // primera vez: vincular datos migrados
   CLIENTE=cli||{nombre:REG_NOMBRE||'',email:user.email};
-  if(bloqueado(CLIENTE)){ mostrarBloqueo(); return; }   // renovación caducada → bloquear
+  if(bloqueado(CLIENTE)){ initPush(true); mostrarBloqueo(); return; }   // renovación caducada → bloquear. initPush(true) refresca su suscripción sin pedirle nada.
   const splash=mostrarSplash();   // bienvenida con saludo + nombre
   registrarAcceso();              // contar la entrada del cliente
   cargarMensajes();               // pool de mensajes para la tarjeta de aviso
