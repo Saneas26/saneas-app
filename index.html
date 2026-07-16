@@ -2470,11 +2470,9 @@ async function descargarFactura(i){
   <tbody><tr><td>${esc(f.concepto||'Asesoramiento nutricional Saneas')}</td><td class="r">${eur(f.total)}</td></tr></tbody>
 </table>
 <div class="tot"><div>
-  <div class="l"><span>Base imponible</span><span>${eur(f.total)}</span></div>
-  <div class="l"><span>IVA</span><span>0,00 €</span></div>
   <div class="g"><span>Total</span><span>${eur(f.total)}</span></div>
 </div></div>
-<div class="pie">${esc(e.nota_exencion||'')}</div>
+<div class="pie">Factura emitida por ${esc(e.emisor_marca||'Saneas')} · ${esc(e.emisor_nombre||'')}</div>
 </body></html>`);
   w.document.close();
 }
