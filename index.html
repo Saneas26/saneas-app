@@ -2385,6 +2385,11 @@ function tarjetaTarifas(){
   </div>`;
 }
 // ====== Facturas del cliente ======
+// REPEP · Agencia Tributaria Canaria. Vigente desde el 01/07/2026.
+// Las facturas de esa fecha en adelante llevan la mencion "Exencion franquicia fiscal".
+// Las de enero a junio son de otro regimen y no la llevan.
+const REPEP_DESDE = '2026-07-01';
+function _repep(f){ return String(f||'').slice(0,10) >= REPEP_DESDE; }
 // Escapa el HTML: los datos van dentro de un documento que se imprime.
 function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 // La seguridad la pone la base: politica "facturas propias lee" (auth.uid() = cliente_id).
@@ -2472,7 +2477,7 @@ async function descargarFactura(i){
 <div class="tot"><div>
   <div class="g"><span>Total</span><span>${eur(f.total)}</span></div>
 </div></div>
-<div class="pie">Factura emitida por ${esc(e.emisor_marca||'Saneas')} · ${esc(e.emisor_nombre||'')}</div>
+<div class="pie">${_repep(f.fecha_emision) ? '<b style="color:#1a2e35">Exención franquicia fiscal</b><br>' : ''}Factura emitida por ${esc(e.emisor_marca||'Saneas')} · ${esc(e.emisor_nombre||'')}</div>
 </body></html>`);
   w.document.close();
 }
