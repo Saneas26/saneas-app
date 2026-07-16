@@ -466,7 +466,8 @@ function tarifaCli(c){
   const p=norm(c.plan), n=norm(c.nivel);
   if(p.includes('premium')||n.includes('premium')) return {label:'Premium',color:'#7c3aed'};
   if(p.includes('prueba')||p.includes('trial')) return {label:'Prueba',color:'#868e96'};
-  if(p.includes('basic')||n.includes('basic')) return {label:'Básico',color:'#3b5bdb'};
+  // Basico: amarillo intenso y relleno solido. Es el que Oscar necesita ver de un vistazo.
+  if(p.includes('basic')||n.includes('basic')) return {label:'Básico',color:'#ffd400',solido:true};
   if(p.includes('completo')||/nivel\s*[123]/.test(n)) return {label:'Completo',color:'#0f8a9c'};
   return {label:'',color:''};
 }
@@ -493,7 +494,8 @@ function render(){
         <span class="dot ${dot}"></span>
         <div class="cod">${PREF}${n}</div>
         <div class="nm">${esc(c.nombre)} ${esc(c.apellido||'')}</div>
-        ${_t.label?`<div style="display:inline-block;margin-top:3px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.3px;padding:1px 6px;border-radius:6px;color:${_t.color};background:${_t.color}1a">${_t.label}</div>`:''}</button>`;
+        ${_t.label?`<div style="display:inline-block;margin-top:3px;font-size:${_t.solido?11:10}px;font-weight:800;text-transform:uppercase;letter-spacing:.3px;padding:${_t.solido?'2px 8px':'1px 6px'};border-radius:6px;color:${_t.solido?'#1a2e35':_t.color};background:${_t.solido?_t.color:_t.color+'1a'}">${_t.label}</div>`:''}
+        ${c.enviado_tarde?`<div style="display:inline-block;margin-top:3px;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.3px;padding:2px 6px;border-radius:6px;color:#fff;background:#e05252">⚠️ Sin consulta</div>`:''}</button>`;
     }else{
       html+=`<button class="plaza empty" onclick="abrirAsig(${n})">
         <div class="cod">${PREF}${n}</div><div class="nm">Libre</div></button>`;
