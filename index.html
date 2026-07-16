@@ -124,12 +124,6 @@
   .daysel{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:6px}
   .daysel button{white-space:nowrap;border:none;background:var(--white);color:var(--muted);padding:8px 14px;border-radius:20px;font-family:inherit;font-weight:700;font-size:14px;box-shadow:var(--shadow);cursor:pointer}
   .daysel button.active{background:var(--teal);color:#fff}
-  /* Dias de la dieta completa: grandes, sin pastilla, subrayado teal en el activo.
-     Clase aparte a proposito: .daysel la comparte el selector del Gym y ahi no se toca. */
-  .daysel.dias-dieta{gap:28px;padding-bottom:10px;margin-bottom:10px}
-  .daysel.dias-dieta button{background:none;box-shadow:none;border-radius:0;padding:4px 0 8px;
-    font-size:32px;font-weight:800;color:var(--muted);border-bottom:3px solid transparent}
-  .daysel.dias-dieta button.active{background:none;color:var(--teal);border-bottom-color:var(--teal)}
   .plato h4{font-size:16px;color:var(--teal);font-weight:800;margin-bottom:4px}
   .plato p{font-size:14px;line-height:1.45;font-weight:600;color:var(--dark)}
   .relh{font-size:14px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);font-weight:700;margin:8px 0 5px}
@@ -1577,7 +1571,7 @@ async function renderDieta(){
       </div>
     </div>
     ${CAL?`<div class="card" style="text-align:center;padding:12px"><div style="font-size:14px;color:var(--muted);font-weight:700">Objetivo del día (${CAL.objLabel})</div><div style="font-size:22px;font-weight:800;color:var(--teal)">${CAL.objetivo} kcal</div><div style="font-size:14px;font-weight:700;color:var(--text);margin-top:2px"><span style="white-space:nowrap">P ${macrosDe(CAL.objetivo).prot}g</span> · <span style="white-space:nowrap">HC ${macrosDe(CAL.objetivo).hc}g</span> · <span style="white-space:nowrap">G ${macrosDe(CAL.objetivo).grasa}g</span></div></div>`:''}
-    <div class="daysel dias-dieta">${dias.map(d=>`<button class="${d[0]===DIA_SEL?'active':''}" onclick="selDia('${d[0]}')">${d[1]}</button>`).join('')}</div>
+    <div class="daysel">${dias.map(d=>`<button class="${d[0]===DIA_SEL?'active':''}" onclick="selDia('${d[0]}')">${d[1]}</button>`).join('')}</div>
     ${tomas.length===0?'<div class="empty">Sin comidas para este día.</div>':tomas.map(t=>{
       const i=TOMA_INFO[t.toma]||['🍴',t.toma];
       const prods=(t.toma_productos||[]).map(x=>x.productos).filter(p=>p&&p.disponible!==false);
