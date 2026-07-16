@@ -133,8 +133,8 @@
   .hdr-btn{background:#fff;border:2px solid var(--line);border-radius:999px;padding:8px 15px;font-weight:700;font-size:13px;color:var(--teal-d)}
   .hdr-btn:hover{border-color:var(--teal)}
   /* Informe / Renovar / Opiniones (modales) */
-  #informe,#renovar,#opiniones{position:fixed;inset:0;background:rgba(16,50,58,.45);z-index:46;display:none;align-items:center;justify-content:center}
-  #informe.show,#renovar.show,#opiniones.show{display:flex}
+  #informe,#renovar,#opiniones,#facturas{position:fixed;inset:0;background:rgba(16,50,58,.45);z-index:46;display:none;align-items:center;justify-content:center}
+  #informe.show,#renovar.show,#opiniones.show,#facturas.show{display:flex}
   #cambiar{position:fixed;inset:0;background:rgba(16,50,58,.45);z-index:46;display:none;align-items:center;justify-content:center}
   #cambiar.show{display:flex}
   #cambiar .box{background:#fff;border-radius:16px;padding:24px;width:440px;max-width:94vw;max-height:90vh;overflow-y:auto}
@@ -160,10 +160,10 @@
   .fixr-btn{margin-left:8px;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.5);color:#fff;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap}
   .fixr-btn:hover{background:rgba(255,255,255,.34)}
   #informe .box,#opiniones .box{background:var(--bg);border-radius:16px;width:680px;max-width:96vw;max-height:90vh;overflow-y:auto}
-  #informe .ihead,#opiniones .ihead{background:linear-gradient(135deg,#0f8a9c,#0b6875);color:#fff;padding:18px 22px;position:sticky;top:0;display:flex;justify-content:space-between;align-items:center}
-  #informe .ihead h3,#opiniones .ihead h3{font-size:19px}
-  #informe .ihead .x,#opiniones .ihead .x{background:rgba(255,255,255,.2);border:0;color:#fff;width:32px;height:32px;border-radius:50%;font-size:18px}
-  #informe .ibody,#opiniones .ibody{padding:18px 22px 28px}
+  #informe .ihead,#opiniones .ihead,#facturas .ihead{background:linear-gradient(135deg,#0f8a9c,#0b6875);color:#fff;padding:18px 22px;position:sticky;top:0;display:flex;justify-content:space-between;align-items:center}
+  #informe .ihead h3,#opiniones .ihead h3,#facturas .ihead h3{font-size:19px}
+  #informe .ihead .x,#opiniones .ihead .x,#facturas .ihead .x{background:rgba(255,255,255,.2);border:0;color:#fff;width:32px;height:32px;border-radius:50%;font-size:18px}
+  #informe .ibody,#opiniones .ibody,#facturas .ibody{padding:18px 22px 28px}
   .opcard{background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px 15px;margin-bottom:12px}
   .opcard .oph{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:7px}
   .opcard .who{font-size:14px;font-weight:800;color:var(--teal-d)}
@@ -173,6 +173,21 @@
   .opcard .meta{margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
   .opcard .stars{color:#e0a800;font-size:15px;letter-spacing:2px}
   .opcard .tema{background:var(--soft);color:var(--muted);font-size:12px;font-weight:700;padding:3px 9px;border-radius:20px}
+  #facturas .box{background:var(--bg);border-radius:16px;width:900px;max-width:96vw;max-height:90vh;overflow-y:auto}
+  .ftab{width:100%;border-collapse:collapse;font-size:13px;background:#fff}
+  .ftab th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);padding:9px 10px;border-bottom:2px solid var(--line);position:sticky;top:0;background:#fff}
+  .ftab td{padding:9px 10px;border-bottom:1px solid var(--line)}
+  .ftab tr:hover td{background:var(--soft)}
+  .ftab .num{font-family:ui-monospace,monospace;font-weight:700;color:var(--teal-d)}
+  .ftab .imp{text-align:right;font-weight:700;white-space:nowrap}
+  .fanul{opacity:.5;text-decoration:line-through}
+  .fchip{display:inline-block;font-size:10px;font-weight:700;padding:2px 7px;border-radius:999px;margin-left:5px;vertical-align:1px}
+  .fchip.baja{background:#eef2f4;color:#6b878f}
+  .fchip.anul{background:#fdecea;color:#e0533d}
+  .fchip.falta{background:#fff4e6;color:#b8651a}
+  .ffiltros{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:center}
+  .ffiltros input,.ffiltros select{border:2px solid var(--line);border-radius:9px;padding:7px 10px;font-family:inherit;font-size:13px;color:var(--text)}
+  .ffiltros input:focus,.ffiltros select:focus{outline:none;border-color:var(--teal)}
   .isec{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:14px}
   .isec h4{font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:10px}
   .isum{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
@@ -240,6 +255,7 @@
   <div class="dias" id="dias"></div>
   <div class="sp"></div>
   <button class="hdr-btn" onclick="abrirInforme()">📋 Informe del día</button>
+  <button class="hdr-btn" onclick="abrirFacturas()">🧾 Facturas</button>
   <button class="hdr-btn" onclick="abrirOpiniones()">💬 Opiniones</button>
   <button class="hdr-btn" onclick="enviarAviso(null,null)">🔔 Aviso a todos</button>
   <button class="hdr-btn" onclick="abrirRenovar()">🔄 Renovar</button>
@@ -323,6 +339,27 @@
   <div class="box">
     <div class="ihead"><h3 id="infTit">Informe del día</h3><button class="x" onclick="cerrarInforme()">×</button></div>
     <div class="ibody" id="infBody"><p class="vacio">Cargando…</p></div>
+  </div>
+</div>
+
+<!-- Facturas -->
+<div id="facturas">
+  <div class="box">
+    <div class="ihead"><h3 id="facTit">Facturas</h3><button class="x" onclick="cerrarFacturas()">×</button></div>
+    <div class="ibody">
+      <div class="ffiltros">
+        <input id="fBuscar" type="search" placeholder="Nombre, número o NIF…" style="flex:1;min-width:180px" oninput="facDebounce()">
+        <select id="fRango" onchange="cargarFacturas()">
+          <option value="">Todo</option>
+          <option value="mes">Este mes</option>
+          <option value="ano" selected>Este año</option>
+          <option value="trim1">1er trimestre</option>
+          <option value="trim2">2º trimestre</option>
+        </select>
+        <button class="hdr-btn" onclick="exportarFacturas()">⬇ CSV</button>
+      </div>
+      <div id="facBody"><p class="vacio">Cargando…</p></div>
+    </div>
   </div>
 </div>
 
@@ -1012,6 +1049,71 @@ async function consultaPasadaFicha(id,nombre){
 }
 
 // ---------- Informe del día ----------
+// ---- Facturas ----
+let FACT=[], FACT_T=null;
+function abrirFacturas(){ el('facturas').classList.add('show'); cargarFacturas(); }
+function cerrarFacturas(){ el('facturas').classList.remove('show'); }
+function facDebounce(){ clearTimeout(FACT_T); FACT_T=setTimeout(cargarFacturas,350); }
+function facRango(){
+  const v=el('fRango').value, y=new Date().getFullYear();
+  if(v==='mes'){ const d=new Date(); return {desde:`${y}-${String(d.getMonth()+1).padStart(2,'0')}-01`, hasta:null}; }
+  if(v==='ano')   return {desde:`${y}-01-01`, hasta:`${y}-12-31`};
+  if(v==='trim1') return {desde:`${y}-01-01`, hasta:`${y}-03-31`};
+  if(v==='trim2') return {desde:`${y}-04-01`, hasta:`${y}-06-30`};
+  return {desde:null, hasta:null};
+}
+const eur = n => Number(n||0).toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';
+const fcorta = f => { if(!f) return '—'; const d=new Date(String(f).slice(0,10)+'T00:00:00');
+  return isNaN(d)?'—':d.toLocaleDateString('es-ES',{day:'2-digit',month:'2-digit',year:'2-digit'}); };
+
+async function cargarFacturas(){
+  el('facBody').innerHTML='<p class="vacio">Cargando…</p>';
+  const {desde,hasta}=facRango();
+  const buscar=el('fBuscar').value.trim();
+  const {status,data}=await api('facturas',{desde,hasta,buscar,limite:600});
+  if(status!==200){ el('facBody').innerHTML='<p class="vacio">'+esc(data.error||'Error')+'</p>'; return; }
+  FACT=data.lista||[];
+  const r=data.resumen||{};
+  el('facTit').textContent='Facturas · '+(r.facturas||0);
+  if(!FACT.length){ el('facBody').innerHTML='<p class="vacio">No hay facturas con ese filtro.</p>'; return; }
+  const avisos = (r.sin_datos_fiscales
+      ? `<div class="ipill" style="border-color:#ffd7a8;background:#fff9f2">⚠️ <b>${r.sin_datos_fiscales}</b> sin datos fiscales</div>` : '')
+    + (r.anuladas ? `<div class="ipill"><b>${r.anuladas}</b> anuladas</div>` : '');
+  el('facBody').innerHTML=`
+    <div class="isum">
+      <div class="ipill"><b>${r.facturas||0}</b> facturas</div>
+      <div class="ipill" style="border-color:#bfe3d2;background:#f2fbf6">Total <b>${eur(r.total)}</b></div>
+      ${avisos}
+    </div>
+    <div class="isec" style="padding:0;overflow:hidden">
+      <table class="ftab">
+        <thead><tr><th>Número</th><th>Fecha</th><th>Cliente</th><th>NIF</th><th class="imp">Importe</th></tr></thead>
+        <tbody>${FACT.map(f=>`
+          <tr class="${f.anulada?'fanul':''}">
+            <td class="num">${esc(f.numero)}</td>
+            <td>${fcorta(f.fecha_emision)}</td>
+            <td>${esc(f.cli_nombre||'—')}${f.es_cliente_actual?'':'<span class="fchip baja">ya no está</span>'}${f.anulada?'<span class="fchip anul">anulada</span>':''}</td>
+            <td>${esc(f.cli_nif||'')||'<span class="fchip falta">falta NIF</span>'}</td>
+            <td class="imp">${eur(f.total)}</td>
+          </tr>`).join('')}</tbody>
+      </table>
+    </div>`;
+}
+
+function exportarFacturas(){
+  if(!FACT.length){ toast('No hay nada que exportar'); return; }
+  const cab=['Numero','Fecha','Cliente','NIF','Concepto','Importe','Estado','Cobrada'];
+  const esc2=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"';
+  const filas=FACT.map(f=>[f.numero,f.fecha_emision,f.cli_nombre,f.cli_nif||'',f.concepto||'',
+    String(f.total).replace('.',','), f.anulada?'Anulada':'Emitida', f.fecha_cobro||''].map(esc2).join(';'));
+  const csv='\uFEFF'+[cab.join(';'),...filas].join('\r\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
+  a.download='saneas_facturas_'+new Date().toISOString().slice(0,10)+'.csv';
+  a.click(); URL.revokeObjectURL(a.href);
+  toast('CSV con '+FACT.length+' facturas');
+}
+
 async function abrirInforme(){
   el('informe').classList.add('show');
   el('infBody').innerHTML='<p class="vacio">Cargando…</p>';
