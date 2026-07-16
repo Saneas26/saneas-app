@@ -124,6 +124,12 @@
   .daysel{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:6px}
   .daysel button{white-space:nowrap;border:none;background:var(--white);color:var(--muted);padding:8px 14px;border-radius:20px;font-family:inherit;font-weight:700;font-size:14px;box-shadow:var(--shadow);cursor:pointer}
   .daysel button.active{background:var(--teal);color:#fff}
+  /* Dias de la dieta completa: grandes, sin pastilla, subrayado teal en el activo.
+     Clase aparte a proposito: .daysel la comparte el selector del Gym y ahi no se toca. */
+  .daysel.dias-dieta{gap:28px;padding-bottom:10px;margin-bottom:10px}
+  .daysel.dias-dieta button{background:none;box-shadow:none;border-radius:0;padding:4px 0 8px;
+    font-size:32px;font-weight:800;color:var(--muted);border-bottom:3px solid transparent}
+  .daysel.dias-dieta button.active{background:none;color:var(--teal);border-bottom-color:var(--teal)}
   .plato h4{font-size:16px;color:var(--teal);font-weight:800;margin-bottom:4px}
   .plato p{font-size:14px;line-height:1.45;font-weight:600;color:var(--dark)}
   .relh{font-size:14px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);font-weight:700;margin:8px 0 5px}
@@ -258,6 +264,7 @@
         <div class="field"><label>Altura (cm)</label><input id="d_altura" type="number"></div>
         <div class="field"><label>Sexo</label>
           <select id="d_genero" class="search" style="margin:0"><option value="">—</option><option>Mujer</option><option>Hombre</option><option>Otro</option></select></div>
+        <div class="field"><label>Fecha de nacimiento</label><input id="d_nacimiento" type="date"></div>
       </div>
       <div class="field"><label>Calle y número</label><input id="d_calle"></div>
       <div class="grid2">
@@ -317,6 +324,7 @@
         <button onclick="regTab('pli',this)">Plicometría</button>
         <button onclick="regTab('per',this)">Perímetros</button>
       </div>
+      <div id="avisoPlazo" class="card" style="display:none;background:#fff4e6;border-left:4px solid #F5862E;color:#17343c;font-size:14px;line-height:1.45;margin-bottom:12px"></div>
       <div id="r-imp" class="card">
         <div class="grid2">
           <div class="field"><label>Peso (kg)</label><input id="f_peso" type="number" step="0.1"></div>
@@ -331,6 +339,7 @@
         </div>
         <p style="font-size:12.5px;color:var(--muted);margin:10px 4px 0">El <b>peso sin grasa</b>, la <b>edad metabólica</b> y el <b>IMC</b> los calculamos nosotros a partir de tu peso, tu grasa corporal y tu edad. No hace falta que los rellenes.</p>
       </div>
+      <button class="btn" id="btnReg_imp" onclick="guardarSeccion('imp')">Enviar</button>
       <div id="r-pli" class="card hidden">
         <div class="grid2">
           <div class="field"><label>Bicipital (mm)</label><input id="f_pli_bicipital" type="number" step="0.1"><a class="vidlink" href="https://www.instagram.com/p/C6RuBniISsi/" target="_blank" rel="noopener">▶ Ver vídeo</a></div>
@@ -341,6 +350,7 @@
           <div class="field"><label>Suprailíaco (mm)</label><input id="f_pli_suprailiaco" type="number" step="0.1"><a class="vidlink" href="https://www.instagram.com/p/C6RseXBKKru/" target="_blank" rel="noopener">▶ Ver vídeo</a></div>
         </div>
       </div>
+      <button class="btn" id="btnReg_pli" onclick="guardarSeccion('pli')">Enviar</button>
       <div id="r-per" class="card hidden">
         <div id="canonCard"></div>
         <div class="grid2">
@@ -349,7 +359,7 @@
           <div class="field" id="perHombros"><label>Hombros (cm)</label><input id="f_per_hombro" type="number" step="0.1"><a class="vidlink" href="https://www.instagram.com/p/C7CwlqDIWI1/" target="_blank" rel="noopener">▶ Ver vídeo</a></div>
         </div>
       </div>
-      <button class="btn" id="btnReg2" onclick="guardarRegistro()">✅ Enviar mis datos</button>
+      <button class="btn" id="btnReg_per" onclick="guardarSeccion('per')">Enviar</button>
       <div id="regSaveMsg"></div>
     </div>
 
@@ -510,6 +520,10 @@ function nuevoDatos(planId){
       <div class="field"><label>Apellido 1</label><input id="n_ap1"></div>
       <div class="field"><label>Apellido 2</label><input id="n_ap2"></div>
       <div class="field"><label>DNI</label><input id="n_dni"></div>
+      <div class="field"><label>Altura (cm)</label><input id="n_altura" type="number" min="120" max="220" step="1" placeholder="p. ej. 167"></div>
+      <div class="field"><label>Sexo</label>
+        <select id="n_genero" class="search" style="margin:0"><option value="">—</option><option>Mujer</option><option>Hombre</option></select></div>
+      <div class="field"><label>Fecha de nacimiento</label><input id="n_nacimiento" type="date"></div>
       <div class="field"><label>Email</label><input id="n_email" type="email"></div>
       <div class="field"><label>Teléfono</label><input id="n_tel" type="tel"></div>
     </div>
@@ -529,6 +543,7 @@ async function crearYpagar(planId){
   const g=id=>document.getElementById(id).value.trim();
   const email=g('n_email'),tel=g('n_tel'),nombre=g('n_nombre'),ap1=g('n_ap1'),dni=g('n_dni');
   if(!email||!tel||!nombre||!ap1||!dni){setMsg('nuevoMsg','Rellena email, teléfono, nombre, primer apellido y DNI.','err');return;}
+  const _malN=revisarDatosBasicos('n_'); if(_malN){setMsg('nuevoMsg',_malN,'err');return;}
   const btn=document.getElementById('btnCrearPagar');btn.disabled=true;btn.textContent='Creando...';
   try{
     const {data,error}=await sb.auth.signUp({email,password:telPass(tel)});
@@ -538,6 +553,7 @@ async function crearYpagar(planId){
     const {error:e2}=await sb.from('clientes').insert({id:u.id,email:u.email,telefono:telPass(tel),
       nombre,apellido:ap1,apellido2:g('n_ap2'),dni,calle:g('n_calle'),municipio:g('n_muni'),
       codigo_postal:g('n_cp'),provincia:g('n_prov'),pais:g('n_pais')||'España',
+      altura:num(g('n_altura')),genero:g('n_genero')||null,fecha_nacimiento:g('n_nacimiento')||null,
       nivel:'Nivel1',agua_objetivo_ml:2000,plan:(PLAN_NUEVO[planId]||{}).label});
     if(e2) throw e2;
     await contratarPlan(planId);   // crea el pago en Mollie y redirige al checkout
@@ -603,6 +619,7 @@ async function intentarAccesoExistente(email,tel){
     const partes=(data.nombre||'').trim().split(' ');
     set('d_nombre',partes[0]||''); set('d_ap1',partes.slice(1).join(' ')||'');
     set('d_altura',data.altura||''); if(data.genero)set('d_genero',data.genero);
+    if(data.fecha_nacimiento)set('d_nacimiento',data.fecha_nacimiento);
     set('d_dni',data.dni||''); set('d_calle',data.calle||''); set('d_muni',data.municipio||'');
     set('d_cp',data.codigo_postal||''); set('d_prov',data.provincia||''); set('d_pais','España');
     const dni=(data.dni||'').trim();
@@ -634,6 +651,7 @@ async function verificar(){
   document.getElementById('d_ap1').value=partes.slice(1).join(' ')||'';
   if(data.altura) document.getElementById('d_altura').value=data.altura;
   if(data.genero) document.getElementById('d_genero').value=data.genero;
+  if(data.fecha_nacimiento) document.getElementById('d_nacimiento').value=data.fecha_nacimiento;
   setMsg('verifMsg','');
   hideCard('verifCard');showCard('datosCard');
 }
@@ -642,11 +660,12 @@ async function verificar(){
 async function crearCuenta(){
   if(!PENDING){showLogin();return;}
   const datos={nombre:val('d_nombre'),ap1:val('d_ap1'),ap2:val('d_ap2'),dni:val('d_dni'),
-    altura:val('d_altura'),genero:document.getElementById('d_genero').value,
+    altura:val('d_altura'),genero:document.getElementById('d_genero').value,nacimiento:val('d_nacimiento'),
     calle:val('d_calle'),muni:val('d_muni'),cp:val('d_cp'),prov:val('d_prov'),pais:val('d_pais')||'España'};
   const _dni=(datos.dni||'').trim();
   if(!datos.nombre||!datos.ap1||!_dni||!datos.calle||!datos.cp||!datos.muni||!datos.prov){setMsg('datosMsg','Faltan datos obligatorios: nombre, primer apellido, DNI, calle, municipio, código postal y provincia.','err');return;}
   if(!/[A-Za-z]$/.test(_dni)){setMsg('datosMsg','El DNI debe incluir la letra (por ejemplo 12345678Z).','err');return;}
+  const _malD=revisarDatosBasicos('d_'); if(_malD){setMsg('datosMsg',_malD,'err');return;}
   const btn=document.getElementById('btnCrear');btn.disabled=true;btn.textContent='Creando...';
   try{
     const {data,error}=await sb.auth.signUp({email:PENDING.email,password:PENDING.telefono});
@@ -729,7 +748,8 @@ async function crearCliente(user,datos){
     nivel:imp?imp.nivel:'Nivel1',dia_consulta:imp?(imp.dia_consulta||'').toLowerCase():null,
     dieta_actual_id:da,dieta_proxima_id:dp,dias_entreno:imp?(imp.dias_entreno||3):3,casa_gym:imp?imp.casa_gym:null,agua_objetivo_ml:2000,
     fecha_proxima_consulta:imp?imp.proxima_cita:null,fecha_renovacion:imp?imp.proxima_renovacion:null,
-    peso_inicial:imp?imp.peso_inicial:null,grasa_inicial:imp?imp.grasa_inicial:null,fecha_nacimiento:imp?imp.fecha_nacimiento:null};
+    peso_inicial:imp?imp.peso_inicial:null,grasa_inicial:imp?imp.grasa_inicial:null,
+    fecha_nacimiento:datos.nacimiento||(imp?imp.fecha_nacimiento:null)};
   const {error}=await sb.from('clientes').insert(row);
   if(error)console.error('insert cliente',error);
   await copiarRegistros(user);
@@ -913,10 +933,40 @@ const PRODUCTOS_CACHE={}, RECETAS_CACHE={};
 
 // ====== OBJETIVOS (peso, grasa, IMC) ======
 const r1 = x => (x==null||isNaN(x))?'—':(Math.round(x*10)/10).toString().replace('.',',');
-function grasaReal(rec){ const alt=parseFloat(CLIENTE.altura), cin=PRIMERO?Number(PRIMERO.per_cintura):NaN; if(!alt||!cin||!PRIMERO||PRIMERO.peso==null||!rec||rec.peso==null) return null; const esMujer=String(CLIENTE.genero||'').toLowerCase().startsWith('m'); const gi=64-20*(alt/cin)+(esMujer?12:0); return gi-(Number(PRIMERO.peso)-Number(rec.peso)); } function calcObjetivos(){
-  const alt=parseFloat(CLIENTE.altura), gen=String(CLIENTE.genero||'').toLowerCase();
-  if(!alt) return null;
-  const a2=alt*alt, esMujer=gen.startsWith('m');
+// ====== DATOS BASICOS: validacion compartida ======
+// La altura va en CENTIMETROS (148-185 en la base real). Un "1,67" reventaria el IMC.
+function alturaValida(v){ const n=num(v); if(n===null||isNaN(n)) return null; if(n<3) return 'metros'; if(n<120||n>220) return 'rango'; return n; }
+// Devuelve true (mujer), false (hombre) o null (no lo sabemos: '', 'Otro', null).
+// Antes esto devolvia false por defecto y calculaba a las mujeres como hombres.
+function esMujerDe(g){ const t=String(g||'').trim().toLowerCase();
+  if(t.startsWith('m')) return true; if(t.startsWith('h')) return false; return null; }
+function nacimientoValido(v){ const t=String(v||'').trim(); if(!t) return null;
+  const d=new Date(t+'T00:00:00'); if(isNaN(d)) return 'invalida';
+  const hoy=new Date(); if(d>=hoy) return 'futuro';
+  const edad=(hoy-d)/31557600000; if(edad>100) return 'invalida'; return t; }
+function listaNatural(xs){ return xs.length===1?xs[0]:xs.slice(0,-1).join(', ')+' y '+xs[xs.length-1]; }
+// Revisa altura/sexo/nacimiento de un formulario. Devuelve un mensaje o null si todo va bien.
+function revisarDatosBasicos(pref){
+  const gv=id=>{const e=document.getElementById(pref+id); return e?e.value:'';};
+  const faltan=[];
+  const a=alturaValida(gv('altura'));
+  if(a==='metros') return 'La altura va en centímetros (por ejemplo 167, no 1,67).';
+  if(a==='rango')  return 'Revisa la altura: debe estar entre 120 y 220 cm.';
+  if(a===null) faltan.push('la altura');
+  if(esMujerDe(gv('genero'))===null) faltan.push('el sexo');
+  const n=nacimientoValido(gv('nacimiento'));
+  if(n==='futuro')   return 'La fecha de nacimiento no puede estar en el futuro.';
+  if(n==='invalida') return 'Revisa la fecha de nacimiento.';
+  if(n===null) faltan.push('la fecha de nacimiento');
+  if(!faltan.length) return null;
+  return faltan.length===1 ? 'Aún falta '+faltan[0]+' por rellenar.'
+                           : 'Aún faltan por rellenar: '+listaNatural(faltan)+'.';
+}
+
+function grasaReal(rec){ const alt=parseFloat(CLIENTE.altura), cin=PRIMERO?Number(PRIMERO.per_cintura):NaN; if(!alt||!cin||!PRIMERO||PRIMERO.peso==null||!rec||rec.peso==null) return null; const esMujer=esMujerDe(CLIENTE.genero); if(esMujer===null) return null; const gi=64-20*(alt/cin)+(esMujer?12:0); return gi-(Number(PRIMERO.peso)-Number(rec.peso)); } function calcObjetivos(){
+  const alt=parseFloat(CLIENTE.altura), esMujer=esMujerDe(CLIENTE.genero);
+  if(!alt||esMujer===null) return null;
+  const a2=alt*alt;
   const POb=(29.9*a2)/10000;                     // límite obesidad (IMC 29,9)
   const PO1=(24.9*a2)/10000;                     // límite sobrepeso (IMC 24,9)
   const PO2=alt-100-((alt-150)/(esMujer?2.5:4)); // peso mínimo saludable (Lorentz)
@@ -1527,7 +1577,7 @@ async function renderDieta(){
       </div>
     </div>
     ${CAL?`<div class="card" style="text-align:center;padding:12px"><div style="font-size:14px;color:var(--muted);font-weight:700">Objetivo del día (${CAL.objLabel})</div><div style="font-size:22px;font-weight:800;color:var(--teal)">${CAL.objetivo} kcal</div><div style="font-size:14px;font-weight:700;color:var(--text);margin-top:2px"><span style="white-space:nowrap">P ${macrosDe(CAL.objetivo).prot}g</span> · <span style="white-space:nowrap">HC ${macrosDe(CAL.objetivo).hc}g</span> · <span style="white-space:nowrap">G ${macrosDe(CAL.objetivo).grasa}g</span></div></div>`:''}
-    <div class="daysel">${dias.map(d=>`<button class="${d[0]===DIA_SEL?'active':''}" onclick="selDia('${d[0]}')">${d[1]}</button>`).join('')}</div>
+    <div class="daysel dias-dieta">${dias.map(d=>`<button class="${d[0]===DIA_SEL?'active':''}" onclick="selDia('${d[0]}')">${d[1]}</button>`).join('')}</div>
     ${tomas.length===0?'<div class="empty">Sin comidas para este día.</div>':tomas.map(t=>{
       const i=TOMA_INFO[t.toma]||['🍴',t.toma];
       const prods=(t.toma_productos||[]).map(x=>x.productos).filter(p=>p&&p.disponible!==false);
@@ -1730,44 +1780,140 @@ function renderCanon(){
     </div>
   </div>`;
 }
-function regTab(k,el){['imp','pli','per'].forEach(x=>document.getElementById('r-'+x).classList.add('hidden'));
+function regTab(k,el){['imp','pli','per'].forEach(x=>{document.getElementById('r-'+x).classList.add('hidden');
+    const b=document.getElementById('btnReg_'+x); if(b) b.classList.add('hidden');});
   document.getElementById('r-'+k).classList.remove('hidden');
+  const bk=document.getElementById('btnReg_'+k); if(bk) bk.classList.remove('hidden');
   document.querySelectorAll('#s-registro .tabs button').forEach(b=>b.classList.remove('active'));el.classList.add('active');}
 
-async function guardarRegistro(){
-  const btn=document.getElementById('btnReg2');btn.disabled=true;btn.textContent='Guardando...';
-  const campos=['peso','grasa_corporal','grasa_subcutanea','grasa_visceral','agua',
-    'musculo_esqueletico','masa_muscular','masa_esqueletica','proteina',
-    'pli_bicipital','pli_abdominal','pli_cuadricipital','pli_subescapular','pli_tricipital','pli_suprailiaco',
-    'per_cintura','per_cadera','per_hombro'];
-  // Un registro por semana, editable: si ya hay uno de esta semana, se corrige
+// ====== REGISTRO POR SECCIONES ======
+// Cada seccion se envia sola y lleva su cuenta: 0 sin enviar · 1 enviado · 2 corregido (bloqueado).
+// Mandar los perimetros el viernes no puede tocar el peso del lunes: los campos vacios NO se mandan.
+const SECCIONES = {
+  imp: { nom:'impedancia', col:'env_impedancia', obligatorios:true,
+         campos:['peso','grasa_corporal','grasa_subcutanea','grasa_visceral','agua',
+                 'musculo_esqueletico','masa_muscular','masa_esqueletica','proteina'] },
+  pli: { nom:'pliegues', col:'env_pliegues', obligatorios:false,
+         campos:['pli_bicipital','pli_abdominal','pli_cuadricipital',
+                 'pli_subescapular','pli_tricipital','pli_suprailiaco'] },
+  per: { nom:'perimetros', col:'env_perimetros', obligatorios:false,
+         campos:['per_cintura','per_cadera','per_hombro'] },
+};
+const NOMBRE_CAMPO = {
+  peso:'el peso', grasa_corporal:'la grasa corporal', grasa_subcutanea:'la grasa subcutánea',
+  grasa_visceral:'la grasa visceral', agua:'el agua', musculo_esqueletico:'el músculo esquelético',
+  masa_muscular:'la masa muscular', masa_esqueletica:'la masa ósea', proteina:'la proteína',
+  pli_bicipital:'el pliegue bicipital', pli_abdominal:'el pliegue abdominal',
+  pli_cuadricipital:'el pliegue cuadricipital', pli_subescapular:'el pliegue subescapular',
+  pli_tricipital:'el pliegue tricipital', pli_suprailiaco:'el pliegue suprailíaco',
+  per_cintura:'la cintura', per_cadera:'la cadera', per_hombro:'los hombros',
+};
+let REG_SEM = null;   // el registro de esta semana, o null
+
+function lunesStrHoy(){
   const hoy=new Date(); const dow=(hoy.getDay()+6)%7;
-  const lunes=new Date(hoy); lunes.setDate(hoy.getDate()-dow);
-  const lunesStr=lunes.toISOString().slice(0,10);
-  const row={cliente_id:CLIENTE.id,fecha:hoy.toISOString().slice(0,10),semana:CLIENTE.semana||null,hora_envio:hoy.toISOString()};
-  campos.forEach(c=>{ const v=num(document.getElementById('f_'+c).value); if(v!==null) row[c]=v; });
-  // Masa muscular / ósea: si la báscula las da en %, convertir a kg con el peso del día
-  ['masa_muscular','masa_esqueletica'].forEach(k=>{ const chk=document.getElementById('f_'+k+'_pct'); if(chk&&chk.checked&&row[k]!=null&&row.peso!=null){ row[k]=Math.round(row.peso*(row[k]/100)*10)/10; } });
-  // ---- Datos calculados automáticamente (el cliente no los rellena) ----
-  const g=row.grasa_corporal;
-  // IMC = peso / altura² (altura en m)
-  if(row.peso!=null && CLIENTE && CLIENTE.altura){ const h=CLIENTE.altura/100; row.imc=Math.round((row.peso/(h*h))*10)/10; }
-  // Peso sin grasa = peso − (peso × %grasa)
-  if(row.peso!=null && g!=null){ row.peso_sin_grasa=Math.round(row.peso*(1-g/100)*10)/10; }
-  // Edad metabólica = edad × (1 + (%grasa − ideal)/100)   (ideal: hombre 19, mujer 24)
-  const edadHoy=edadEn(row.fecha);
-  if(edadHoy!=null && g!=null){ const ideal=String(CLIENTE.genero||'').toLowerCase().startsWith('m')?24:19; row.edad_metabolica=Math.round(edadHoy*(1+(g-ideal)/100)); }
-  // Envío tarde: si hoy es su día de consulta y ya pasaron las 9:00 (hora canaria) → cuenta como "Sin Consulta" en el panel (los datos sí se guardan)
-  row.enviado_tarde = (esDiaConsultaHoy() && deadlinePasado());
-  const {data:yaSem}=await sb.from('registros').select('id').eq('cliente_id',CLIENTE.id).gte('fecha',lunesStr).order('fecha',{ascending:false}).limit(1);
-  const corrige=yaSem&&yaSem.length;
-  let error;
-  if(corrige){ ({error}=await sb.from('registros').update(row).eq('id',yaSem[0].id)); }
-  else { ({error}=await sb.from('registros').insert(row)); }
-  if(error){setMsg('regSaveMsg','Error al guardar: '+error.message,'err');}
-  else{setMsg('regSaveMsg',corrige?'✅ Actualizamos tus datos de esta semana.':'✅ Datos guardados en tu ficha correctamente.','ok');
-    ULTIMO=row;renderInicio();campos.forEach(c=>document.getElementById('f_'+c).value='');}
-  btn.disabled=false;btn.textContent='✅ Enviar mis datos';
+  const l=new Date(hoy); l.setDate(hoy.getDate()-dow);
+  return l.toISOString().slice(0,10);
+}
+function campoVisible(c){
+  // Cadera/hombros se ocultan segun sexo: lo oculto no puede ser obligatorio.
+  const el=document.getElementById('f_'+c); if(!el) return false;
+  const cont=el.closest('.field');
+  return !(cont && cont.style.display==='none');
+}
+function etiquetaBoton(estado){
+  return estado===0 ? 'Enviar' : estado===1 ? '✏️ Corregir' : '🔒 Ya enviado y corregido';
+}
+
+// Carga el registro de la semana, precarga los campos y pinta los tres botones.
+async function cargarEstadoRegistro(){
+  if(!CLIENTE || !CLIENTE.id) return;
+  const {data}=await sb.from('registros').select('*').eq('cliente_id',CLIENTE.id)
+    .gte('fecha',lunesStrHoy()).order('fecha',{ascending:false}).limit(1);
+  REG_SEM=(data&&data[0])||null;
+  Object.keys(SECCIONES).forEach(sec=>{
+    const S=SECCIONES[sec], estado=REG_SEM?(REG_SEM[S.col]??0):0;
+    // Precargar lo guardado: antes se borraba el formulario y parecia que no habia enviado nada.
+    S.campos.forEach(c=>{ const el=document.getElementById('f_'+c); if(!el) return;
+      el.value=(REG_SEM&&REG_SEM[c]!=null)?String(REG_SEM[c]).replace('.',','):''; el.style.borderColor=''; });
+    const btn=document.getElementById('btnReg_'+sec); if(!btn) return;
+    btn.textContent=etiquetaBoton(estado); btn.disabled=estado>=2; btn.style.opacity=estado>=2?'.55':'';
+  });
+  pintarAvisoPlazo();
+}
+
+// Aviso cuando la impedancia llego fuera de plazo: los datos SI estan, pero no hay consulta.
+// ⚠️ Al cliente se le habla SIEMPRE en hora de Madrid: el corte son "las 10:00".
+function pintarAvisoPlazo(){
+  const box=document.getElementById('avisoPlazo'); if(!box) return;
+  const tarde=!!(REG_SEM && REG_SEM.enviado_tarde && REG_SEM.peso!=null);
+  box.style.display=tarde?'block':'none';
+  if(tarde) box.innerHTML='⏰ <b>Tus datos de esta semana se han grabado correctamente</b>, pero llegaron fuera de plazo, '
+    +'así que esta semana no podremos pasarte consulta.<br>Recuerda: el límite es a las <b>10:00 de la mañana</b> '
+    +'de tu día asignado. La semana que viene te esperamos a tiempo.';
+}
+
+async function guardarSeccion(sec){
+  const S=SECCIONES[sec], btn=document.getElementById('btnReg_'+sec);
+  const estado=REG_SEM?(REG_SEM[S.col]??0):0;
+  if(estado>=2){ setMsg('regSaveMsg','Ya enviaste y corregiste tus '+S.nom+' esta semana. Podrás volver el lunes.','err'); return; }
+
+  // Impedancia: o esta completa o no entra. Y se dice QUE falta, por su nombre.
+  if(S.obligatorios){
+    const faltan=S.campos.filter(c=>campoVisible(c) && num(document.getElementById('f_'+c).value)===null);
+    if(faltan.length){
+      const n=faltan.map(c=>NOMBRE_CAMPO[c]||c);
+      setMsg('regSaveMsg', n.length===1?('Aún falta '+n[0]+' por rellenar.'):('Aún faltan por rellenar: '+listaNatural(n)+'.'),'err');
+      let primero=null;
+      S.campos.forEach(c=>{ const el=document.getElementById('f_'+c); if(!el) return;
+        const vacio=campoVisible(c)&&num(el.value)===null;
+        el.style.borderColor=vacio?'#e05252':''; if(vacio&&!primero) primero=el; });
+      if(primero){ primero.focus(); primero.scrollIntoView({block:'center',behavior:'smooth'}); }
+      return;
+    }
+  }
+  S.campos.forEach(c=>{ const el=document.getElementById('f_'+c); if(el) el.style.borderColor=''; });
+
+  // Solo los campos con valor: asi un envio nunca pisa lo ya guardado.
+  const row={}; let algo=false;
+  S.campos.forEach(c=>{ const el=document.getElementById('f_'+c); if(!el) return;
+    const v=num(el.value); if(v!==null){ row[c]=v; algo=true; } });
+  if(!algo){ setMsg('regSaveMsg','Rellena al menos un dato de '+S.nom+' antes de enviar.','err'); return; }
+
+  btn.disabled=true; const txtPrev=btn.textContent; btn.textContent='Guardando…';
+  try{
+    if(sec==='imp'){
+      // % a kg
+      ['masa_muscular','masa_esqueletica'].forEach(k=>{ const chk=document.getElementById('f_'+k+'_pct');
+        if(chk&&chk.checked&&row[k]!=null&&row.peso!=null){ row[k]=Math.round(row.peso*(row[k]/100)*10)/10; } });
+      const g=row.grasa_corporal;
+      if(row.peso!=null && CLIENTE && CLIENTE.altura){ const h=CLIENTE.altura/100; row.imc=Math.round((row.peso/(h*h))*10)/10; }
+      if(row.peso!=null && g!=null){ row.peso_sin_grasa=Math.round(row.peso*(1-g/100)*10)/10; }
+      const edadHoy=edadEn(new Date().toISOString().slice(0,10));
+      const esM=esMujerDe(CLIENTE.genero);
+      if(edadHoy!=null && g!=null && esM!==null){ const ideal=esM?24:19; row.edad_metabolica=Math.round(edadHoy*(1+(g-ideal)/100)); }
+      // SOLO la impedancia decide la consulta. Mandar perimetros a las 15:00 no puede
+      // marcar Sin Consulta: lo que se consulta es el peso.
+      row.hora_envio=new Date().toISOString();
+      row.enviado_tarde=(esDiaConsultaHoy() && deadlinePasado());
+    }
+    row[SECCIONES[sec].col]=Math.min(estado+1,2);
+
+    let error;
+    if(REG_SEM){ ({error}=await sb.from('registros').update(row).eq('id',REG_SEM.id)); }
+    else { row.cliente_id=CLIENTE.id; row.fecha=new Date().toISOString().slice(0,10); row.semana=CLIENTE.semana||null;
+           ({error}=await sb.from('registros').insert(row)); }
+    if(error) throw error;
+
+    setMsg('regSaveMsg', row[SECCIONES[sec].col]===1
+      ? ('✅ '+S.nom.charAt(0).toUpperCase()+S.nom.slice(1)+' guardados. Si te equivocaste, puedes corregir una vez.')
+      : ('✅ Corregido. Tus '+S.nom+' quedan cerrados hasta la semana que viene.'), 'ok');
+    await cargarEstadoRegistro();
+    if(sec==='imp'){ ULTIMO=Object.assign({},REG_SEM); renderInicio(); }
+  }catch(e){
+    setMsg('regSaveMsg','Error al guardar: '+(e.message||e),'err');
+    btn.disabled=false; btn.textContent=txtPrev;
+  }
 }
 
 // ====== NAV ======
@@ -1775,7 +1921,7 @@ function go(id,el){
   document.querySelectorAll('.screen').forEach(s=>s.classList.add('hidden'));
   document.getElementById('s-'+id).classList.remove('hidden');
   document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));el.classList.add('active');
-  if(id==='registro')ajustarPerimetros();
+  if(id==='registro'){ajustarPerimetros();cargarEstadoRegistro();}
   if(id==='dieta')renderDieta();
   if(id==='gym')renderGym();
   document.getElementById('s-'+id).scrollTop=0;

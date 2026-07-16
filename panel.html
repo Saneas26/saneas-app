@@ -558,7 +558,8 @@ const PARAMS=[
   {k:'per_brazo',l:'Brazo',u:' cm',down:null},
   {k:'per_muslo',l:'Muslo',u:' cm',down:null},
 ];
-function grasaInicialSaneas(cli,ini){ const alt=Number(cli.altura), cin=ini?Number(ini.per_cintura):NaN; if(!alt||!cin) return null; return 64-20*(alt/cin)+(norm(cli.genero).startsWith('m')?12:0); } function grasaReal(cli,rec){ const rs=(FICHA_REGS||[]).filter(r=>!r.sin_consulta); const ini=rs[rs.length-1]||null; const gi=grasaInicialSaneas(cli,ini); if(gi==null||!ini||ini.peso==null||!rec||rec.peso==null) return null; return gi-(Number(ini.peso)-Number(rec.peso)); } function val(cli,rec,k){ if(!rec)return null; if(k==='__edadmet')return edadMet(cli,rec); if(k==='grasa_corporal') return grasaReal(cli,rec);
+function esMujerDe(g){ const t=String(g||'').trim().toLowerCase(); if(t.startsWith('m')) return true; if(t.startsWith('h')) return false; return null; }
+function grasaInicialSaneas(cli,ini){ const alt=Number(cli.altura), cin=ini?Number(ini.per_cintura):NaN; const em=esMujerDe(cli.genero); if(!alt||!cin||em===null) return null; return 64-20*(alt/cin)+(em?12:0); } function grasaReal(cli,rec){ const rs=(FICHA_REGS||[]).filter(r=>!r.sin_consulta); const ini=rs[rs.length-1]||null; const gi=grasaInicialSaneas(cli,ini); if(gi==null||!ini||ini.peso==null||!rec||rec.peso==null) return null; return gi-(Number(ini.peso)-Number(rec.peso)); } function val(cli,rec,k){ if(!rec)return null; if(k==='__edadmet')return edadMet(cli,rec); if(k==='grasa_corporal') return grasaReal(cli,rec);
   let v=rec[k];
   if(k==='imc' && v==null && rec.peso!=null && Number(cli.altura)>0){ v=Math.round((Number(rec.peso)/Math.pow(Number(cli.altura)/100,2))*10)/10; }
   return v==null?null:Number(v); }
@@ -614,7 +615,8 @@ function pintarFicha(cli,regs){
   const act=reales[0]||null, ant=reales[1]||null, ini=reales[reales.length-1]||null;
   const nom=`${esc(cli.nombre)} ${esc(cli.apellido||'')} ${esc(cli.apellido2||'')}`.trim();
   const ed=edad(cli.fecha_nacimiento);
-  const gen=norm(cli.genero).startsWith('m')?'Mujer':'Hombre';
+  const _em=esMujerDe(cli.genero);
+  const gen=_em===null?'<b style="color:#e05252">⚠️ sin sexo</b>':(_em?'Mujer':'Hombre');
   const plazaTxt=cli.plaza?`${pref(cli.dia_consulta)}${cli.plaza}`:'sin plaza';
   // Estado real de suscripción (por fecha de renovación, no por el campo Mollie)
   const _hoy0=new Date();_hoy0.setHours(0,0,0,0);
@@ -737,6 +739,7 @@ function pintarFicha(cli,regs){
       <h3>${nom||'Cliente'}</h3>
       <div class="sub">
         <span>${gen}${ed!=null?' · '+ed+' años':''}</span>
+        <span>Nacimiento: <b>${cli.fecha_nacimiento?_fmt(cli.fecha_nacimiento):'<span style="color:#e05252">⚠️ falta</span>'}</b> · Altura: <b>${cli.altura?esc(cli.altura)+' cm':'<span style="color:#e05252">⚠️ falta</span>'}</b></span>
         <span>${DIAS.find(d=>d[0]===norm(cli.dia_consulta))?.[1]||'—'} · ${plazaTxt}</span>
         <span>${sem}</span>
         <span>Suscripción: <b style="color:${estCol}">${estTxt}</b>${cli.fecha_renovacion?` · renueva <b>${_fmt(cli.fecha_renovacion)}</b>`:''}<button class="fixr-btn" onclick="abrirFixRenov('${cli.id}')">✏️ Corregir</button></span>
