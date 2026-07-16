@@ -2384,11 +2384,106 @@ function tarjetaTarifas(){
     </div>
   </div>`;
 }
+// ====== Facturas del cliente ======
+// Escapa el HTML: los datos van dentro de un documento que se imprime.
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+// La seguridad la pone la base: politica "facturas propias lee" (auth.uid() = cliente_id).
+// Aunque este codigo pidiera todas, Postgres solo devuelve las suyas.
+let EMISOR=null;
+async function cargarMisFacturas(){
+  const cont=document.getElementById('facturasLista'); if(!cont) return;
+  if(!CLIENTE||!CLIENTE.id){ cont.innerHTML='<p class="note" style="margin:0">—</p>'; return; }
+  try{
+    const {data,error}=await sb.from('facturas')
+      .select('numero,fecha_emision,total,concepto,anulada')
+      .order('fecha_emision',{ascending:true}).order('numero',{ascending:true});
+    if(error) throw error;
+    MIS_FACTURAS=(data||[]).filter(f=>!f.anulada);
+  }catch(e){ MIS_FACTURAS=[]; }
+  pintarMisFacturas();
+}
+function pintarMisFacturas(){
+  const cont=document.getElementById('facturasLista'); if(!cont) return;
+  const aviso='<p class="note" style="margin:10px 0 0;line-height:1.5">A partir del 1 de julio podrás obtener tu factura y descargarla en PDF con total seguridad.</p>';
+  if(!MIS_FACTURAS||!MIS_FACTURAS.length){
+    cont.innerHTML='<p class="note" style="margin:0">Aún no tienes facturas.</p>'+aviso; return;
+  }
+  cont.innerHTML=MIS_FACTURAS.map((f,i)=>`
+    <div class="orow" style="cursor:pointer" onclick="descargarFactura(${i})">
+      <span>🧾 Factura ${i+1}</span>
+      <b style="color:var(--teal)">${fechaCorta(f.fecha_emision)} <span style="font-size:13px;color:var(--muted);font-weight:600">${Number(f.total).toLocaleString('es-ES',{minimumFractionDigits:2})}€</span> ⬇</b>
+    </div>`).join('')+aviso;
+}
+async function descargarFactura(i){
+  const f=MIS_FACTURAS&&MIS_FACTURAS[i]; if(!f) return;
+  if(!EMISOR){ try{ const {data}=await sb.from('config').select('*').limit(1).maybeSingle(); EMISOR=data||{}; }catch(e){ EMISOR={}; } }
+  const e=EMISOR||{};
+  const cli=CLIENTE||{};
+  const nom=[cli.nombre,cli.apellido,cli.apellido2].filter(Boolean).join(' ');
+  const dir=[cli.calle,cli.codigo_postal&&(cli.codigo_postal+' '+(cli.municipio||'')),cli.provincia,cli.pais].filter(Boolean).join(' · ');
+  const eDir=[e.emisor_direccion,e.emisor_cp&&(e.emisor_cp+' '+(e.emisor_municipio||'')),e.emisor_provincia,e.emisor_pais].filter(Boolean).join(' · ');
+  const eur=n=>Number(n||0).toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';
+  const w=window.open('','_blank');
+  if(!w){ toast('Permite las ventanas emergentes para descargar tu factura'); return; }
+  w.document.write(`<!DOCTYPE html><html lang="es"><head><meta charset="utf-8">
+<title>${f.numero} · Saneas</title>
+<style>
+ @page{size:A4;margin:18mm}
+ *{box-sizing:border-box}
+ body{font-family:system-ui,-apple-system,'Segoe UI',sans-serif;color:#1a2e35;margin:0;font-size:13px;line-height:1.5}
+ .top{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #3890a4;padding-bottom:14px;margin-bottom:22px}
+ .marca{font-size:30px;font-weight:800;color:#3890a4;line-height:1}
+ .num{text-align:right}
+ .num .n{font-size:20px;font-weight:800;letter-spacing:.5px}
+ .num .f{color:#6b8b93;font-size:12px;margin-top:2px}
+ .cols{display:flex;gap:26px;margin-bottom:24px}
+ .col{flex:1}
+ .col h4{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#6b8b93;margin:0 0 6px;font-weight:700}
+ .col b{font-size:14px;display:block;margin-bottom:2px}
+ .col span{color:#3a5a64;font-size:12px}
+ table{width:100%;border-collapse:collapse;margin-bottom:18px}
+ th{text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:#6b8b93;border-bottom:2px solid #e8f4f7;padding:8px 0}
+ td{padding:12px 0;border-bottom:1px solid #e8f4f7}
+ .r{text-align:right}
+ .tot{display:flex;justify-content:flex-end;margin-bottom:22px}
+ .tot div{min-width:210px}
+ .tot .l{display:flex;justify-content:space-between;padding:5px 0;font-size:12px;color:#3a5a64}
+ .tot .g{display:flex;justify-content:space-between;padding:10px 0;border-top:2px solid #3890a4;font-size:19px;font-weight:800}
+ .pie{color:#6b8b93;font-size:11px;border-top:1px solid #e8f4f7;padding-top:12px;line-height:1.6}
+ @media print{.noprint{display:none}}
+ .noprint{position:fixed;top:12px;right:12px;background:#3890a4;color:#fff;border:0;padding:11px 20px;border-radius:11px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 4px 14px rgba(0,0,0,.2)}
+</style></head><body>
+<button class="noprint" onclick="window.print()">⬇ Guardar como PDF</button>
+<div class="top">
+  <div><div class="marca">${esc(e.emisor_marca||'Saneas')}</div>
+       <div style="color:#6b8b93;font-size:11px;margin-top:3px">${esc(e.emisor_desde||'')}</div></div>
+  <div class="num"><div class="n">${esc(f.numero)}</div><div class="f">${fechaLarga(f.fecha_emision)}</div></div>
+</div>
+<div class="cols">
+  <div class="col"><h4>Emisor</h4>
+    <b>${esc(e.emisor_nombre||'')}</b><span>${esc(e.emisor_nif||'')}</span><br><span>${esc(eDir)}</span></div>
+  <div class="col"><h4>Cliente</h4>
+    <b>${esc(nom)}</b><span>${esc(cli.dni||'')}</span><br><span>${esc(dir)}</span></div>
+</div>
+<table>
+  <thead><tr><th>Concepto</th><th class="r">Importe</th></tr></thead>
+  <tbody><tr><td>${esc(f.concepto||'Asesoramiento nutricional Saneas')}</td><td class="r">${eur(f.total)}</td></tr></tbody>
+</table>
+<div class="tot"><div>
+  <div class="l"><span>Base imponible</span><span>${eur(f.total)}</span></div>
+  <div class="l"><span>IVA</span><span>0,00 €</span></div>
+  <div class="g"><span>Total</span><span>${eur(f.total)}</span></div>
+</div></div>
+<div class="pie">${esc(e.nota_exencion||'')}</div>
+</body></html>`);
+  w.document.close();
+}
 function copiar(txt){ if(navigator.clipboard) navigator.clipboard.writeText(txt); toast('Copiado: '+txt); }
 function toast(m){const t=document.createElement('div');t.textContent=m;
   t.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1a2e35;color:#fff;padding:10px 16px;border-radius:20px;font-size:14px;z-index:100;box-shadow:0 6px 20px rgba(0,0,0,.3)';
   document.body.appendChild(t);setTimeout(()=>t.remove(),1600);}
 let PAGOS_TARGET='m-pagos';
+let MIS_FACTURAS=null;
 function renderPagos(target){
   if(target) PAGOS_TARGET=target;
   const c=document.getElementById(PAGOS_TARGET);
@@ -2422,7 +2517,11 @@ function renderPagos(target){
         ? `🎉 ¡Este mes tu cuota es 0€ gracias a tus ${_nInv} Saneamigos!`
         : `Ya con el descuento de tus ${_nInv} Saneamigo${_nInv>1?'s':''} (−${_desc}€). Cuota base ${_base}€.`}</p>`:''}` : '';
   const bizum=(n,nombre,tel)=>`<div class="orow" style="cursor:pointer" onclick="copiar('${tel}')"><span>📱 Bizum ${n} · ${nombre}</span><b>${tel.replace(/(\d{3})(\d{3})(\d{3})/,'$1 $2 $3')} 📋</b></div>`;
+  setTimeout(()=>{ if(MIS_FACTURAS) pintarMisFacturas(); else cargarMisFacturas(); },0);
   c.innerHTML=`
+    <div class="card" id="facturasCard"><h3>🧾 Descárgate tu factura</h3>
+      <div id="facturasLista"><p class="note" style="margin:0">Cargando tus facturas…</p></div>
+    </div>
     <div class="card"><h3>💳 Mi suscripción</h3>
       <div class="orow"><span>Plan</span><b>${(CLIENTE&&CLIENTE.plan)||'—'}</b></div>
       <div class="orow"><span>Estado</span><b style="color:${estadoCol}">${estadoView}</b></div>
