@@ -2663,7 +2663,7 @@ document.body.insertAdjacentHTML('beforeend',`
   <div class="gdbox">
     <button class="gd-x" onclick="cerrarGen()">×</button>
     <h3>🌿 Tu plan semanal</h3>
-    <div class="sub">Dime a qué hora cenas y te coloco el resto de las comidas respetando 14&nbsp;h de ayuno nocturno. Puedes cambiar cualquier hora a mano. Después descargas tu plan en PDF.</div>
+    <div class="sub">Dime a qué hora cenas y te coloco el resto de las comidas respetando el ayuno nocturno que le toca a tu plan. Puedes cambiar cualquier hora a mano. Después descargas tu plan en PDF.</div>
     <div class="gd-ctrl">
       <div>
         <label>1 · ¿A qué hora cenas?</label>
@@ -2686,6 +2686,15 @@ document.body.insertAdjacentHTML('beforeend',`
   </div>
 </div>`);
 
+// Las horas de ayuno las decide la DIETA, no la app (regla de Oscar, 17/07/2026):
+//   5 platos -> 12 h de ayuno · 4 o 3 platos -> 14 h
+// "Plato" = ingesta solida. EnPie y AntesDormir son agua/infusion y NO cuentan
+// (skill creadieta-mmd: "no tiene Desayuno ni EnPie como ingesta solida").
+// Provisional: manana se afina por dieta. Mientras, sale de la composicion real.
+const GEN_PLATOS=['Desayuno','MediaManana','Almuerzo','Merienda','Cena'];
+function genHorasAyuno(tomas){
+  return (tomas||[]).filter(t=>GEN_PLATOS.includes(t)).length>=5 ? 12 : 14;
+}
 const GEN_ORDEN=['EnPie','Desayuno','MediaManana','Almuerzo','Merienda','Cena','AntesDormir'];
 const GEN_TOMAS={EnPie:{label:'En pie',emoji:'🌅'},Desayuno:{label:'Desayuno',emoji:'☀️'},
   MediaManana:{label:'Media mañana',emoji:'🍏'},Almuerzo:{label:'Almuerzo',emoji:'🍽️'},
@@ -2739,11 +2748,20 @@ async function abrirGen(){
 function genCalcHoras(auto){
   if(!GEN_PLAN)return;
   const cena=genMin(gel('gd_cena').value||'21:00');
-  const des=(cena+14*60)%1440;               // 14 h de ayuno nocturno
-  const h={Cena:cena,Desayuno:des,EnPie:(des+1440-30)%1440,AntesDormir:(cena+90)%1440};
-  const mids=['MediaManana','Almuerzo','Merienda'].filter(t=>GEN_PLAN.tomas.includes(t));
-  const win=(cena-des+1440)%1440;
-  mids.forEach((t,i)=>{h[t]=(des+Math.round(win*(i+1)/(mids.length+1)/15)*15)%1440;});
+  const AY=genHorasAyuno(GEN_PLAN.tomas);    // 12 h si son 5 platos, 14 h si son 4 o 3
+  // El ayuno se cuenta hasta la PRIMERA INGESTA REAL de la dieta, que no siempre es
+  // el desayuno: la Fase 1 Insulina no lo tiene y empieza en la media manana.
+  // Anclarlo en un desayuno que no existe se comia 2,5 h de mas.
+  const dia=GEN_PLATOS.filter(t=>t!=='Cena'&&GEN_PLAN.tomas.includes(t));
+  const h={Cena:cena,AntesDormir:(cena+90)%1440};
+  if(dia.length){
+    const ini=(cena+AY*60)%1440;
+    h[dia[0]]=ini;                          // la primera comida, a AY horas de la cena
+    h.EnPie=(ini+1440-30)%1440;
+    const mids=dia.slice(1);                // el resto, repartido hasta la cena
+    const win=(cena-ini+1440)%1440;
+    mids.forEach((t,i)=>{h[t]=(ini+Math.round(win*(i+1)/(mids.length+1)/15)*15)%1440;});
+  }else{ h.EnPie=(cena+AY*60+1440-30)%1440; }
   GEN_HORAS={}; GEN_PLAN.tomas.forEach(t=>{GEN_HORAS[t]=h[t];});
   gel('gd_horas').innerHTML=GEN_PLAN.tomas.map(t=>`<div class="gh"><b>${GEN_TOMAS[t].emoji} ${GEN_TOMAS[t].label}</b>
     <input type="time" value="${genHM(GEN_HORAS[t])}" oninput="genHoraManual('${t}',this.value)"></div>`).join('');
@@ -2758,7 +2776,7 @@ function genAyuno(){
   const ay=((GEN_HORAS[primera]-GEN_HORAS.Cena)+1440)%1440;
   const hs=Math.floor(ay/60), mn=ay%60;
   a.textContent=`Ayuno nocturno: ${hs} h${mn?' '+mn+' min':''} (cena ${genHM(GEN_HORAS.Cena)} → ${GEN_TOMAS[primera].label.toLowerCase()} ${genHM(GEN_HORAS[primera])})`;
-  a.className='gd-ayuno'+(ay<14*60?' mal':'');
+  a.className='gd-ayuno'+(ay<genHorasAyuno(GEN_PLAN.tomas)*60?' mal':'');
 }
 function genBotones(){gel('gd_generar').disabled=!GEN_PLAN;}
 function genDiaLabel(ds){
