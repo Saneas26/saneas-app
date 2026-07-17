@@ -1663,7 +1663,7 @@ document.head.insertAdjacentHTML('beforeend',`<style>
 document.body.insertAdjacentHTML('beforeend',`
 <div id="ingresos"><div class="inbox">
   <button class="in-x" onclick="cerrarIngresos()">×</button>
-  <h3>📊 Ingresos 2026</h3>
+  <h3>📊 Ingresos</h3>
   <div class="sub">Enero–junio, de <b>Saneas Buget 26</b> tal cual. Julio en adelante, copiado de cada factura. Es para estudiar el negocio: <b>no es la contabilidad</b>, que va por Facturas y no se cruza con esto.</div>
   <div id="in_body"><div id="in_msg">Cargando…</div></div>
 </div></div>`);
@@ -1711,40 +1711,65 @@ function inPintar(){
   </div>`;
 
   const kpis=pres+`<div class="in-kpis">
-    <div class="in-k big"><div class="lab">Llevamos de año</div><div class="val">${eur(a.facturado)}</div></div>
-    <div class="in-k"><div class="lab">Cobros</div><div class="val">${a.cobros||0}</div></div>
-    <div class="in-k"><div class="lab">Clientes distintos</div><div class="val">${a.clientes||0}</div></div>
-    ${tr.map(t=>`<div class="in-k"><div class="lab">${t.t}º trimestre</div><div class="val">${eur(t.facturado)}</div></div>`).join('')}
+    ${(d.anios||[]).map(x=>`<div class="in-k${x.anio===hy.anio?' big':''}"><div class="lab">Año ${x.anio}</div><div class="val">${eur(x.facturado)}</div>
+      <div style="font-size:11px;color:var(--muted);font-weight:700">${x.cobros} cobros · ${x.clientes} clientes</div></div>`).join('')}
+    ${tr.filter(t=>t.anio===hy.anio).map(t=>`<div class="in-k"><div class="lab">${t.t}º trim. ${t.anio}</div><div class="val">${eur(t.facturado)}</div></div>`).join('')}
+  </div>
+  <div style="display:flex;justify-content:flex-end;margin:-6px 0 10px">
+    <button class="gd-btn" style="background:#1d6f42;padding:8px 14px;font-size:13px" onclick="inExcel(this)">⬇️ Descargar Excel</button>
   </div>`;
 
+  const idx={}; ms.forEach(m=>idx[m.anio+'-'+m.mes]=m);
   const filas=ms.map((m,i)=>{
     const prev=i>0?Number(ms[i-1].facturado):null;
     const dif=prev!=null?Number(m.facturado)-prev:null;
     const pct=prev?((dif/prev)*100):null;
     const comp=dif==null?'<span style="color:var(--muted)">—</span>'
       :`<span class="${dif>=0?'in-up':'in-dn'}">${dif>=0?'▲':'▼'} ${eur(Math.abs(dif))} · ${pct>=0?'+':'−'}${Math.abs(pct).toFixed(1)}%</span>`;
-    return `<tr>
-      <td class="mes">${IN_MES[m.mes]}
+    const ant=idx[(m.anio-1)+'-'+m.mes];
+    const ia=ant?Number(m.facturado)-Number(ant.facturado):null;
+    const iaP=(ant&&Number(ant.facturado))?(ia/Number(ant.facturado)*100):null;
+    const inter=(ant&&iaP!=null)?`<span class="${ia>=0?'in-up':'in-dn'}">${ia>=0?'▲':'▼'} ${Math.abs(iaP).toFixed(0)}%</span> <span style="color:var(--muted);font-size:11px">vs ${eur(ant.facturado)}</span>`
+      :'<span style="color:var(--muted)">—</span>';
+    const enCurso=(m.anio===hy.anio&&m.mes===hy.mes);
+    return `<tr${enCurso?' style="background:#fff8f2"':''}>
+      <td class="mes">${IN_MES[m.mes]} <span style="font-weight:700;color:var(--muted)">${m.anio}</span>${enCurso?' <span style="font-size:10px;color:var(--orange);font-weight:800">EN CURSO</span>':''}
+        ${m.solo_total?'<div style="font-size:10px;color:var(--muted);font-weight:700">solo el total, sin desglose</div>':''}
         <div class="in-bar"><i style="width:${(Number(m.facturado)/max*100).toFixed(1)}%"></i></div></td>
-      <td>${m.clientes}</td><td>${m.cobros}</td>
+      <td>${m.solo_total?'—':m.clientes}</td>
+      <td>${m.solo_total?'—':m.cobros}</td>
       <td><b>${eur(m.facturado)}</b></td>
-      <td>${eur(m.precio_medio)}</td>
+      <td>${m.solo_total?'—':eur(m.precio_medio)}</td>
       <td>${m.altas==null?'—':`<span class="in-alta">+${m.altas}</span>`}</td>
       <td>${m.bajas==null?'—':`<span class="in-baja">−${m.bajas}</span>`}</td>
-      <td>${comp}</td></tr>`;
+      <td>${comp}</td>
+      <td>${inter}</td></tr>`;
   }).join('');
 
+  const aY=(d.anios||[]).find(x=>x.anio===hy.anio)||{};
+  const aAnt=(d.anios||[]).find(x=>x.anio===hy.anio-1)||null;
+  const cerrHasta=aY.cerrado_hasta, cerrEuros=Number(aY.facturado_cerrado||0);
+  // el mismo tramo de meses del año pasado, para comparar peras con peras
+  const cerrAnt=(aAnt&&cerrHasta)?(d.meses||[]).filter(m=>m.anio===hy.anio-1&&m.mes<=cerrHasta).reduce((s,m)=>s+Number(m.facturado),0):null;
+  const difA=cerrAnt?cerrEuros-cerrAnt:null;
+  const pctA=cerrAnt?(difA/cerrAnt*100):null;
   const tabla=`<div class="in-h">Mes a mes</div>
     <table class="in-t"><thead><tr>
       <th>Mes</th><th>Clientes</th><th>Cobros</th><th>Facturado</th>
-      <th>Precio medio</th><th>Altas</th><th>Bajas</th><th>Contra el mes anterior</th>
+      <th>Precio medio</th><th>Altas</th><th>Bajas</th><th>Contra el mes anterior</th><th>Mismo mes del año anterior</th>
     </tr></thead><tbody>${filas}</tbody>
-    <tfoot><tr><td>Total</td><td>${a.clientes||0}</td><td>${a.cobros||0}</td>
-      <td>${eur(a.facturado)}</td>
-      <td>${eur(a.cobros?Number(a.facturado)/Number(a.cobros):0)}</td>
-      <td colspan="3"></td></tr></tfoot></table>
-    <div class="in-nota">El mejor mes es <b>${IN_MES[mejor.mes]||'—'}</b> (${eur(mejor.facturado)}) y el más flojo <b>${IN_MES[peor.mes]||'—'}</b> (${eur(peor.facturado)}).
-    Altas y bajas se calculan por nombre: una baja es quien cobró un mes y no el siguiente. Enero no tiene con qué compararse, por eso va en blanco.</div>`;
+    <tfoot><tr>
+      <td>Total ${hy.anio}</td>
+      <td>${aY.clientes||0}</td><td>${aY.cobros||0}</td>
+      <td>${eur(aY.facturado)}</td>
+      <td>${eur(aY.cobros?Number(aY.facturado)/Number(aY.cobros):0)}</td>
+      <td colspan="2"></td>
+      <td colspan="2" style="text-align:left">
+        <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px">Meses cerrados de ${hy.anio} (enero–${IN_MES[cerrHasta]||'—'})</div>
+        <div style="font-size:16px">${eur(cerrEuros)}${cerrAnt?` · <span class="${difA>=0?'in-up':'in-dn'}">${difA>=0?'▲':'▼'} ${Math.abs(pctA).toFixed(1)}%</span> <span style="font-weight:600;color:var(--muted);font-size:11px">vs ${eur(cerrAnt)} del mismo tramo de ${hy.anio-1}</span>`:''}</div>
+      </td></tr></tfoot></table>
+    <div class="in-nota">El mejor mes es <b>${IN_MES[mejor.mes]} ${mejor.anio}</b> (${eur(mejor.facturado)}) y el más flojo <b>${IN_MES[peor.mes]} ${peor.anio}</b> (${eur(peor.facturado)}).
+    Altas y bajas se calculan por nombre: una baja es quien cobró un mes y no el siguiente. El primer mes con datos no tiene con qué compararse, y enero y febrero de 2025 solo traen el total, sin nombres.</div>`;
 
   const reparto=(tit,arr,campo)=>{
     const tot=(arr||[]).reduce((s,x)=>s+Number(x.importe||0),0)||1;
@@ -1760,6 +1785,30 @@ function inPintar(){
   document.getElementById('in_body').innerHTML = kpis + tabla +
     `<div class="in-cols">${reparto('Cómo pagan','medios' in d?d.medios:[],'medio')}${reparto('Por nivel',d.niveles||[],'nivel')}</div>` +
     `<div class="in-cols" style="margin-top:6px">${lista('Bajas',d.bajas_detalle,'in-baja')}${lista('Altas',d.altas_detalle,'in-alta')}</div>`;
+}
+
+// El Excel no se monta hasta que Oscar le da al boton: no se prepara nada de antemano.
+async function inExcel(b){
+  if(!IN_DATOS){ toast('Abre primero los ingresos'); return; }
+  const t0=b?b.textContent:''; if(b){b.disabled=true;b.textContent='Montando…';}
+  try{
+    if(!window.XLSX) await genScript('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js');
+    const d=IN_DATOS, wb=XLSX.utils.book_new(), eu=n=>Number(n||0), hoja=(n,r)=>XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(r),n);
+    hoja('Por mes', (d.meses||[]).map(m=>({Año:m.anio, Mes:IN_MES[m.mes], Clientes:m.solo_total?'':m.clientes,
+      Cobros:m.solo_total?'':m.cobros, Facturado:eu(m.facturado), 'Precio medio':m.solo_total?'':eu(m.precio_medio),
+      Altas:m.altas==null?'':m.altas, Bajas:m.bajas==null?'':m.bajas,
+      Nota:m.solo_total?'solo el total, sin desglose':''})));
+    hoja('Por trimestre', (d.trimestres||[]).map(t=>({Año:t.anio, Trimestre:t.t+'T', Facturado:eu(t.facturado), Cobros:t.cobros})));
+    hoja('Por año', (d.anios||[]).map(x=>({Año:x.anio, Facturado:eu(x.facturado), Cobros:x.cobros, Clientes:x.clientes,
+      'Cerrado hasta':IN_MES[x.cerrado_hasta]||'', 'Facturado en meses cerrados':eu(x.facturado_cerrado)})));
+    hoja('Como pagan', (d.medios||[]).map(x=>({Medio:x.medio, Cobros:x.cobros, Importe:eu(x.importe)})));
+    hoja('Por nivel', (d.niveles||[]).map(x=>({Nivel:x.nivel, Cobros:x.cobros, Importe:eu(x.importe)})));
+    hoja('Altas', (d.altas_detalle||[]).map(x=>({Año:x.anio, Mes:IN_MES[x.mes], Nombre:x.nombre})));
+    hoja('Bajas', (d.bajas_detalle||[]).map(x=>({Año:x.anio, Mes:IN_MES[x.mes], Nombre:x.nombre})));
+    XLSX.writeFile(wb, 'Saneas_ingresos_'+String((d.hoy&&d.hoy.fecha)||'').replace(/\//g,'-')+'.xlsx');
+    toast('⬇️ Excel descargado');
+  }catch(e){ toast('No se pudo montar el Excel: '+(e&&e.message||e)); }
+  if(b){b.disabled=false;b.textContent=t0;}
 }
 // ================= FIN INGRESOS =================
 
