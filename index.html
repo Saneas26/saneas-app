@@ -702,86 +702,33 @@ function bloqueado(c){ if(!c||!c.fecha_renovacion) return true;   // sin pago to
 function mostrarBloqueo(){
   document.getElementById('auth').classList.add('hidden');
   document.getElementById('main').classList.add('hidden');
-  document.getElementById('bloqTxt').textContent = CLIENTE.fecha_renovacion
-    ? 'Tu renovación venció el '+fechaCorta(CLIENTE.fecha_renovacion)+'. Renueva tu cuota para volver a acceder a tu app.'
-    : 'Un último paso: elige tu bono y realiza el pago para acceder a tu app.';
+  let _bloqTxt;
+  if(CLIENTE.fecha_renovacion){
+    _bloqTxt = 'Tu renovación venció el '+fechaCorta(CLIENTE.fecha_renovacion)+'. Renueva tu cuota para volver a acceder a tu app.';
+    const _lim=new Date(CLIENTE.fecha_renovacion+'T00:00:00'); _lim.setDate(_lim.getDate()+6);
+    const _hoy=new Date(); _hoy.setHours(0,0,0,0);
+    if(_lim>_hoy) _bloqTxt += ' Si no se renueva antes del '+fechaCorta(_lim.toISOString().slice(0,10))+', tus datos se borrarán de Saneas y tu plaza quedará libre.';
+  } else {
+    _bloqTxt = 'Un último paso: elige tu bono y realiza el pago para acceder a tu app.';
+  }
+  document.getElementById('bloqTxt').textContent = _bloqTxt;
   renderPagos('bloq-pagos');
   document.getElementById('bloqueo').classList.remove('hidden');
 }
 
-// ====== AUTO-VÍNCULO: migrar datos del cliente al primer login ======
-async function linkCliente(user){
-  // ¿existe perfil migrado para este email? (RLS solo devuelve el suyo)
-  const {data:imp}=await sb.from('clientes_import').select('*').maybeSingle();
-  if(imp){
-    let da=null,dp=null;
-    if(imp.estrategia){const {data:d}=await sb.from('dietas').select('id').eq('nombre_plan',imp.estrategia).maybeSingle();da=d?d.id:null;}
-    if(imp.proxima_estrategia){const {data:d}=await sb.from('dietas').select('id').eq('nombre_plan',imp.proxima_estrategia).maybeSingle();dp=d?d.id:null;}
-    const row={id:user.id,nombre:(imp.nombre||'').split(' ')[0],apellido:(imp.nombre||'').split(' ').slice(1).join(' '),
-      email:user.email,nivel:imp.nivel,dia_consulta:(imp.dia_consulta||'').toLowerCase(),
-      dieta_actual_id:da,dieta_proxima_id:dp,dias_entreno:imp.dias_entreno||3,casa_gym:imp.casa_gym,agua_objetivo_ml:2000,
-      fecha_proxima_consulta:imp.proxima_cita,fecha_renovacion:imp.proxima_renovacion,
-      peso_inicial:imp.peso_inicial,grasa_inicial:imp.grasa_inicial,altura:imp.altura,genero:imp.genero,fecha_nacimiento:imp.fecha_nacimiento};
-    const {error}=await sb.from('clientes').insert(row);
-    if(error){console.error('insert cliente',error);}
-    // copiar histórico de registros (RLS solo devuelve los suyos)
-    const {data:regs}=await sb.from('registros_import').select('*');
-    if(regs&&regs.length){
-      const rows=regs.map(r=>({cliente_id:user.id,fecha:r.fecha,semana:r.semana,sin_consulta:r.sin_consulta,dieta_asignada:r.dieta,
-        peso:r.peso,grasa_corporal:r.grasa_corporal,peso_sin_grasa:r.peso_sin_grasa,grasa_subcutanea:r.grasa_subcutanea,
-        grasa_visceral:r.grasa_visceral,agua:r.agua,musculo_esqueletico:r.musculo_esqueletico,masa_muscular:r.masa_muscular,
-        masa_esqueletica:r.masa_esqueletica,proteina:r.proteina,edad_metabolica:r.edad_metabolica,
-        per_hombro:r.per_hombro,per_cintura:r.per_cintura,per_cadera:r.per_cadera,pli_bicipital:r.pli_bicipital,
-        pli_abdominal:r.pli_abdominal,pli_muslo:r.pli_muslo,pli_subescapular:r.pli_subescapular,
-        pli_tricipital:r.pli_tricipital,pli_suprailiaco:r.pli_suprailiaco}));
-      const {error:er}=await sb.from('registros').insert(rows);
-      if(er)console.error('insert registros',er);
-    }
-    // semana actual = nº de registros
-    const {count}=await sb.from('registros').select('*',{count:'exact',head:true}).eq('cliente_id',user.id);
-    if(count){await sb.from('clientes').update({semana:count}).eq('id',user.id);}
-    return (await sb.from('clientes').select('*').eq('id',user.id).maybeSingle()).data;
-  }
-  // cliente nuevo (no migrado): ficha mínima con una dieta de ejemplo
-  const {data:dietaDemo}=await sb.from('dietas').select('id').limit(1).maybeSingle();
-  const row={id:user.id,nombre:REG_NOMBRE||user.email.split('@')[0],email:user.email,nivel:'Nivel1',
-    agua_objetivo_ml:2000,semana:1,dieta_actual_id:dietaDemo?dietaDemo.id:null};
-  await sb.from('clientes').insert(row);
-  return row;
-}
+// ====== AUTO-VÍNCULO (retirado el 17/07/2026) ======
+// La migración desde Glide terminó: todos los clientes tienen su ficha en `clientes`.
+// Si un login llega sin ficha no se inventa nada: cae a la pantalla de pago/bloqueo.
 
 // Crear ficha completa con datos de facturación (registro nuevo)
 async function crearCliente(user,datos){
-  const {data:imp}=await sb.from('clientes_import').select('*').maybeSingle();
-  let da=null,dp=null;
-  if(imp&&imp.estrategia){const {data:d}=await sb.from('dietas').select('id').eq('nombre_plan',imp.estrategia).maybeSingle();da=d?d.id:null;}
-  if(imp&&imp.proxima_estrategia){const {data:d}=await sb.from('dietas').select('id').eq('nombre_plan',imp.proxima_estrategia).maybeSingle();dp=d?d.id:null;}
   const row={id:user.id,email:user.email,telefono:PENDING?PENDING.telefono:null,
     nombre:datos.nombre,apellido:datos.ap1,apellido2:datos.ap2,dni:datos.dni,genero:datos.genero,altura:num(datos.altura),
     calle:datos.calle,municipio:datos.muni,codigo_postal:datos.cp,provincia:datos.prov,pais:datos.pais,
-    nivel:imp?imp.nivel:'Nivel1',dia_consulta:imp?(imp.dia_consulta||'').toLowerCase():null,
-    dieta_actual_id:da,dieta_proxima_id:dp,dias_entreno:imp?(imp.dias_entreno||3):3,casa_gym:imp?imp.casa_gym:null,agua_objetivo_ml:2000,
-    fecha_proxima_consulta:imp?imp.proxima_cita:null,fecha_renovacion:imp?imp.proxima_renovacion:null,
-    peso_inicial:imp?imp.peso_inicial:null,grasa_inicial:imp?imp.grasa_inicial:null,
-    fecha_nacimiento:datos.nacimiento||(imp?imp.fecha_nacimiento:null)};
+    nivel:'Nivel1',agua_objetivo_ml:2000,
+    fecha_nacimiento:datos.nacimiento||null};
   const {error}=await sb.from('clientes').insert(row);
   if(error)console.error('insert cliente',error);
-  await copiarRegistros(user);
-  const {count}=await sb.from('registros').select('*',{count:'exact',head:true}).eq('cliente_id',user.id);
-  if(count){await sb.from('clientes').update({semana:count}).eq('id',user.id);}
-}
-async function copiarRegistros(user){
-  const {data:regs}=await sb.from('registros_import').select('*');
-  if(!regs||!regs.length) return;
-  const rows=regs.map(r=>({cliente_id:user.id,fecha:r.fecha,semana:r.semana,sin_consulta:r.sin_consulta,dieta_asignada:r.dieta,
-    peso:r.peso,grasa_corporal:r.grasa_corporal,peso_sin_grasa:r.peso_sin_grasa,grasa_subcutanea:r.grasa_subcutanea,
-    grasa_visceral:r.grasa_visceral,agua:r.agua,musculo_esqueletico:r.musculo_esqueletico,masa_muscular:r.masa_muscular,
-    masa_esqueletica:r.masa_esqueletica,proteina:r.proteina,edad_metabolica:r.edad_metabolica,
-    per_hombro:r.per_hombro,per_cintura:r.per_cintura,per_cadera:r.per_cadera,pli_bicipital:r.pli_bicipital,
-    pli_abdominal:r.pli_abdominal,pli_muslo:r.pli_muslo,pli_subescapular:r.pli_subescapular,
-    pli_tricipital:r.pli_tricipital,pli_suprailiaco:r.pli_suprailiaco}));
-  const {error}=await sb.from('registros').insert(rows);
-  if(error)console.error('insert registros',error);
 }
 
 // ====== CARGA DE DATOS ======
@@ -910,7 +857,6 @@ async function iniciarSesion(){
   document.getElementById('auth').classList.add('hidden');
   const {data:{user}}=await sb.auth.getUser();
   let {data:cli}=await sb.from('clientes').select('*').eq('id',user.id).maybeSingle();
-  if(!cli){ cli=await linkCliente(user); }   // primera vez: vincular datos migrados
   CLIENTE=cli||{nombre:REG_NOMBRE||'',email:user.email};
   if(bloqueado(CLIENTE)){ initPush(true); mostrarBloqueo(); return; }   // renovación caducada → bloquear. initPush(true) refresca su suscripción sin pedirle nada.
   const splash=mostrarSplash();   // bienvenida con saludo + nombre
