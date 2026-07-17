@@ -243,8 +243,8 @@
       <h2>Tu código</h2>
       <p style="font-size:14px;color:var(--muted);text-align:center;margin-bottom:14px">Te lo hemos enviado a <b id="c_email"></b>. Míralo en tu correo y escríbelo aquí.</p>
       <div class="field"><label>Código</label>
-        <input id="l_codigo" type="text" inputmode="numeric" maxlength="6" autocomplete="one-time-code"
-               placeholder="000000" style="font-size:28px;letter-spacing:10px;text-align:center"></div>
+        <input id="l_codigo" type="text" inputmode="numeric" maxlength="10" autocomplete="one-time-code"
+               placeholder="········" style="font-size:26px;letter-spacing:6px;text-align:center"></div>
       <button class="btn" id="btnCodigo" onclick="verificarCodigo()">Entrar</button>
       <div class="switch" style="margin-top:6px"><a onclick="showLogin()">Usar otro correo</a></div>
       <div id="codigoMsg"></div>
@@ -607,7 +607,7 @@ async function login(){
 // un enlace del correo abre Safari y la sesion se quedaria alli, no en la app.
 async function verificarCodigo(){
   const token = val('l_codigo').replace(/\D/g,'');
-  if(token.length !== 6){ setMsg('codigoMsg','El código son 6 números.','err'); return; }
+  if(token.length < 6){ setMsg('codigoMsg','Escribe el código completo, tal y como te ha llegado.','err'); return; }
   const btn = document.getElementById('btnCodigo');
   btn.disabled = true; btn.textContent = 'Entrando...';
   const { error } = await sb.auth.verifyOtp({ email: PENDING_EMAIL, token, type: 'email' });
