@@ -1646,14 +1646,25 @@ document.head.insertAdjacentHTML('beforeend',`<style>
 .in-lista .r{display:flex;justify-content:space-between;padding:5px 9px;border-bottom:1px solid var(--soft)}
 .in-lista .r:last-child{border-bottom:0}
 .in-nota{font-size:11px;color:var(--muted);margin-top:8px;line-height:1.5}
+.in-pres{background:linear-gradient(135deg,#0b6875,#123a55);color:#fff;border-radius:14px;padding:16px 18px;margin-bottom:16px}
+.in-pres h4{font-size:13px;text-transform:uppercase;letter-spacing:.6px;margin:0 0 10px;opacity:.85;font-weight:800}
+.in-pres .g{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px}
+.in-pres .c .l{font-size:11px;opacity:.75;font-weight:700;text-transform:uppercase;letter-spacing:.4px}
+.in-pres .c .v{font-size:21px;font-weight:800;letter-spacing:-.5px;margin-top:1px}
+.in-pres .ok{color:#7fe0a0} .in-pres .ko{color:#ffa89a}
+.in-pres .ritmo{margin-top:14px;background:rgba(255,255,255,.13);border-radius:9px;height:22px;position:relative;overflow:hidden}
+.in-pres .ritmo i{position:absolute;inset:0 auto 0 0;background:rgba(255,255,255,.34)}
+.in-pres .ritmo b{position:absolute;top:0;bottom:0;width:3px;background:#F5862E}
+.in-pres .ritmo span{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800}
+.in-pres .pie{font-size:11px;opacity:.8;margin-top:8px;line-height:1.5}
 #in_msg{font-size:13px;color:var(--muted);padding:26px;text-align:center}
 </style>`);
 
 document.body.insertAdjacentHTML('beforeend',`
 <div id="ingresos"><div class="inbox">
   <button class="in-x" onclick="cerrarIngresos()">×</button>
-  <h3>📊 Ingresos · enero–junio 2026</h3>
-  <div class="sub">Importado de <b>Saneas Buget 26</b> tal cual, para estudiar el negocio. No es la contabilidad: los impuestos van por Facturas y no se cruzan con esto.</div>
+  <h3>📊 Ingresos 2026</h3>
+  <div class="sub">Enero–junio, de <b>Saneas Buget 26</b> tal cual. Julio en adelante, copiado de cada factura. Es para estudiar el negocio: <b>no es la contabilidad</b>, que va por Facturas y no se cruza con esto.</div>
   <div id="in_body"><div id="in_msg">Cargando…</div></div>
 </div></div>`);
 
@@ -1677,7 +1688,29 @@ function inPintar(){
   const mejor=ms.reduce((x,y)=>Number(y.facturado)>Number(x.facturado)?y:x, ms[0]||{});
   const peor =ms.reduce((x,y)=>Number(y.facturado)<Number(x.facturado)?y:x, ms[0]||{});
 
-  const kpis=`<div class="in-kpis">
+  const p=d.presupuesto||{}, hy=d.hoy||{}, tk=d.ticket||{};
+  const dentro=Number(p.desvio)>=0;
+  const pctLlevo=p.objetivo?Math.min(100,Number(p.llevo)/Number(p.objetivo)*100):0;
+  const pres=`<div class="in-pres">
+    <h4>🎯 Presupuesto de ${IN_MES[hy.mes]} · día ${hy.dia} de ${hy.dias_mes}</h4>
+    <div class="g">
+      <div class="c"><div class="l">Objetivo del mes</div><div class="v">${eur(p.objetivo)}</div></div>
+      <div class="c"><div class="l">Deberías llevar hoy</div><div class="v">${eur(p.deberia_llevar)}</div></div>
+      <div class="c"><div class="l">Llevas</div><div class="v">${eur(p.llevo)}</div></div>
+      <div class="c"><div class="l">Desvío</div><div class="v ${dentro?'ok':'ko'}">${dentro?'+':'−'}${eur(Math.abs(Number(p.desvio)))}</div></div>
+      <div class="c"><div class="l">Cierre proyectado</div><div class="v">${eur(p.proyeccion_cierre)}</div></div>
+      <div class="c"><div class="l">Ticket ${IN_MES[hy.mes]}</div><div class="v">${eur(tk.mes_actual)}</div></div>
+    </div>
+    <div class="ritmo">
+      <i style="width:${pctLlevo.toFixed(1)}%"></i>
+      <b style="left:${Number(p.pct_curva_hoy||0).toFixed(1)}%" title="Donde deberías ir hoy"></b>
+      <span>${pctLlevo.toFixed(0)}% del objetivo · la marca naranja es el ${Number(p.pct_curva_hoy||0).toFixed(0)}% donde sueles ir el día ${hy.dia}</span>
+    </div>
+    <div class="pie">Objetivo = ${p.metodo}. Tu gente paga pronto: el día ${hy.dia} sueles llevar el <b>${p.pct_curva_hoy}%</b> cobrado, no el ${(Number(hy.dia)/Number(hy.dias_mes)*100).toFixed(0)}% que tocaría si fuera a partes iguales — por eso el listón de hoy no es una simple división.
+    Ticket histórico ${eur(tk.historico)}. Otros cálculos del objetivo: media de 6 meses ${eur((p.candidatos||{}).media_6)} · mediana ${eur((p.candidatos||{}).mediana_6)} · junio ${eur((p.candidatos||{}).ultimo_cerrado)}.</div>
+  </div>`;
+
+  const kpis=pres+`<div class="in-kpis">
     <div class="in-k big"><div class="lab">Llevamos de año</div><div class="val">${eur(a.facturado)}</div></div>
     <div class="in-k"><div class="lab">Cobros</div><div class="val">${a.cobros||0}</div></div>
     <div class="in-k"><div class="lab">Clientes distintos</div><div class="val">${a.clientes||0}</div></div>
