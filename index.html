@@ -707,7 +707,9 @@ function mostrarBloqueo(){
     _bloqTxt = 'Tu renovación venció el '+fechaCorta(CLIENTE.fecha_renovacion)+'. Renueva tu cuota para volver a acceder a tu app.';
     const _lim=new Date(CLIENTE.fecha_renovacion+'T00:00:00'); _lim.setDate(_lim.getDate()+6);
     const _hoy=new Date(); _hoy.setHours(0,0,0,0);
-    if(_lim>_hoy) _bloqTxt += ' Si no se renueva antes del '+fechaCorta(_lim.toISOString().slice(0,10))+', tus datos se borrarán de Saneas y tu plaza quedará libre.';
+    const _dosD=n=>String(n).padStart(2,'0');
+    const _limISO=_lim.getFullYear()+'-'+_dosD(_lim.getMonth()+1)+'-'+_dosD(_lim.getDate());
+    if(_lim>_hoy) _bloqTxt += ' Si no se renueva antes del '+fechaCorta(_limISO)+', tus datos se borrarán de Saneas y tu plaza quedará libre.';
   } else {
     _bloqTxt = 'Un último paso: elige tu bono y realiza el pago para acceder a tu app.';
   }
@@ -1065,7 +1067,7 @@ const ACT_FACT={Sedentario:1.2,Ligero:1.375,Moderado:1.55,Regular:1.725,Intenso:
 function calcCalorias(){
   const alt=Number(CLIENTE.altura)||null;
   const peso=(ULTIMO&&ULTIMO.peso!=null)?Number(ULTIMO.peso):(CLIENTE.peso_inicial!=null?Number(CLIENTE.peso_inicial):null);
-  const ed=edadEn(new Date().toISOString().slice(0,10));
+  const ed=edadEn(_hoyCanarias());
   if(!alt||!peso||ed==null) return null;
   const esMujer=String(CLIENTE.genero||'').toLowerCase().startsWith('m');
   const tmb=10*peso+6.25*alt-5*ed+(esMujer?-161:5);
@@ -1736,7 +1738,7 @@ function ajustarPerimetros(){
 // cadera ideal (mujer) u hombros ideales (hombre) = cintura ideal ÷ índice.
 function canonBelleza(){
   const alt=Number(CLIENTE&&CLIENTE.altura)||null;
-  const ed=edadEn(new Date().toISOString().slice(0,10));
+  const ed=edadEn(_hoyCanarias());
   if(!alt||ed==null) return null;
   const hombre=String(CLIENTE.genero||'').toLowerCase().startsWith('h');
   const f1 = hombre ? (ed<30?0.42:(ed<40?0.45:0.49)) : (ed<30?0.38:(ed<40?0.40:0.42));
@@ -1879,7 +1881,7 @@ async function guardarSeccion(sec){
 
     let error;
     if(REG_SEM){ ({error}=await sb.from('registros').update(row).eq('id',REG_SEM.id)); }
-    else { row.cliente_id=CLIENTE.id; row.fecha=new Date().toISOString().slice(0,10); row.semana=CLIENTE.semana||null;
+    else { row.cliente_id=CLIENTE.id; row.fecha=_hoyCanarias(); row.semana=CLIENTE.semana||null;
            ({error}=await sb.from('registros').insert(row)); }
     if(error) throw error;
 

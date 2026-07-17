@@ -667,15 +667,23 @@ function pintarFicha(cli,regs){
   // Último envío de datos (registro real, no "sin consulta") y si ya envió esta semana
   const _fmt=f=>String(f||'').split('-').reverse().join('/');
   const _lunesW=new Date(_hoy0); _lunesW.setDate(_hoy0.getDate()-((_hoy0.getDay()+6)%7));
-  const _enviadoSem=reales.some(r=>r.fecha&&new Date(r.fecha+'T00:00:00')>=_lunesW);
+  // ⚠️ `fecha` NO es el día del envío: es el día en que se creó la fila, es decir cuando
+  // la clienta guardó su PRIMERA sección. Puede empezar un día y enviar al siguiente
+  // (caso Cristina Esteban 17/07: empezó el 16, envió el 17 → el panel leía "ayer").
+  // El envío de verdad es `hora_envio`. `fecha` solo vale de reserva para los registros
+  // antiguos migrados, que no tienen hora_envio.
+  const _diaEnvio=r=>(r&&r.hora_envio)
+    ? new Date(r.hora_envio).toLocaleDateString('en-CA',{timeZone:'Atlantic/Canary'})
+    : (r?r.fecha:null);
+  const _enviadoSem=reales.some(r=>{const d=_diaEnvio(r);return d&&new Date(d+'T00:00:00')>=_lunesW;});
   let envioTxt,envioCol;
   if(!act){ envioTxt='sin envíos aún'; envioCol='var(--muted)'; }
-  else { const fe=new Date(act.fecha+'T00:00:00'); const dd=Math.round((_hoy0-fe)/86400000);
+  else { const _d=_diaEnvio(act); const fe=new Date(_d+'T00:00:00'); const dd=Math.round((_hoy0-fe)/86400000);
     const cuando=dd<=0?'hoy':dd===1?'ayer':'hace '+dd+' días';
     const _he=act.hora_envio?(' a las '+new Date(act.hora_envio).toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit',timeZone:'Atlantic/Canary'})):'';
-    envioTxt=_fmt(act.fecha)+_he+' · '+cuando; envioCol=dd<=1?'#ffd54a':dd<=7?'#ffb46b':'#ff8a8a'; }
+    envioTxt=_fmt(_d)+_he+' · '+cuando; envioCol=dd<=1?'#ffd54a':dd<=7?'#ffb46b':'#ff8a8a'; }
   // ¿El registro de esta semana llegó fuera de plazo? (después de las 9:00 h canaria)
-  const _regSem=reales.find(r=>r.fecha&&new Date(r.fecha+'T00:00:00')>=_lunesW);
+  const _regSem=reales.find(r=>{const d=_diaEnvio(r);return d&&new Date(d+'T00:00:00')>=_lunesW;});
   const _tarde=!!(_regSem&&_regSem.enviado_tarde);
   const pesoHoy=val(cli,act,'peso');
   let estado='—';
