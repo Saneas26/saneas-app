@@ -631,6 +631,7 @@ async function verificarCodigo(){
     setMsg('codigoMsg','Ese código no es válido o ya ha caducado. Pide otro.','err'); return;
   }
   btn.disabled = false; btn.textContent = 'Entrar';
+  try{ await sb.auth.signOut({scope:'others'}); }catch(e){ console.error('cerrar otros aparatos', e); }
   await iniciarSesion();
 }
 
