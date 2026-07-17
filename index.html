@@ -228,31 +228,32 @@
   <div id="auth">
     <div class="logo">Saneas</div>
 
-    <!-- LOGIN -->
+    <!-- LOGIN · paso 1: el correo -->
     <div class="auth-card" id="loginCard">
       <h2>Entra en tu app</h2>
+      <p style="font-size:14px;color:var(--muted);text-align:center;margin-bottom:14px">Te mandamos un código a tu correo. Sin contraseñas.</p>
       <div class="field"><label>Email</label><input id="l_email" type="email" autocomplete="email" placeholder="tucorreo@email.com"></div>
-      <div class="field"><label>Teléfono</label><input id="l_tel" type="tel" autocomplete="tel" placeholder="Tu teléfono"></div>
       <button class="btn" id="btnLogin" onclick="login()">Entrar</button>
       <div class="switch" style="margin-top:6px">¿Aún no eres cliente? <a onclick="showNuevo()">Ver métodos de pago</a></div>
       <div id="loginMsg"></div>
     </div>
 
-    <!-- REGISTRO PASO 1: verificación -->
-    <div class="auth-card hidden" id="verifCard">
-      <h2>Regístrate</h2>
-      <p style="font-size:14px;color:var(--muted);text-align:center;margin-bottom:14px">Introduce el email y el teléfono que diste a Saneas para verificar tu acceso.</p>
-      <div class="field"><label>Email</label><input id="v_email" type="email" placeholder="tucorreo@email.com"></div>
-      <div class="field"><label>Teléfono</label><input id="v_tel" type="tel" placeholder="Tu teléfono"></div>
-      <button class="btn" id="btnVerif" onclick="verificar()">Verificar</button>
-      <div class="switch">¿Ya tienes cuenta? <a onclick="showLogin()">Entrar</a></div>
-      <div id="verifMsg"></div>
+    <!-- LOGIN · paso 2: el codigo -->
+    <div class="auth-card hidden" id="codigoCard">
+      <h2>Tu código</h2>
+      <p style="font-size:14px;color:var(--muted);text-align:center;margin-bottom:14px">Te lo hemos enviado a <b id="c_email"></b>. Míralo en tu correo y escríbelo aquí.</p>
+      <div class="field"><label>Código</label>
+        <input id="l_codigo" type="text" inputmode="numeric" maxlength="6" autocomplete="one-time-code"
+               placeholder="000000" style="font-size:28px;letter-spacing:10px;text-align:center"></div>
+      <button class="btn" id="btnCodigo" onclick="verificarCodigo()">Entrar</button>
+      <div class="switch" style="margin-top:6px"><a onclick="showLogin()">Usar otro correo</a></div>
+      <div id="codigoMsg"></div>
     </div>
 
-    <!-- REGISTRO PASO 2: datos de facturación -->
+    <!-- COMPLETAR DATOS · sale sola si el alta de Oscar dejo huecos -->
     <div class="auth-card hidden" id="datosCard">
       <h2>Completa tus datos</h2>
-      <p style="font-size:14px;color:var(--muted);text-align:center;margin-bottom:14px">Necesarios para tu ficha y tu facturación.</p>
+      <p style="font-size:14px;color:var(--muted);text-align:center;margin-bottom:14px">Nos faltan un par de cosas para tu ficha y tu facturación.</p>
       <div class="grid2">
         <div class="field"><label>Nombre</label><input id="d_nombre"></div>
         <div class="field"><label>Apellido 1</label><input id="d_ap1"></div>
@@ -270,8 +271,8 @@
         <div class="field"><label>Provincia</label><input id="d_prov"></div>
         <div class="field"><label>País</label><input id="d_pais" value="España"></div>
       </div>
-      <button class="btn" id="btnCrear" onclick="crearCuenta()">Crear mi cuenta</button>
-      <div class="switch"><a onclick="showLogin()">Cancelar</a></div>
+      <button class="btn" id="btnCrear" onclick="guardarFicha()">Guardar y entrar</button>
+      <div class="switch"><a onclick="logout()">Salir</a></div>
       <div id="datosMsg"></div>
     </div>
 
@@ -468,14 +469,13 @@ function formatoLista(t){
 // ====== AUTH UI ======
 function hideCard(id){document.getElementById(id).classList.add('hidden');}
 function showCard(id){document.getElementById(id).classList.remove('hidden');}
-function showRegister(){hideCard('loginCard');hideCard('datosCard');hideCard('nuevoCard');showCard('verifCard');}
-function showLogin(){hideCard('verifCard');hideCard('datosCard');hideCard('nuevoCard');showCard('loginCard');}
+function showLogin(){hideCard('codigoCard');hideCard('datosCard');hideCard('nuevoCard');showCard('loginCard');}
 // Lleva al cliente a la pantalla de datos: ahi es donde puede corregir lo que falte.
-function mostrarDatos(){ if(_pantallaVisible()!=='datos'){ hideCard('loginCard');hideCard('verifCard');hideCard('nuevoCard');showCard('datosCard'); } }
+function mostrarDatos(){ if(_pantallaVisible()!=='datos'){ hideCard('loginCard');hideCard('codigoCard');hideCard('nuevoCard');showCard('datosCard'); } }
 function setMsg(id,txt,cls){const e=document.getElementById(id);e.innerHTML=txt?`<div class="msg ${cls}">${txt}</div>`:'';}
 
 // ---- Bienvenida cliente nuevo (sin datos aún) ----
-function showNuevo(){hideCard('loginCard');hideCard('verifCard');hideCard('datosCard');showCard('nuevoCard');renderPlanes();}
+function showNuevo(){hideCard('loginCard');hideCard('codigoCard');hideCard('datosCard');showCard('nuevoCard');renderPlanes();}
 const PLAN_NUEVO={
   prueba:{label:'Prueba · 2 semanas',amount:15},
   basico:{label:'Básico',amount:30},
@@ -578,86 +578,50 @@ function elegirPlanManual(planId){
 }
 const telPass = t => String(t||'').replace(/\D/g,'').slice(-9);   // teléfono → últimos 9 dígitos (hace de contraseña)
 
+let PENDING_EMAIL = null;
+
+// La puerta es una sola: correo -> codigo -> dentro. Un caso, no tres.
+// El muro de pago ya no vive aqui: vive dentro, en iniciarSesion() -> bloqueado().
 async function login(){
-  const email=val('l_email'),tel=val('l_tel');
-  if(!email||!tel){setMsg('loginMsg','Introduce email y teléfono.','err');return;}
-  const btn=document.getElementById('btnLogin');btn.disabled=true;btn.textContent='Entrando...';
-  // CASO 1 · ya tiene cuenta en la app nueva → entra directo
-  const {error}=await sb.auth.signInWithPassword({email,password:telPass(tel)});
-  if(!error){ await iniciarSesion(); return; }
-  // No tiene cuenta todavía: ¿es cliente al día (Caso 2) o nuevo/caducado (Caso 3)?
-  const r=await intentarAccesoExistente(email,tel);
-  if(r.status==='completo'){ await crearCuenta(); return; }        // CASO 2 · entra directo, sin pagar
-  if(r.status==='incompleto'){                                     // CASO 2 · le faltan datos obligatorios
-    setMsg('loginMsg','','');
-    hideCard('loginCard'); showCard('datosCard');
-    setMsg('datosMsg','Antes de entrar, completa los datos que faltan (todos son obligatorios).','err');
-    btn.disabled=false;btn.textContent='Entrar'; return;
+  const email = val('l_email').trim().toLowerCase();
+  if(!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){
+    setMsg('loginMsg','Escribe tu correo para entrar.','err'); return;
   }
-  if(r.status==='caducado'){                                       // CASO 3 · cuota vencida
-    setMsg('loginMsg','Tu cuota está vencida'+(r.renovacion?' (renovación '+r.renovacion+')':'')+'. Renueva con Saneas para volver a entrar.','err');
-    btn.disabled=false;btn.textContent='Entrar'; return;
-  }
-  if(r.status==='telefono'){
-    setMsg('loginMsg','El teléfono no coincide con ese email. Revísalo.','err');
-    btn.disabled=false;btn.textContent='Entrar'; return;
-  }
-  // no_encontrado / error → CASO 3 · cliente nuevo
-  setMsg('loginMsg','No encontramos tu cuenta. Si aún no eres cliente de Saneas, pulsa «Ver métodos de pago».','err');
-  btn.disabled=false;btn.textContent='Entrar';
+  const btn = document.getElementById('btnLogin');
+  btn.disabled = true; btn.textContent = 'Enviando...';
+  // shouldCreateUser:false -> nadie se crea una cuenta poniendo un correo.
+  // El alta la da Oscar desde el panel, o Mollie cuando el cliente paga.
+  await sb.auth.signInWithOtp({ email, options:{ shouldCreateUser:false } });
+  btn.disabled = false; btn.textContent = 'Entrar';
+  PENDING_EMAIL = email;
+  document.getElementById('c_email').textContent = email;
+  // Se pasa al codigo exista o no la cuenta: si dijeramos "ese correo no existe",
+  // cualquiera podria averiguar quien es clienta probando correos.
+  hideCard('loginCard'); showCard('codigoCard');
+  setMsg('loginMsg',''); setMsg('codigoMsg','');
+  const inp = document.getElementById('l_codigo');
+  if(inp){ inp.value=''; inp.focus(); }
 }
 
-// Enrutador: comprueba email+teléfono contra los clientes dados de alta y su facturación.
-async function intentarAccesoExistente(email,tel){
-  try{
-    const {data,error}=await sb.rpc('verificar_acceso',{p_email:email,p_telefono:tel});
-    if(error||!data) return {status:'error'};
-    if(!data.ok) return {status:data.motivo||'error', renovacion:data.renovacion};
-    PENDING={email:email.trim(),telefono:telPass(tel),verif:data};
-    const set=(id,v)=>{const e=document.getElementById(id);if(e)e.value=(v==null?'':v);};
-    const partes=(data.nombre||'').trim().split(' ');
-    set('d_nombre',partes[0]||''); set('d_ap1',partes.slice(1).join(' ')||'');
-    set('d_altura',data.altura||''); if(data.genero)set('d_genero',data.genero);
-    if(data.fecha_nacimiento)set('d_nacimiento',data.fecha_nacimiento);
-    set('d_dni',data.dni||''); set('d_calle',data.calle||''); set('d_muni',data.municipio||'');
-    set('d_cp',data.codigo_postal||''); set('d_prov',data.provincia||''); set('d_pais','España');
-    const dni=(data.dni||'').trim();
-    const dniOk=dni.length>=2 && /[A-Za-z]$/.test(dni);
-    const completo=(partes[0])&&dni&&dniOk&&data.calle&&data.codigo_postal&&data.municipio&&data.provincia;
-    return {status: completo?'completo':'incompleto'};
-  }catch(e){ return {status:'error'}; }
-}
-
-// Registro paso 1: verificar email+teléfono contra los clientes dados de alta
-async function verificar(){
-  const email=val('v_email'),tel=val('v_tel');
-  if(!email||!tel){setMsg('verifMsg','Introduce email y teléfono.','err');return;}
-  const btn=document.getElementById('btnVerif');btn.disabled=true;btn.textContent='Verificando...';
-  const {data,error}=await sb.rpc('verificar_acceso',{p_email:email,p_telefono:tel});
-  btn.disabled=false;btn.textContent='Verificar';
-  if(error){setMsg('verifMsg','Error de conexión: '+error.message,'err');return;}
-  if(!data||!data.ok){
-    const m=data?data.motivo:'';
-    if(m==='no_encontrado') setMsg('verifMsg','No encontramos tu alta con ese email. Contacta con Saneas.','err');
-    else if(m==='telefono') setMsg('verifMsg','El teléfono no coincide con el registrado para ese email.','err');
-    else if(m==='caducado') setMsg('verifMsg','Tu suscripción está caducada (renovación '+(data.renovacion||'')+'). Renueva con Saneas para acceder.','err');
-    else setMsg('verifMsg','No se pudo verificar. Revisa los datos.','err');
-    return;
+// La sesion se crea AQUI, dentro de la PWA. Por eso es codigo y no enlace:
+// un enlace del correo abre Safari y la sesion se quedaria alli, no en la app.
+async function verificarCodigo(){
+  const token = val('l_codigo').replace(/\D/g,'');
+  if(token.length !== 6){ setMsg('codigoMsg','El código son 6 números.','err'); return; }
+  const btn = document.getElementById('btnCodigo');
+  btn.disabled = true; btn.textContent = 'Entrando...';
+  const { error } = await sb.auth.verifyOtp({ email: PENDING_EMAIL, token, type: 'email' });
+  if(error){
+    btn.disabled = false; btn.textContent = 'Entrar';
+    setMsg('codigoMsg','Ese código no es válido o ya ha caducado. Pide otro.','err'); return;
   }
-  PENDING={email:email.trim(),telefono:telPass(tel),verif:data};
-  const partes=(data.nombre||'').trim().split(' ');
-  document.getElementById('d_nombre').value=partes[0]||'';
-  document.getElementById('d_ap1').value=partes.slice(1).join(' ')||'';
-  if(data.altura) document.getElementById('d_altura').value=data.altura;
-  if(data.genero) document.getElementById('d_genero').value=data.genero;
-  if(data.fecha_nacimiento) document.getElementById('d_nacimiento').value=data.fecha_nacimiento;
-  setMsg('verifMsg','');
-  hideCard('verifCard');showCard('datosCard');
+  btn.disabled = false; btn.textContent = 'Entrar';
+  await iniciarSesion();
 }
 
 // Registro paso 2: crear la cuenta con los datos de facturación
 // _fallo(): deja el error donde el cliente lo esta MIRANDO, no en una pantalla oculta.
-// crearCuenta() se llama desde login() (ve btnLogin) o desde datosCard (ve btnCrear).
+// guardarFicha() se llama desde datosCard (ve btnCrear).
 function _pantallaVisible(){
   const dc=document.getElementById('datosCard');
   return (dc && !dc.classList.contains('hidden')) ? 'datos' : 'login';
@@ -665,32 +629,60 @@ function _pantallaVisible(){
 function _fallo(msg){
   if(_pantallaVisible()==='datos'){
     setMsg('datosMsg',msg,'err');
-    const b=document.getElementById('btnCrear'); if(b){b.disabled=false;b.textContent='Crear mi cuenta';}
+    const b=document.getElementById('btnCrear'); if(b){b.disabled=false;b.textContent='Guardar y entrar';}
   } else {
     setMsg('loginMsg',msg,'err');
     const b=document.getElementById('btnLogin'); if(b){b.disabled=false;b.textContent='Entrar';}
   }
 }
-async function crearCuenta(){
-  if(!PENDING){showLogin();return;}
+// El alta de Oscar solo trae correo y telefono. El resto se lo pedimos aqui,
+// la primera vez que entra. No se crea nada: se completa la ficha que ya existe.
+async function guardarFicha(){
   const datos={nombre:val('d_nombre'),ap1:val('d_ap1'),ap2:val('d_ap2'),dni:val('d_dni'),
     altura:val('d_altura'),genero:document.getElementById('d_genero').value,nacimiento:val('d_nacimiento'),
     calle:val('d_calle'),muni:val('d_muni'),cp:val('d_cp'),prov:val('d_prov'),pais:val('d_pais')||'España'};
   const _dni=(datos.dni||'').trim();
-  if(!datos.nombre||!datos.ap1||!_dni||!datos.calle||!datos.cp||!datos.muni||!datos.prov){_fallo('Faltan datos obligatorios: nombre, primer apellido, DNI, calle, municipio, código postal y provincia.');mostrarDatos();return;}
+  if(!datos.nombre||!datos.ap1||!_dni||!datos.calle||!datos.cp||!datos.muni||!datos.prov){
+    _fallo('Faltan datos obligatorios: nombre, primer apellido, DNI, calle, municipio, código postal y provincia.');mostrarDatos();return;}
   if(!/[A-Za-z]$/.test(_dni)){_fallo('El DNI debe incluir la letra (por ejemplo 12345678Z).');mostrarDatos();return;}
   const _malD=revisarDatosBasicos('d_'); if(_malD){_fallo(_malD);mostrarDatos();return;}
-  const btn=document.getElementById('btnCrear');btn.disabled=true;btn.textContent='Creando...';
+  const btn=document.getElementById('btnCrear');btn.disabled=true;btn.textContent='Guardando...';
   try{
-    const {data,error}=await sb.auth.signUp({email:PENDING.email,password:PENDING.telefono});
-    if(error){
-      if((error.message||'').toLowerCase().includes('already')) throw new Error('Ya tienes una cuenta. Entra con tu email y teléfono.');
-      throw error;
-    }
-    if(!data.session){setMsg('datosMsg','Cuenta creada. Si te pide confirmar el email, desactívalo en Supabase (Authentication → Email) y entra.','ok');btn.disabled=false;btn.textContent='Crear mi cuenta';return;}
-    await crearCliente(data.user,datos);
+    const {data:{user}}=await sb.auth.getUser();
+    if(!user) throw new Error('Se ha cerrado la sesión. Vuelve a entrar.');
+    const row={nombre:datos.nombre,apellido:datos.ap1,apellido2:datos.ap2||null,dni:_dni,
+      genero:datos.genero||null,altura:num(datos.altura),fecha_nacimiento:datos.nacimiento||null,
+      calle:datos.calle,municipio:datos.muni,codigo_postal:datos.cp,provincia:datos.prov,pais:datos.pais};
+    const {error}=await sb.from('clientes').update(row).eq('id',user.id);
+    if(error) throw error;
+    Object.assign(CLIENTE||{},row);
+    hideCard('datosCard');
     await iniciarSesion();
-  }catch(err){ btn.disabled=false; btn.textContent='Crear mi cuenta'; _fallo('Error: '+(err.message||err)); }
+  }catch(e){ btn.disabled=false; btn.textContent='Guardar y entrar'; _fallo('Error: '+(e.message||e)); }
+}
+
+// Que le falta a la ficha para que la app pueda calcularle nada y facturarle.
+function fichaIncompleta(c){
+  if(!c) return true;
+  const dni=(c.dni||'').trim();
+  if(!c.nombre || !c.apellido || !dni || !/[A-Za-z]$/.test(dni)) return true;
+  if(!c.calle || !c.codigo_postal || !c.municipio || !c.provincia) return true;
+  if(c.altura==null || !c.fecha_nacimiento) return true;
+  if(!['Mujer','Hombre'].includes((c.genero||'').trim())) return true;
+  return false;
+}
+
+function pintarFichaPendiente(c){
+  const set=(id,v)=>{const e=document.getElementById(id); if(e) e.value=(v==null?'':v);};
+  set('d_nombre',c.nombre); set('d_ap1',c.apellido); set('d_ap2',c.apellido2);
+  set('d_dni',c.dni); set('d_altura',c.altura); set('d_nacimiento',c.fecha_nacimiento);
+  set('d_calle',c.calle); set('d_muni',c.municipio); set('d_cp',c.codigo_postal);
+  set('d_prov',c.provincia); set('d_pais',c.pais||'España');
+  const g=document.getElementById('d_genero'); if(g) g.value=['Mujer','Hombre'].includes((c.genero||'').trim())?c.genero.trim():'';
+  document.getElementById('auth').classList.remove('hidden');
+  document.getElementById('main').classList.add('hidden');
+  hideCard('loginCard'); hideCard('codigoCard'); hideCard('nuevoCard'); showCard('datosCard');
+  setMsg('datosMsg','Antes de entrar, completa lo que falta. Todo es obligatorio.','err');
 }
 
 async function logout(){await sb.auth.signOut();location.reload();}
@@ -861,6 +853,8 @@ async function iniciarSesion(){
   let {data:cli}=await sb.from('clientes').select('*').eq('id',user.id).maybeSingle();
   CLIENTE=cli||{nombre:REG_NOMBRE||'',email:user.email};
   if(bloqueado(CLIENTE)){ initPush(true); mostrarBloqueo(); return; }   // renovación caducada → bloquear. initPush(true) refresca su suscripción sin pedirle nada.
+  // Al corriente pero con huecos: el alta de Oscar solo trae correo y telefono.
+  if(fichaIncompleta(CLIENTE)){ pintarFichaPendiente(CLIENTE); return; }
   const splash=mostrarSplash();   // bienvenida con saludo + nombre
   registrarAcceso();              // contar la entrada del cliente
   cargarMensajes();               // pool de mensajes para la tarjeta de aviso
