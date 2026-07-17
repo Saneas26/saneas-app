@@ -79,6 +79,11 @@
   .agenda .row{display:flex;justify-content:space-between;font-size:14px;padding:5px 0;border-top:1px solid rgba(255,255,255,.18)}
   .agenda .row span:last-child{font-weight:700}
   .agenda .today{background:#fff;border-radius:10px;padding:10px 12px;margin-top:10px;font-size:14px;text-align:center;font-weight:600;color:var(--dark);line-height:1.35}
+  .agenda .objsem{background:#fff;border-radius:10px;padding:14px 12px;margin-top:8px;text-align:center}
+  .agenda .objsem .cap{font-size:12px;font-weight:800;color:var(--muted);letter-spacing:.6px}
+  .agenda .objsem .big{font-size:40px;font-weight:800;color:var(--teal);line-height:1.05;letter-spacing:-1.5px;margin:2px 0}
+  .agenda .objsem .big em{font-style:normal;font-size:18px;font-weight:800;margin-left:2px}
+  .agenda .objsem .sub{font-size:13px;color:var(--dark);font-weight:600}
   .choices{display:flex;gap:6px;margin-bottom:12px}
   .choice{flex:1;background:var(--white);border:2px solid var(--light);border-radius:14px;padding:10px 4px;text-align:center;font-size:14px;font-weight:700;color:var(--muted);cursor:pointer;line-height:1.2}
   .choice .ic{font-size:20px;display:block;margin-bottom:3px}
@@ -1223,7 +1228,11 @@ function renderInicio(){
       <div class="today">${consultaHoyPendiente()
         ? '💬 La constancia vence al impulso. El cambio real no ocurre en un día de dieta perfecta, sino en los cien días que decidiste no tirar la toalla.'  /* el mensaje de consulta ya sale arriba; aquí una frase fija, no aleatoria */
         : 'Hoy no es día de consulta. Recuerda enviar tus datos antes de las 10:00 (hora Madrid) del '+fmt(CLIENTE.dia_consulta)+', tu día de consulta 🕙'}</div>
-      ${(CAL&&(CAL.get-CAL.objetivo)>0)?`<div class="today" style="margin-top:8px;background:#fff;color:#d97757;font-weight:800">🎯 Esta semana tu objetivo es bajar <span style="font-size:16px">${CAL.get-CAL.objetivo} g</span></div>`:''}
+      ${(CAL&&(CAL.get-CAL.objetivo)>0)?`<div class="objsem">
+        <div class="cap">🎯 TU OBJETIVO ESTA SEMANA</div>
+        <div class="big">${CAL.get-CAL.objetivo}<em>g</em></div>
+        <div class="sub">es lo que toca bajar</div>
+      </div>`:''}
     </div>
 
     <h2 class="sec">🧭 Tu pizarra</h2>
