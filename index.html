@@ -151,6 +151,9 @@
   .video{position:relative;border-radius:14px;overflow:hidden;height:170px;background:linear-gradient(135deg,#1a2e35,#3890a4);display:flex;align-items:center;justify-content:center}
   .video .play{width:56px;height:56px;border-radius:50%;background:rgba(255,255,255,.92);display:flex;align-items:center;justify-content:center;font-size:22px;color:var(--teal);text-decoration:none}
   .video .cap{position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.4);color:#fff;padding:8px 12px;font-size:14px}
+  .video .thumb{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+  .video .play{position:relative;z-index:1;box-shadow:0 4px 14px rgba(0,0,0,.35)}
+  .video .cap{z-index:1}
   .daysel{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:6px}
   .daysel button{white-space:nowrap;border:none;background:var(--white);color:var(--muted);padding:8px 14px;border-radius:20px;font-family:inherit;font-weight:700;font-size:14px;box-shadow:var(--shadow);cursor:pointer}
   .daysel button.active{background:var(--teal);color:#fff}
@@ -1219,6 +1222,10 @@ function renderInicio(){
   const vasos=aguaL!=null?Math.round(aguaL*4):0;   // vasos de 250 ml
   let glasses='';for(let i=0;i<vasos;i++)glasses+='<span class="full"></span>';
   const vid=CLIENTE.video_semana_url;
+  // La miniatura la pone YouTube a partir del id, y el id sale de la URL guardada.
+  // Sirve tanto youtu.be/ID como youtube.com/watch?v=ID o /embed/ID.
+  const _ytId=u=>{ const m=String(u||'').match(/(?:youtu\.be\/|v=|\/embed\/|\/shorts\/)([A-Za-z0-9_-]{11})/); return m?m[1]:null; };
+  const vidThumb=_ytId(vid);
 
   document.getElementById('s-inicio').innerHTML=`
     <p style="font-size:20px;font-weight:700;margin:4px 6px 2px">Hola, ${CLIENTE.nombre||''}${esEmbajador()?` <img src="${SANEAMIGO_BADGE}" title="Embajador Saneas" style="height:24px;vertical-align:-5px">`:''} 👋</p>
@@ -1338,6 +1345,7 @@ function renderInicio(){
 
     <h2 class="sec">🎬 Vídeo de la semana</h2>
     <div class="video">
+      ${vidThumb?`<img class="thumb" src="https://img.youtube.com/vi/${vidThumb}/hqdefault.jpg" alt="" loading="lazy" onerror="this.remove()">`:''}
       ${vid?`<a class="play" href="${vid}" target="_blank" rel="noopener">▶</a>`:'<div class="play">▶</div>'}
       <div class="cap">${vid?'Toca para ver el vídeo de esta semana':'Sin vídeo esta semana'}</div>
     </div>`;
