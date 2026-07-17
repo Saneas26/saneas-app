@@ -1196,6 +1196,20 @@ function dibujarGrafico(regs){
 }
 
 // ====== RENDER INICIO ======
+// Agua diaria = peso actual / 20 (litros). Ej: 80 kg -> 4,0 L
+// UNA sola formula: la tarjeta "Agua de hoy" (inicio) y el plan semanal en PDF
+// leen las dos de aqui. No se copia el /20 a ningun otro sitio.
+function aguaDiariaL(){
+  const pesoHoy=(ULTIMO&&ULTIMO.peso!=null)?Number(ULTIMO.peso):null;
+  const pesoIni=(PRIMERO&&PRIMERO.peso!=null)?Number(PRIMERO.peso)
+               :(CLIENTE&&CLIENTE.peso_inicial!=null?Number(CLIENTE.peso_inicial):null);
+  const p=pesoHoy||pesoIni||null;
+  return p?(p/20):null;
+}
+function aguaDiariaTexto(){
+  const l=aguaDiariaL();
+  return l!=null?l.toFixed(1).replace('.',','):null;
+}
 function renderInicio(){
   const hoy=new Date();
   const esConsulta=(CLIENTE.dia_consulta||'').toLowerCase()===DIA_NOMBRE[hoy.getDay()];
@@ -1215,10 +1229,8 @@ function renderInicio(){
   const metaFinal=OBJ?OBJ.promedio:CLIENTE.peso_objetivo;
   const prog=(pesoIni&&metaFinal&&pesoHoy)?
     Math.max(0,Math.min(100,Math.round((pesoIni-pesoHoy)/(pesoIni-metaFinal)*100))):0;
-  // Agua diaria = peso actual / 20 (litros). Ej: 80 kg → 4,0 L
-  const pesoAgua=pesoHoy||pesoIni||null;
-  const aguaL=pesoAgua?(pesoAgua/20):null;
-  const litros=aguaL!=null?aguaL.toFixed(1).replace('.',','):'—';
+  const aguaL=aguaDiariaL();
+  const litros=aguaDiariaTexto()||'—';
   const vasos=aguaL!=null?Math.round(aguaL*4):0;   // vasos de 250 ml
   let glasses='';for(let i=0;i<vasos;i++)glasses+='<span class="full"></span>';
   const vid=CLIENTE.video_semana_url;
@@ -2775,6 +2787,7 @@ function genRender(){
   if(!GEN_PLAN){genMsg('Tu plan aún no ha cargado.','err');return;}
   const p=GEN_PLAN, nom=GEN_NOM, uid=GEN_UID;
   const fecha=new Date().toLocaleDateString('es-ES',{timeZone:'Atlantic/Canary'});
+  const AGUA=aguaDiariaTexto();   // el mismo litraje que ve en "Agua de hoy": si no hay peso, no se inventa
   const nd=p.dias.length;
   let g=`<div class="gi-grid" style="grid-template-columns:150px repeat(${nd},1fr)">`;
   g+=`<div class="gi-hcell gi-corner"></div>`;
@@ -2799,10 +2812,10 @@ function genRender(){
     <div style="position:relative">${g}<div class="gi-marca">${marca}</div></div>
     <div class="gi-foot">
       <div class="gi-rec"><h5>✅ Recomendaciones importantes</h5>
-        <div>✔️ Cocina sin aceite.</div><div>✔️ Usa todas las especias que desees.</div><div>✔️ Bebe suficiente agua durante el día.</div></div>
+        <div>✔️ Cocina sin aceite.</div><div>✔️ Usa todas las especias que desees.</div><div>✔️ ${AGUA?`Recuerda que tienes que beber durante estas dos semanas <b>${AGUA} litros al día</b>.`:'Bebe suficiente agua durante el día.'}</div></div>
       <div class="gi-rac"><h5>Raciones por comida</h5>
-        <div>✋ Proteína: la palma de la mano abierta.</div><div>✊ Hidratos: el tamaño del puño cerrado.</div><div>🥗 Vegetales: lo que resta de la mitad del plato.</div></div>
-      <div class="gi-agua">💧 Hidrátate durante todo el día: agua siempre a mano, sin faltar.</div>
+        <div>✋ Proteína: la palma de la mano abierta.</div><div>✊ Hidratos: el tamaño del puño cerrado.</div><div>🥗 Vegetales, la mitad del plato: recuerda que es la parte más grande del plato.</div></div>
+      <div class="gi-agua">🍽️ Recuerda no mezclar hidratos y grasas en la misma digestión durante estas dos semanas.</div>
     </div>
     <div class="gi-pie">Documento personal e intransferible de ${esc(nom)} · ID ${uid} · Generado el ${fecha} · Saneas®</div>
   </div>`;
