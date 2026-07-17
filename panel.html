@@ -1239,6 +1239,352 @@ async function confirmarRenovar(){
   }
   await cargar();
 }
+// ================= GENERADOR DE DIETAS (17/07/2026) =================
+// Seccion nueva del panel: elige cliente + plan de la biblioteca (Supabase),
+// calcula horarios respetando 14h de ayuno nocturno (editables), monta la
+// infografia "Plan Semanal de Alimentacion" con imagenes reales de los
+// alimentos (productos/recetas del motor de tags) y la descarga en PDF con
+// marca de agua trazable (nombre + ID unico ligado al cliente).
+// Datos: RPC panel_generador_dieta (SECURITY DEFINER, solo lectura).
+
+document.head.insertAdjacentHTML('beforeend',`<style>
+#gendieta{position:fixed;inset:0;background:rgba(16,50,58,.45);z-index:46;display:none;align-items:flex-start;justify-content:center;overflow-y:auto;padding:20px 10px}
+#gendieta.show{display:flex}
+#gendieta .gdbox{background:#fff;border-radius:16px;padding:24px;width:min(1320px,97vw);position:relative}
+#gendieta h3{font-size:18px;color:var(--teal-d);margin-bottom:4px}
+#gendieta .sub{font-size:13px;color:var(--muted);margin-bottom:14px}
+#gendieta .gd-x{position:absolute;top:14px;right:16px;background:var(--soft);border:0;width:32px;height:32px;border-radius:50%;font-size:17px;color:var(--muted)}
+.gd-ctrl{display:grid;grid-template-columns:280px 300px 1fr;gap:18px;align-items:start}
+@media(max-width:900px){.gd-ctrl{grid-template-columns:1fr}}
+.gd-ctrl label{display:block;font-size:12px;font-weight:700;color:var(--muted);margin:0 0 4px}
+.gd-ctrl input,.gd-ctrl select{width:100%;padding:10px;border:2px solid var(--line);border-radius:9px;font-size:14px;background:#fff}
+.gd-list{max-height:170px;overflow-y:auto;border:1px solid var(--line);border-radius:9px;margin-top:6px}
+.gd-list .row{display:flex;justify-content:space-between;padding:8px 10px;cursor:pointer;font-size:13px}
+.gd-list .row:hover{background:var(--soft)}
+.gd-list .row.sel{background:#e2f2f5}
+.gd-list .who{font-weight:700}
+.gd-list .where{color:var(--muted);font-size:12px}
+.gd-chip{font-size:12px;color:var(--teal-d);font-weight:700;margin-top:8px;min-height:16px}
+.gd-ayuno{font-size:12px;font-weight:700;margin:8px 0;color:var(--good)}
+.gd-ayuno.mal{color:var(--bad)}
+.gd-horas{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:8px}
+.gd-horas .gh{background:var(--soft);border:1px solid var(--line);border-radius:9px;padding:6px 8px}
+.gd-horas .gh b{display:block;font-size:11px;color:var(--muted)}
+.gd-horas .gh input{padding:4px 6px;border-width:1px;font-size:13px;margin-top:2px}
+.gd-foot2{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;align-items:center}
+.gd-btn{padding:11px 18px;border-radius:9px;border:0;font-weight:700;background:var(--teal);color:#fff}
+.gd-btn:disabled{opacity:.45;cursor:default}
+.gd-btn.gd-pdf{background:var(--orange)}
+#gd_msg{font-size:13px;min-height:16px;margin-top:6px}
+#gd_msg.err{color:var(--bad)} #gd_msg.ok{color:var(--good)}
+.gd-prev{margin-top:16px;overflow-x:auto;border:1px dashed var(--line);border-radius:12px;background:var(--soft);padding:10px}
+.gd-vacio{color:var(--muted);font-size:13px;padding:30px;text-align:center}
+/* Infografia */
+.gi{width:1240px;background:#fff;border-radius:10px;padding:18px 20px 12px;position:relative;font-family:'Segoe UI',system-ui,sans-serif;color:#16323a}
+.gi-head{display:flex;align-items:center;gap:16px;margin-bottom:12px}
+.gi-logo{font-weight:800;font-size:26px;color:#0b6875}
+.gi-logo span{color:#F5862E}
+.gi-tit{flex:1;text-align:center}
+.gi-tit h1{font-size:26px;letter-spacing:.5px;color:#123a55;text-transform:uppercase;margin:0}
+.gi-tit .gi-sub{font-size:12px;color:#6b878f;font-weight:700;margin-top:2px}
+.gi-idbox{font-size:11px;font-weight:800;color:#6b878f;border:1px solid #dceaee;border-radius:8px;padding:6px 10px;text-align:center}
+.gi-grid{display:grid;border:1px solid #d5e4e8;border-radius:8px;overflow:hidden;position:relative}
+.gi-hcell{padding:8px 4px;text-align:center;font-weight:800;font-size:14px;color:#fff;text-transform:uppercase;letter-spacing:.5px}
+.gi-corner{background:#f7fbfc}
+.gi-tcell{padding:10px 8px;font-weight:800;font-size:13px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:2px;border-top:1px solid #d5e4e8}
+.gi-tcell .em{font-size:22px}
+.gi-tcell .hr{font-size:12px;color:#0b6875}
+.gi-cell{border-left:1px solid #e3edef;border-top:1px solid #d5e4e8;padding:7px 8px;font-size:11px;line-height:1.35;background:#fff}
+.gi-line{margin-bottom:3px}
+.gi-items{display:flex;gap:5px;flex-wrap:wrap;margin-top:5px;align-items:center}
+.gi-img{width:34px;height:34px;object-fit:cover;border-radius:50%;border:1px solid #e3edef;background:#fff}
+.gi-emoji{font-size:22px;line-height:34px}
+.gi-mas{font-size:10px;font-weight:800;color:#6b878f}
+.gi-foot{display:grid;grid-template-columns:1.2fr 1.2fr .8fr;gap:12px;margin-top:12px}
+.gi-foot h5{font-size:12px;text-transform:uppercase;letter-spacing:.5px;margin:0 0 6px;color:#123a55}
+.gi-rec,.gi-rac{border:1px solid #dceaee;border-radius:10px;padding:10px 14px;font-size:12px;line-height:1.7}
+.gi-rec h5{color:#fff;background:#123a55;margin:-10px -14px 8px;padding:7px 14px;border-radius:9px 9px 0 0}
+.gi-agua{border:1px solid #cfe6f5;background:#f2f9fe;border-radius:10px;padding:14px;font-size:13px;font-weight:700;color:#155f8a;display:flex;align-items:center}
+.gi-marca{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:5}
+.gi-marca span{position:absolute;font-size:26px;font-weight:800;color:rgba(11,104,117,.07);white-space:nowrap;transform:rotate(-24deg)}
+.gi-pie{margin-top:10px;font-size:10px;color:#6b878f;text-align:center;font-weight:700}
+</style>`);
+
+document.body.insertAdjacentHTML('beforeend',`
+<div id="gendieta">
+  <div class="gdbox">
+    <button class="gd-x" onclick="cerrarGen()">×</button>
+    <h3>🥗 Generador de dietas</h3>
+    <div class="sub">Elige cliente y plan de la biblioteca, ajusta la hora de la cena (el resto se calcula respetando 14&nbsp;h de ayuno y es editable) y descarga la infografía en PDF con marca de agua personal.</div>
+    <div class="gd-ctrl">
+      <div>
+        <label>1 · Cliente</label>
+        <input id="gd_buscar" placeholder="Nombre y apellido…" oninput="genBuscar()">
+        <div class="gd-list" id="gd_list"></div>
+        <div class="gd-chip" id="gd_cliinfo"></div>
+      </div>
+      <div>
+        <label>2 · Plan de la biblioteca</label>
+        <select id="gd_plan" onchange="genCargarPlan()"><option value="">— elige un plan —</option></select>
+        <label style="margin-top:12px">3 · Hora de la cena</label>
+        <input id="gd_cena" type="time" value="21:00" onchange="genCalcHoras(true)">
+        <div class="gd-ayuno" id="gd_ayuno"></div>
+      </div>
+      <div>
+        <label>4 · Horarios de las ingestas (editables)</label>
+        <div class="gd-horas" id="gd_horas"><div class="gd-vacio" style="padding:10px">Elige un plan para calcular los horarios.</div></div>
+        <div class="gd-foot2">
+          <button class="gd-btn" id="gd_generar" onclick="genRender()" disabled>Generar infografía</button>
+          <button class="gd-btn gd-pdf" id="gd_pdf" onclick="genPDF()" disabled>⬇️ Descargar PDF</button>
+        </div>
+        <div id="gd_msg"></div>
+      </div>
+    </div>
+    <div class="gd-prev" id="gd_prev"><div class="gd-vacio">La infografía aparecerá aquí.</div></div>
+  </div>
+</div>`);
+
+(function(){const a=document.querySelector('header .alta-btn');
+  if(a)a.insertAdjacentHTML('beforebegin','<button class="hdr-btn" onclick="abrirGen()">🥗 Generador</button>');})();
+
+const GEN_ORDEN=['EnPie','Desayuno','MediaManana','Almuerzo','Merienda','Cena','AntesDormir'];
+const GEN_TOMAS={EnPie:{label:'En pie',emoji:'🌅'},Desayuno:{label:'Desayuno',emoji:'☀️'},
+  MediaManana:{label:'Media mañana',emoji:'🍏'},Almuerzo:{label:'Almuerzo',emoji:'🍽️'},
+  Merienda:{label:'Merienda',emoji:'🥜'},Cena:{label:'Cena',emoji:'🌙'},AntesDormir:{label:'Antes de dormir',emoji:'😴'}};
+const GEN_TINTES={EnPie:'#fff8e6',Desayuno:'#fff3d6',MediaManana:'#eef7ea',Almuerzo:'#e6f2ec',Merienda:'#e9eefc',Cena:'#e7ecf4',AntesDormir:'#f3e9f7'};
+const GEN_COLORES=['#5b9e48','#8ab55f','#3f8e9b','#8e7cc3','#e69138','#e06e8a','#d0493b'];
+// Mapa opcional tag/producto -> URL de imagen propia; si un dia Oscar sube sus
+// fotos (bucket propio), se rellena y sustituye a las imagenes del catalogo.
+const GEN_TAG_IMG={};
+const GEN_EMOJI=[[/(pollo|pavo)/,'🍗'],[/salmon/,'🍣'],[/(pescado|merluza|dorada|lubina|bacalao|atun|caballa|sardina|boqueron|gamba|marisco)/,'🐟'],
+  [/huevo/,'🥚'],[/(jamon|fiambre|lacon)/,'🥓'],[/(ternera|cerdo|lomo|solomillo|bistec|carne)/,'🥩'],
+  [/(arroz|cereal|avena|quinoa)/,'🍚'],[/(patata|batata|boniato|papa)/,'🥔'],[/pasta/,'🍝'],
+  [/(lenteja|garbanzo|judia|alubia|frijol|legumbre)/,'🫘'],[/pan/,'🍞'],
+  [/(yogur|kefir|leche|lacteo)/,'🥛'],[/queso/,'🧀'],[/aguacate/,'🥑'],[/tomate/,'🍅'],
+  [/(manzana|pera|platano|naranja|kiwi|fresa|arandano|melon|sandia|uva|mango|pina|fruta)/,'🍎'],
+  [/(nuez|nueces|almendra|anacardo|avellana|pistacho|frutos secos)/,'🥜'],
+  [/(ensalada|verdura|brocoli|espinaca|calabacin|lechuga|pimiento|pepino|zanahoria|vegetal|esparrago|champinon|seta)/,'🥗'],
+  [/cafe/,'☕'],[/(te |te$|infusion|artemisa|manzanilla)/,'🍵'],[/(agua|limon)/,'💧'],
+  [/aceite/,'🫒'],[/(chocolate|cacao)/,'🍫'],[/(atun)/,'🐟']];
+let GEN_CLI=null,GEN_PLAN=null,GEN_LISTA=[],GEN_HORAS={},GEN_REQ=0;
+
+function genEmoji(s){s=norm(s);for(const p of GEN_EMOJI){if(p[0].test(s))return p[1];}return '🍽️';}
+function genMin(hm){const p=String(hm||'').split(':');return (Number(p[0])||0)*60+(Number(p[1])||0);}
+function genHM(m){m=((m%1440)+1440)%1440;return String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0');}
+function genUID(c){return 'SAN-'+String(c.id||'').replace(/-/g,'').slice(0,8).toUpperCase();}
+function genSlug(s){return norm(s).replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');}
+function genMsg(t,cls){const m=el('gd_msg');m.className=cls||'';m.textContent=t||'';}
+
+async function abrirGen(){
+  el('gendieta').classList.add('show');
+  genBuscar();
+  if(!GEN_LISTA.length){
+    const r=await rpc('panel_generador_dieta',{p_dieta_id:null,secret:SYNC_SECRET});
+    if(r&&r.ok)GEN_LISTA=r.dietas||[];
+    else{genMsg('No se pudo cargar la biblioteca de dietas.','err');return;}
+    el('gd_plan').innerHTML='<option value="">— elige un plan —</option>'+
+      GEN_LISTA.map(d=>`<option value="${d.id}">${d.orden!=null?d.orden+' · ':''}${esc(d.nombre_plan)}</option>`).join('');
+  }
+}
+function cerrarGen(){el('gendieta').classList.remove('show');}
+function genBuscar(){
+  const nq=norm(el('gd_buscar').value);
+  const lista=(CLIENTES||[]).filter(c=>!nq||norm(c.nombre+' '+(c.apellido||'')).includes(nq))
+    .sort((a,b)=>String(a.nombre).localeCompare(String(b.nombre))).slice(0,30);
+  el('gd_list').innerHTML=lista.map(c=>{
+    const donde=c.plaza?`${pref(c.dia_consulta)}${c.plaza}`:'';
+    const sel=(GEN_CLI&&GEN_CLI.id===c.id)?' sel':'';
+    return `<div class="row${sel}" onclick="genSelCliente('${c.id}')"><span class="who">${esc(c.nombre)} ${esc(c.apellido||'')}</span><span class="where">${donde}</span></div>`;
+  }).join('')||'<div class="gd-vacio" style="padding:10px">Sin resultados (entra con tu contraseña para cargar los clientes).</div>';
+}
+async function genSelCliente(id){
+  GEN_CLI=(CLIENTES||[]).find(c=>c.id===id)||GEN_CLI;
+  if(!GEN_CLI)return;
+  el('gd_cliinfo').textContent=`${GEN_CLI.nombre} ${GEN_CLI.apellido||''} · ID ${genUID(GEN_CLI)}`;
+  genBuscar(); genBotones();
+  // Pre-selecciona su dieta actual si el panel puede leer la ficha
+  try{
+    const {status,data}=await api('ficha',{cliente_id:id});
+    if(status===200&&data.cliente&&data.cliente.dieta_actual_id&&!el('gd_plan').value){
+      if(GEN_LISTA.some(d=>d.id===data.cliente.dieta_actual_id)){
+        el('gd_plan').value=data.cliente.dieta_actual_id; genCargarPlan();
+      }
+    }
+  }catch(e){}
+}
+async function genCargarPlan(){
+  const id=el('gd_plan').value; GEN_PLAN=null; genBotones();
+  el('gd_prev').innerHTML='<div class="gd-vacio">La infografía aparecerá aquí.</div>'; el('gd_pdf').disabled=true;
+  if(!id){el('gd_horas').innerHTML='<div class="gd-vacio" style="padding:10px">Elige un plan para calcular los horarios.</div>';el('gd_ayuno').textContent='';return;}
+  const req=++GEN_REQ;
+  genMsg('Cargando plan…');
+  const r=await rpc('panel_generador_dieta',{p_dieta_id:id,secret:SYNC_SECRET});
+  if(req!==GEN_REQ)return;
+  if(!r||!r.ok){genMsg((r&&r.error)||'No se pudo cargar el plan.','err');return;}
+  const dias=[...new Set(r.tomas.map(t=>t.dia_semana))].sort((a,b)=>parseInt(a)-parseInt(b));
+  const matriz={};
+  r.tomas.forEach(t=>{(matriz[t.toma]=matriz[t.toma]||{})[t.dia_semana]=t;});
+  GEN_PLAN={dieta:r.dieta,dias,matriz,tomas:GEN_ORDEN.filter(t=>matriz[t])};
+  genMsg('');
+  genCalcHoras(true);
+  genBotones();
+}
+function genCalcHoras(auto){
+  if(!GEN_PLAN)return;
+  const cena=genMin(el('gd_cena').value||'21:00');
+  const des=(cena+14*60)%1440;               // 14 h de ayuno nocturno
+  const h={Cena:cena,Desayuno:des,EnPie:(des+1440-30)%1440,AntesDormir:(cena+90)%1440};
+  const mids=['MediaManana','Almuerzo','Merienda'].filter(t=>GEN_PLAN.tomas.includes(t));
+  const win=(cena-des+1440)%1440;
+  mids.forEach((t,i)=>{h[t]=(des+Math.round(win*(i+1)/(mids.length+1)/15)*15)%1440;});
+  GEN_HORAS={}; GEN_PLAN.tomas.forEach(t=>{GEN_HORAS[t]=h[t];});
+  el('gd_horas').innerHTML=GEN_PLAN.tomas.map(t=>`<div class="gh"><b>${GEN_TOMAS[t].emoji} ${GEN_TOMAS[t].label}</b>
+    <input type="time" value="${genHM(GEN_HORAS[t])}" oninput="genHoraManual('${t}',this.value)"></div>`).join('');
+  genAyuno();
+}
+function genHoraManual(t,v){if(v){GEN_HORAS[t]=genMin(v);genAyuno();}}
+function genAyuno(){
+  if(!GEN_PLAN)return;
+  const primera=['Desayuno','MediaManana','Almuerzo','Merienda'].find(t=>GEN_HORAS[t]!=null);
+  const a=el('gd_ayuno');
+  if(primera==null||GEN_HORAS.Cena==null){a.textContent='';return;}
+  const ay=((GEN_HORAS[primera]-GEN_HORAS.Cena)+1440)%1440;
+  const hs=Math.floor(ay/60), mn=ay%60;
+  a.textContent=`Ayuno nocturno: ${hs} h${mn?' '+mn+' min':''} (cena ${genHM(GEN_HORAS.Cena)} → ${GEN_TOMAS[primera].label.toLowerCase()} ${genHM(GEN_HORAS[primera])})`;
+  a.className='gd-ayuno'+(ay<14*60?' mal':'');
+}
+function genBotones(){el('gd_generar').disabled=!(GEN_CLI&&GEN_PLAN);}
+function genDiaLabel(ds){
+  const p=String(ds||'').split('_')[1]||String(ds||'');
+  if(/^Dia\d+$/i.test(p))return 'Día '+p.replace(/\D/g,'');
+  const acc={Miercoles:'Miércoles',Sabado:'Sábado'};
+  return acc[p]||p;
+}
+function genItemsHTML(t){
+  const vistos=new Set(), lista=[];
+  (t.items||[]).forEach(it=>{const k=norm(it.nombre).slice(0,14);if(vistos.has(k))return;vistos.add(k);lista.push(it);});
+  const max=4, extra=lista.length-max;
+  let h=lista.slice(0,max).map(it=>{
+    const propia=GEN_TAG_IMG[norm(it.nombre)];
+    const src=propia||it.img;
+    return src?`<img class="gi-img" src="${esc(src)}" alt="" title="${esc(it.nombre)}" data-emoji="${genEmoji(it.nombre)}" loading="lazy" referrerpolicy="no-referrer" onerror="genImgErr(this)">`
+              :`<span class="gi-emoji" title="${esc(it.nombre)}">${genEmoji(it.nombre)}</span>`;
+  }).join('');
+  if(!lista.length&&t.tags)h=String(t.tags).split(',').slice(0,4).map(x=>`<span class="gi-emoji" title="${esc(x.trim())}">${genEmoji(x)}</span>`).join('');
+  if(extra>0)h+=`<span class="gi-mas">+${extra}</span>`;
+  return h?`<div class="gi-items">${h}</div>`:'';
+}
+function genImgErr(im){
+  const s=document.createElement('span');s.className='gi-emoji';s.textContent=im.dataset.emoji||'🍽️';s.title=im.title;im.replaceWith(s);
+}
+function genRender(){
+  if(!GEN_CLI||!GEN_PLAN){genMsg('Elige cliente y plan primero.','err');return;}
+  const p=GEN_PLAN, nom=`${GEN_CLI.nombre||''} ${GEN_CLI.apellido||''}`.trim(), uid=genUID(GEN_CLI);
+  const fecha=new Date().toLocaleDateString('es-ES',{timeZone:'Atlantic/Canary'});
+  const nd=p.dias.length;
+  let g=`<div class="gi-grid" style="grid-template-columns:150px repeat(${nd},1fr)">`;
+  g+=`<div class="gi-hcell gi-corner"></div>`;
+  p.dias.forEach((d,i)=>{g+=`<div class="gi-hcell" style="background:${GEN_COLORES[i%GEN_COLORES.length]}">${genDiaLabel(d)}</div>`;});
+  p.tomas.forEach(t=>{
+    g+=`<div class="gi-tcell" style="background:${GEN_TINTES[t]}"><span class="em">${GEN_TOMAS[t].emoji}</span>${GEN_TOMAS[t].label}<span class="hr">${genHM(GEN_HORAS[t])}</span></div>`;
+    p.dias.forEach(d=>{
+      const c=p.matriz[t][d];
+      g+=`<div class="gi-cell">`+(c?String(c.texto||'').split('|').map(s=>s.trim()).filter(Boolean).map(s=>`<div class="gi-line">${esc(s)}</div>`).join('')+genItemsHTML(c):'<span class="mini">—</span>')+`</div>`;
+    });
+  });
+  g+=`</div>`;
+  let marca='';
+  for(let i=0;i<12;i++)marca+=`<span style="left:${(i%3)*36+2}%;top:${Math.floor(i/3)*26+6}%">${esc(nom)} · ${uid}</span>`;
+  el('gd_prev').innerHTML=`<div class="gi" id="gd_infografia">
+    <div class="gi-head">
+      <div class="gi-logo">Saneas<span>·</span></div>
+      <div class="gi-tit"><h1>🌿 Plan Semanal de Alimentación 🌿</h1>
+        <div class="gi-sub">${esc(p.dieta.nombre_plan)} · ${esc(nom)} · ${fecha}</div></div>
+      <div class="gi-idbox">ID<br>${uid}</div>
+    </div>
+    <div style="position:relative">${g}<div class="gi-marca">${marca}</div></div>
+    <div class="gi-foot">
+      <div class="gi-rec"><h5>✅ Recomendaciones importantes</h5>
+        <div>✔️ Cocina sin aceite.</div><div>✔️ Usa todas las especias que desees.</div><div>✔️ Bebe suficiente agua durante el día.</div></div>
+      <div class="gi-rac"><h5>Raciones por comida</h5>
+        <div>✋ Proteína: la palma de la mano abierta.</div><div>✊ Hidratos: el tamaño del puño cerrado.</div><div>🥗 Vegetales: lo que resta de la mitad del plato.</div></div>
+      <div class="gi-agua">💧 Hidrátate durante todo el día: agua siempre a mano, sin faltar.</div>
+    </div>
+    <div class="gi-pie">Documento personal e intransferible de ${esc(nom)} · ID ${uid} · Generado el ${fecha} · Saneas®</div>
+  </div>`;
+  el('gd_pdf').disabled=false;
+  genMsg('Infografía generada. Revísala y descarga el PDF.','ok');
+}
+function genScript(u){return new Promise((res,rej)=>{const s=document.createElement('script');s.src=u;s.onload=res;s.onerror=()=>rej(new Error('No se pudo cargar '+u));document.head.appendChild(s);});}
+async function genLibs(){
+  if(!window.html2canvas)await genScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
+  if(!window.jspdf)await genScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+}
+const GEN_IMG_CACHE=new Map();   // url -> Promise<dataURL> (evita repetir fetches)
+function genDataURL(url){
+  if(GEN_IMG_CACHE.has(url))return GEN_IMG_CACHE.get(url);
+  const p=(async()=>{
+    const ctl=new AbortController(); const tm=setTimeout(()=>ctl.abort(),6000);
+    try{
+      const r=await fetch(url,{mode:'cors',signal:ctl.signal}); if(!r.ok)throw new Error('http '+r.status);
+      const bl=await r.blob();
+      return await new Promise((res,rej)=>{const fr=new FileReader();fr.onload=()=>res(fr.result);fr.onerror=rej;fr.readAsDataURL(bl);});
+    }finally{clearTimeout(tm);}
+  })();
+  GEN_IMG_CACHE.set(url,p);
+  p.catch(()=>GEN_IMG_CACHE.delete(url));
+  return p;
+}
+async function genIncrustaImgs(node){
+  await Promise.all([...node.querySelectorAll('img.gi-img')].map(async im=>{
+    try{
+      if(im.src.startsWith('data:'))return;
+      im.src=await genDataURL(im.src);
+      if(!im.complete)await new Promise(res=>{im.onload=res;im.onerror=res;setTimeout(res,3000);});
+    }catch(e){genImgErr(im);}
+  }));
+}
+async function genPDF(){
+  const src=document.getElementById('gd_infografia');
+  if(!src){genMsg('Genera primero la infografía.','err');return;}
+  const b=el('gd_pdf'); b.disabled=true; const t0=b.textContent; b.textContent='Preparando PDF…';
+  let node=null;
+  try{
+    await genLibs();
+    node=src.cloneNode(true);
+    node.style.position='fixed'; node.style.left='-20000px'; node.style.top='0';
+    document.body.appendChild(node);
+    await genIncrustaImgs(node);
+    const canvas=await html2canvas(node,{scale:2,backgroundColor:'#ffffff',logging:false});
+    node.remove(); node=null;
+    const ratio=canvas.height/canvas.width;
+    // Orientacion automatica: apaisado si es ancho, vertical si es alto
+    const apaisado=ratio<=194/281;
+    const W=apaisado?281:194, H=apaisado?194:281, M=8;
+    const pdf=new window.jspdf.jsPDF({orientation:apaisado?'landscape':'portrait',unit:'mm',format:'a4'});
+    const h=W*ratio;
+    if(h<=H){ pdf.addImage(canvas.toDataURL('image/jpeg',0.92),'JPEG',M,M,W,h); }
+    else{
+      const pagePx=Math.floor(canvas.width*H/W); let y=0,primera=true;
+      while(y<canvas.height){
+        const sh=Math.min(pagePx,canvas.height-y);
+        const c2=document.createElement('canvas'); c2.width=canvas.width; c2.height=sh;
+        c2.getContext('2d').drawImage(canvas,0,y,canvas.width,sh,0,0,canvas.width,sh);
+        if(!primera)pdf.addPage(); primera=false;
+        pdf.addImage(c2.toDataURL('image/jpeg',0.92),'JPEG',M,M,W,W*sh/canvas.width);
+        y+=sh;
+      }
+    }
+    pdf.save('Saneas_Plan_'+genSlug(GEN_PLAN.dieta.nombre_plan)+'_'+genSlug(GEN_CLI.nombre+'_'+(GEN_CLI.apellido||''))+'.pdf');
+    genMsg('PDF descargado.','ok'); toast('⬇️ PDF descargado');
+  }catch(e){
+    if(node)node.remove();
+    genMsg('No se pudo crear el PDF: '+(e&&e.message||e),'err');
+  }
+  b.disabled=false; b.textContent=t0;
+}
+// ================= FIN GENERADOR DE DIETAS =================
+
 </script>
 </body>
 </html>
