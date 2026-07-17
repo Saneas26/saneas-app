@@ -1128,22 +1128,24 @@ async function verHistorial(){
   if(!data||!data.length){abrirDetalle('Tu evolución','<div class="empty">Aún no tienes registros.</div>');return;}
   const m=(l,v,u)=> v==null?'' : `<div class="hm"><span>${l}</span><b>${r1(v)}${u||''}</b></div>`;
   const cards=data.map(x=>{
-    if(x.sin_consulta){
+    const sinDatos = x.peso==null;
+    if(sinDatos){
       return `<div class="card" style="border-left:4px solid var(--orange);background:#fff7f0">
         <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px">
           <b style="font-size:16px">Semana ${x.semana!=null?x.semana:'—'}</b>
           <small style="color:var(--muted)">${fechaCorta(x.fecha)}</small></div>
         <div style="color:var(--orange);font-weight:700">Sin consulta esta semana</div>
-        <div style="font-size:14px;color:var(--muted);margin-top:2px">No se registraron tus datos.</div></div>`;
+        <div style="font-size:14px;color:var(--muted);margin-top:2px">No llegaron tus datos a tiempo.</div></div>`;
     }
     const em=edadMetabolica(x);
-    return `<div class="card">
+    return `<div class="card"${x.sin_consulta?' style="border-left:4px solid var(--orange)"':''}>
       <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px">
         <b style="font-size:16px">Semana ${x.semana!=null?x.semana:'—'}</b>
         <small style="color:var(--muted)">${fechaCorta(x.fecha)}</small></div>
+      ${x.sin_consulta?'<div style="font-size:13px;color:var(--orange);font-weight:700;margin:-2px 0 6px">Esta semana no hubo consulta, pero tus datos están guardados</div>':''}
       <div class="hgrid">
         ${m('Peso',x.peso,' kg')}
-        ${m('Grasa corporal',x.grasa_corporal,'%')}
+        ${m('Grasa corporal',x.grasa_rfm,'%')}
         ${m('Grasa subcutánea',x.grasa_subcutanea,'%')}
         ${m('Grasa visceral',x.grasa_visceral,'')}
         ${m('Agua',x.agua,'%')}
@@ -1153,7 +1155,7 @@ async function verHistorial(){
         ${m('Proteína',x.proteina,'%')}
         <div class="hm"><span>Edad metabólica</span><b>${em!=null?em+' años':'—'}</b></div>
       </div></div>`;}).join('');
-  const ult10=data.filter(x=>!x.sin_consulta).slice(0,10).reverse();   // últimas 10 con datos, en orden cronológico
+  const ult10=data.filter(x=>x.peso!=null).slice(0,10).reverse();   // lo que cuenta es que haya datos, no si hubo consulta (misma regla que el panel)
   const chart = ult10.length>=2
     ? `<div class="dsec">Últimas ${ult10.length} semanas</div>
        <div style="height:230px;background:#fff;border-radius:16px;padding:10px 8px;box-shadow:var(--shadow);margin-bottom:16px"><canvas id="evoChart"></canvas></div>`
