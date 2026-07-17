@@ -595,6 +595,12 @@ const telPass = t => String(t||'').replace(/\D/g,'').slice(-9);   // teléfono �
 
 let PENDING_EMAIL = null;
 
+// La regla de "un solo aparato" es para las clientas: evita que dos personas
+// compartan una cuota. Oscar no es una clienta, es el dueño: entra desde el movil,
+// el ordenador y donde le haga falta a la vez. No es un secreto ni da permisos:
+// quien manda sobre los datos es RLS, no esta lista.
+const SIN_LIMITE_DE_APARATOS = ['oscarbelloso10@gmail.com'];
+
 // La puerta es una sola: correo -> codigo -> dentro. Un caso, no tres.
 // El muro de pago ya no vive aqui: vive dentro, en iniciarSesion() -> bloqueado().
 async function login(){
@@ -631,7 +637,9 @@ async function verificarCodigo(){
     setMsg('codigoMsg','Ese código no es válido o ya ha caducado. Pide otro.','err'); return;
   }
   btn.disabled = false; btn.textContent = 'Entrar';
-  try{ await sb.auth.signOut({scope:'others'}); }catch(e){ console.error('cerrar otros aparatos', e); }
+  if(!SIN_LIMITE_DE_APARATOS.includes(PENDING_EMAIL)){
+    try{ await sb.auth.signOut({scope:'others'}); }catch(e){ console.error('cerrar otros aparatos', e); }
+  }
   await iniciarSesion();
 }
 
