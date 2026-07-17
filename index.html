@@ -700,7 +700,7 @@ function pintarFichaPendiente(c){
   setMsg('datosMsg','Antes de entrar, completa lo que falta. Todo es obligatorio.','err');
 }
 
-async function logout(){await sb.auth.signOut();location.reload();}
+async function logout(){await sb.auth.signOut({scope:'local'});location.reload();}
 function val(id){return document.getElementById(id).value.trim();}
 
 // ====== BLOQUEO por renovación caducada ======
