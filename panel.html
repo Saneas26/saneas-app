@@ -598,7 +598,11 @@ const PARAMS=[
   {k:'per_muslo',l:'Muslo',u:' cm',down:null},
 ];
 function esMujerDe(g){ const t=String(g||'').trim().toLowerCase(); if(t.startsWith('m')) return true; if(t.startsWith('h')) return false; return null; }
-function grasaInicialSaneas(cli,ini){ const alt=Number(cli.altura), cin=ini?Number(ini.per_cintura):NaN; const em=esMujerDe(cli.genero); if(!alt||!cin||em===null) return null; return 64-20*(alt/cin)+(em?12:0); } function grasaReal(cli,rec){ const rs=(FICHA_REGS||[]).filter(r=>!r.sin_consulta); const ini=rs[rs.length-1]||null; const gi=grasaInicialSaneas(cli,ini); if(gi==null||!ini||ini.peso==null||!rec||rec.peso==null) return null; return gi-(Number(ini.peso)-Number(rec.peso)); } function val(cli,rec,k){ if(!rec)return null; if(k==='__edadmet')return edadMet(cli,rec); if(k==='grasa_corporal') return grasaReal(cli,rec);
+// La grasa la calcula la BASE (saneas_rfm + trigger), no el panel. Aqui solo se lee.
+// Antes: RFM del primer dia menos los kilos perdidos. Restaba kilos a un porcentaje,
+// por eso la grasa se movia clavada con el peso. Y la app usaba otro numero distinto.
+function grasaReal(cli,rec){ return (rec && rec.grasa_rfm != null) ? Number(rec.grasa_rfm) : null; }
+function val(cli,rec,k){ if(!rec)return null; if(k==='__edadmet')return edadMet(cli,rec); if(k==='grasa_corporal') return grasaReal(cli,rec);
   let v=rec[k];
   if(k==='imc' && v==null && rec.peso!=null && Number(cli.altura)>0){ v=Math.round((Number(rec.peso)/Math.pow(Number(cli.altura)/100,2))*10)/10; }
   return v==null?null:Number(v); }

@@ -960,7 +960,11 @@ function revisarDatosBasicos(pref){
                            : 'Aún faltan por rellenar: '+listaNatural(faltan)+'.';
 }
 
-function grasaReal(rec){ const alt=parseFloat(CLIENTE.altura), cin=PRIMERO?Number(PRIMERO.per_cintura):NaN; if(!alt||!cin||!PRIMERO||PRIMERO.peso==null||!rec||rec.peso==null) return null; const esMujer=esMujerDe(CLIENTE.genero); if(esMujer===null) return null; const gi=64-20*(alt/cin)+(esMujer?12:0); return gi-(Number(PRIMERO.peso)-Number(rec.peso)); } function calcObjetivos(){
+// La grasa la calcula la BASE (saneas_rfm + trigger), no la app. Aqui solo se lee.
+// Estuvo escrita aqui y en panel.html, divergieron, y ademas la formula restaba
+// kilos a un porcentaje. Si falta, falta: no se inventa un numero.
+function grasaReal(rec){ return (rec && rec.grasa_rfm != null) ? Number(rec.grasa_rfm) : null; }
+function calcObjetivos(){
   const alt=parseFloat(CLIENTE.altura), esMujer=esMujerDe(CLIENTE.genero);
   if(!alt||esMujer===null) return null;
   const a2=alt*alt;
@@ -1164,7 +1168,7 @@ function dibujarGrafico(regs){
   const labels=regs.map(r=>r.semana!=null?('S'+r.semana):fechaCorta(r.fecha));
   const ds=(l,key,color)=>({label:l,data:regs.map(r=>r[key]??null),borderColor:color,backgroundColor:color,tension:.3,pointRadius:3,borderWidth:2,spanGaps:true});
   _evoChart=new Chart(ctx,{type:'line',
-    data:{labels,datasets:[ds('Peso (kg)','peso','#3890a4'),ds('Grasa %','grasa_corporal','#d05a4a'),ds('Masa musc. (kg)','masa_muscular','#2f9e5f')]},
+    data:{labels,datasets:[ds('Peso (kg)','peso','#3890a4'),ds('Grasa %','grasa_rfm','#d05a4a'),ds('Masa musc. (kg)','masa_muscular','#2f9e5f')]},
     options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
       plugins:{legend:{labels:{font:{family:'Quicksand',size:11},boxWidth:12,padding:10}}},
       scales:{x:{ticks:{font:{family:'Quicksand',size:10}},grid:{display:false}},
@@ -1178,8 +1182,8 @@ function renderInicio(){
   const altura=CLIENTE.altura||null;
   const imc=(p)=>(p&&altura)?+(p/Math.pow(altura/100,2)).toFixed(1):null;
   const pesoIni=(PRIMERO&&PRIMERO.peso!=null)?PRIMERO.peso:CLIENTE.peso_inicial;
-  const grasaIni=(PRIMERO&&PRIMERO.grasa_corporal!=null)?PRIMERO.grasa_corporal:CLIENTE.grasa_inicial;
-  const pesoHoy=ULTIMO?ULTIMO.peso:null, grasaHoy=ULTIMO?ULTIMO.grasa_corporal:null;
+  const grasaIni=(PRIMERO&&PRIMERO.grasa_rfm!=null)?PRIMERO.grasa_rfm:CLIENTE.grasa_inicial;
+  const pesoHoy=ULTIMO?ULTIMO.peso:null, grasaHoy=ULTIMO?ULTIMO.grasa_rfm:null;
   const imcIni=imc(pesoIni), imcHoy=imc(pesoHoy);
   const OBJ=calcObjetivos();
   const CAL=calcCalorias();
