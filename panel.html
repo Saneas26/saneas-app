@@ -465,19 +465,10 @@ async function api(action,extra={}){
 async function rpc(fn,body){ try{ const tok=adminToken()||PUBLISHABLE; const r=await fetch(SUPABASE_URL+'/rest/v1/rpc/'+fn,{method:'POST',headers:{'Content-Type':'application/json','apikey':PUBLISHABLE,'Authorization':'Bearer '+tok},body:JSON.stringify(body)}); return await r.json(); }catch(e){ return null; } }
 async function enviarAviso(clienteId,nombre){
   const cuerpo=prompt('Mensaje del aviso para '+(nombre||'TODOS los clientes con la app')+':'); if(!cuerpo) return;
+  if(!esAdminActivo()){ toast('Activa el modo admin para enviar avisos'); abrirAdmin(); return; }
   try{
-    let d;
-    if(esAdminActivo()){
-      // con sesion admin: el secreto no viaja, lo pone el servidor
-      d=await rpc('admin_enviar_push',{p_titulo:'Saneas',p_cuerpo:cuerpo,p_cliente_id:clienteId||null})||{};
-      toast(d.ok?'🔔 Aviso encolado':('Error: '+(d.error||'?')));
-    }else{
-      // respaldo mientras no haya sesion admin (Stage C quita esto)
-      const r=await fetch(SUPABASE_URL+'/functions/v1/enviar-push',{method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({secret:SYNC_SECRET,titulo:'Saneas',cuerpo,cliente_id:clienteId||undefined})});
-      d=await r.json().catch(()=>({}));
-      toast(d.ok?('🔔 Aviso enviado a '+(d.enviados||0)+' dispositivo(s)'+(d.enviados?'':' — ese cliente aún no activó las notificaciones')):('Error: '+(d.error||r.status)));
-    }
+    const d=await rpc('admin_enviar_push',{p_titulo:'Saneas',p_cuerpo:cuerpo,p_cliente_id:clienteId||null})||{};
+    toast(d.ok?'🔔 Aviso encolado':('Error: '+(d.error||'?')));
   }catch(e){ toast('Error al enviar el aviso'); }
 }
 function toast(m){const t=el('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200);}
@@ -493,6 +484,7 @@ async function entrar(silent){
   if(status!==200){el('loginErr').textContent=data.error||'Error';PASS='';return;}
   sessionStorage.setItem('panel_pw',PASS);
   el('login').style.display='none';el('top').style.display='flex';el('app').style.display='block';
+  if(!esAdminActivo()){ setTimeout(abrirAdmin, 300); }  // el panel necesita identidad admin para ingresos/generador/etc.
   initDias(); cargar();
 }
 function salir(){sessionStorage.removeItem('panel_pw');location.reload();}
@@ -639,7 +631,7 @@ async function abrirFicha(id){
   const {status,data}=await api('ficha',{cliente_id:id});
   if(status!==200){el('ficha').innerHTML=`<div class="fh"><button class="x" onclick="cerrarFicha()">×</button><h3>Error</h3></div><div class="fbody"><p class="empty-msg">${data.error||''}</p></div>`;return;}
   (FICHA_INVS=data.invitados||[], pintarFicha(data.cliente,data.registros||[]));
-  rpc('accesos_resumen',{p_cliente:id,secret:'SANEAS_SYNC_2026'}).then(res=>{
+  rpc('accesos_resumen',{p_cliente:id}).then(res=>{
     const e=el('fActividad'); if(!e) return;
     if(res&&res.dias_semana!=null){
       const vh=res.veces_hoy||0, ds=res.dias_semana||0;
@@ -851,7 +843,7 @@ function tablaMedidas(titulo,ini,ult,defs,u){
   return `<h4 style="margin:14px 0 6px;font-size:14px">${titulo}</h4><table><thead><tr><th>Parámetro</th><th>Inicial<br><span class="mini">${fIni}</span></th><th>Último<br><span class="mini">${fUlt}</span></th><th>Δ</th></tr></thead><tbody>${rows}</tbody></table>`;
 }
 async function cargarMedidasCita(id){
-  let res=null; try{ res=await rpc('panel_medidas',{p_cliente_id:id,secret:SYNC_SECRET}); }catch(e){}
+  let res=null; try{ res=await rpc('panel_medidas',{p_cliente_id:id}); }catch(e){}
   const cEl=el('fCita');
   if(cEl){ const fc=res&&res.fecha_proxima_consulta; cEl.innerHTML=fc?`<span style="color:var(--good)">📅 Próxima cita fijada: <b>${_fmtCita(fc)}</b></span>`:''; }
   const mEl=el('fMedidas');
@@ -954,7 +946,7 @@ async function guardarCambiarPlaza(){
   let citaMsg='';
   if(dia!==CB_DIA0){
     const f=proximaCitaPara(dia);
-    if(f){ const r=await rpc('panel_fijar_cita',{p_cliente_id:CB_ID,p_fecha:f,secret:SYNC_SECRET});
+    if(f){ const r=await rpc('panel_fijar_cita',{p_cliente_id:CB_ID,p_fecha:f});
       if(r&&r.ok){ const c=CLIENTES.find(x=>x.id===CB_ID); if(c)c.fecha_proxima_consulta=f; citaMsg=' · próxima cita '+_fmtCita(f); } }
   }
   b.disabled=false; b.textContent='Guardar cambio';
@@ -978,7 +970,7 @@ async function guardarFixRenov(){
   const f=el('fr_fecha').value, m=el('frMsg');
   if(!f){ m.className='err'; m.textContent='Elige una fecha.'; return; }
   const b=el('btnFixRenov'); b.disabled=true; b.textContent='Guardando…';
-  const r=await rpc('panel_fijar_renovacion',{p_cliente_id:FR_ID,p_fecha:f,secret:SYNC_SECRET});
+  const r=await rpc('panel_fijar_renovacion',{p_cliente_id:FR_ID,p_fecha:f});
   b.disabled=false; b.textContent='Guardar fecha';
   if(!r||!r.ok){ m.className='err'; m.textContent=(r&&r.error)||'No se pudo guardar'; return; }
   cerrarFixRenov();
@@ -1046,7 +1038,7 @@ async function darBaja(id,nombre){
 }
 async function sinConsultaFicha(id,nombre){
   if(!confirm('Marcar SIN CONSULTA esta semana para '+nombre+'?\n\nEn su registro y evolución quedará esta semana como "sin datos".')) return;
-  const res=await rpc('panel_sin_consulta',{p_cliente_id:id,secret:SYNC_SECRET});
+  const res=await rpc('panel_sin_consulta',{p_cliente_id:id});
   if(!res||res.error||res.ok!==true){ toast((res&&res.error)||'No se pudo marcar sin consulta'); return; }
   toast('Marcado sin consulta esta semana');
   // Recargar la ficha para reflejarlo
@@ -1057,13 +1049,13 @@ async function consultaPasadaFicha(id,nombre){
   const cli=FICHA_CLI||CLIENTES.find(x=>x.id===id)||{};
   const diaL=DIAS.find(d=>d[0]===norm(cli.dia_consulta))?.[1]||'día de consulta';
   if(!confirm('¿Marcar la consulta de '+nombre+' como pasada?\n\n· Su próxima cita pasará al próximo '+diaL+'.\n· Su dieta avanzará a la siguiente del plan.')) return;
-  const res=await rpc('panel_consulta_pasada',{p_cliente_id:id,secret:SYNC_SECRET});
+  const res=await rpc('panel_consulta_pasada',{p_cliente_id:id});
   if(!res||res.error||res.ok!==true){ toast((res&&res.error)||'No se pudo marcar la consulta'); return; }
   // La próxima cita cae en su DÍA DE CONSULTA (no hoy+7): 7 días sobre su día.
   const f=proximaCitaPara(cli.dia_consulta);
-  if(f){ await rpc('panel_fijar_cita',{p_cliente_id:id,p_fecha:f,secret:SYNC_SECRET}); }
+  if(f){ await rpc('panel_fijar_cita',{p_cliente_id:id,p_fecha:f}); }
   // La dieta avanza: la que estaba de "próxima" pasa a ser la actual.
-  const d=await rpc('panel_avanzar_dieta',{p_cliente_id:id,secret:SYNC_SECRET});
+  const d=await rpc('panel_avanzar_dieta',{p_cliente_id:id});
   const dietaMsg=(d&&d.ok&&d.avanzada)?(' · dieta → '+(d.actual||'—')):'';
   toast('Consulta pasada · próxima cita '+(f?_fmtCita(f):'fijada')+dietaMsg);
   if(d&&d.ok&&d.fin){ alert('⚠️ '+nombre+' ha llegado al final de la secuencia de dietas.\n\n'+(d.avanzada
@@ -1169,11 +1161,10 @@ async function abrirInforme(){
 function cerrarInforme(){el('informe').classList.remove('show');}
 
 // ---------- Opiniones ----------
-const SYNC_SECRET='SANEAS_SYNC_2026';
 async function abrirOpiniones(){
   el('opiniones').classList.add('show');
   el('opBody').innerHTML='<p class="vacio">Cargando…</p>';
-  const data=await rpc('get_opiniones',{secret:SYNC_SECRET});
+  const data=await rpc('get_opiniones',{});
   if(!Array.isArray(data)){ el('opBody').innerHTML='<p class="vacio">No se pudieron cargar las opiniones.</p>'; return; }
   if(!data.length){ el('opBody').innerHTML='<p class="vacio">Todavía no hay opiniones. Aparecerán aquí en cuanto un cliente escriba desde la app.</p>'; return; }
   const fecha=s=>{ try{ const d=new Date(s); return d.toLocaleDateString('es-ES',{day:'2-digit',month:'short',year:'numeric'})+' · '+d.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'}); }catch(e){ return ''; } };
@@ -1213,7 +1204,7 @@ async function actualizarDescuentoRenovar(){
   const req=++RN_DESC_REQ;
   if(!RENOV_SEL||!(bono==='completo_mensual'||bono==='premium')){ inp.value=0; hint.textContent=''; return; }
   hint.textContent='Buscando descuento Saneamigos…';
-  const r=await rpc('panel_descuento_cliente',{p_cliente_id:RENOV_SEL.id,secret:SYNC_SECRET});
+  const r=await rpc('panel_descuento_cliente',{p_cliente_id:RENOV_SEL.id});
   if(req!==RN_DESC_REQ) return;
   const d=(r&&r.ok)?Number(r.descuento||0):0;
   inp.value=d;
@@ -1244,7 +1235,7 @@ async function confirmarRenovar(){
   // Emitir la factura (1 factura = 1 renovación pagada). Si falla, la renovación NO se rompe.
   const desc=Math.max(0,Number(el('rn_desc').value)||0);
   const hoy=new Date().toLocaleDateString('en-CA',{timeZone:'Atlantic/Canary'});
-  let fac=null; try{ fac=await rpc('crear_factura',{p_cliente_id:RENOV_SEL.id,p_bono:bono,p_fecha:hoy,p_descuento:desc,secret:SYNC_SECRET}); }catch(e){}
+  let fac=null; try{ fac=await rpc('crear_factura',{p_cliente_id:RENOV_SEL.id,p_bono:bono,p_fecha:hoy,p_descuento:desc}); }catch(e){}
   if(fac&&fac.ok){
     m.textContent+=` · Factura ${fac.numero} (${fac.total}€)`+(fac.datos_fiscales_completos?'':' — ⚠️ faltan datos fiscales del cliente');
     toast('Factura '+fac.numero+' emitida');
@@ -1406,7 +1397,7 @@ async function abrirGen(){
   el('gendieta').classList.add('show');
   genBuscar();
   if(!GEN_LISTA.length){
-    const r=await rpc('panel_generador_dieta',{p_dieta_id:null,secret:SYNC_SECRET});
+    const r=await rpc('panel_generador_dieta',{p_dieta_id:null});
     if(r&&r.ok)GEN_LISTA=r.dietas||[];
     else{genMsg('No se pudo cargar la biblioteca de dietas.','err');return;}
     el('gd_plan').innerHTML='<option value="">— elige un plan —</option>'+
@@ -1445,7 +1436,7 @@ async function genCargarPlan(){
   if(!id){el('gd_horas').innerHTML='<div class="gd-vacio" style="padding:10px">Elige un plan para calcular los horarios.</div>';el('gd_ayuno').textContent='';return;}
   const req=++GEN_REQ;
   genMsg('Cargando plan…');
-  const r=await rpc('panel_generador_dieta',{p_dieta_id:id,secret:SYNC_SECRET});
+  const r=await rpc('panel_generador_dieta',{p_dieta_id:id});
   if(req!==GEN_REQ)return;
   if(!r||!r.ok){genMsg((r&&r.error)||'No se pudo cargar el plan.','err');return;}
   const dias=[...new Set(r.tomas.map(t=>t.dia_semana))].sort((a,b)=>parseInt(a)-parseInt(b));
@@ -1692,7 +1683,7 @@ function cerrarIngresos(){document.getElementById('ingresos').classList.remove('
 async function abrirIngresos(){
   document.getElementById('ingresos').classList.add('show');
   if(IN_DATOS){ inPintar(); return; }
-  const r=await rpc('panel_ingresos',{secret:SYNC_SECRET});
+  const r=await rpc('panel_ingresos',{});
   if(!r||!r.ok){ document.getElementById('in_msg').textContent=(r&&r.error)||'No se pudieron cargar los ingresos.'; return; }
   IN_DATOS=r; inPintar();
 }
