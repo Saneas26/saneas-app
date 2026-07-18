@@ -442,6 +442,12 @@ const PREFIJO={lunes:'L',martes:'M',miercoles:'X',jueves:'J',viernes:'V'};
 const pref=k=>PREFIJO[norm(k)]||'L';
 const NPLAZAS=40;
 let PASS=sessionStorage.getItem('panel_pw')||'';
+// Sesion admin (email+codigo). Cuando esta, las RPC van con el token de Oscar y ya
+// no hace falta el secreto. Aditivo: si no hay sesion admin, todo sigue como antes.
+let ADMIN_SESS=null;
+try{ ADMIN_SESS=JSON.parse(sessionStorage.getItem('panel_admin_sess')||'null'); }catch(e){ ADMIN_SESS=null; }
+const adminToken=()=>(ADMIN_SESS&&ADMIN_SESS.access_token)||'';
+const esAdminActivo=()=>!!adminToken();
 let CLIENTES=[];           // todos los activos
 let DIA_ACT='lunes';
 let ASIG_CTX=null;         // {plaza} para asignar
@@ -456,14 +462,22 @@ async function api(action,extra={}){
   },body:JSON.stringify({action,password:PASS,...extra})});
   return {status:r.status,data:await r.json().catch(()=>({}))};
 }
-async function rpc(fn,body){ try{ const r=await fetch(SUPABASE_URL+'/rest/v1/rpc/'+fn,{method:'POST',headers:{'Content-Type':'application/json','apikey':PUBLISHABLE,'Authorization':'Bearer '+PUBLISHABLE},body:JSON.stringify(body)}); return await r.json(); }catch(e){ return null; } }
+async function rpc(fn,body){ try{ const tok=adminToken()||PUBLISHABLE; const r=await fetch(SUPABASE_URL+'/rest/v1/rpc/'+fn,{method:'POST',headers:{'Content-Type':'application/json','apikey':PUBLISHABLE,'Authorization':'Bearer '+tok},body:JSON.stringify(body)}); return await r.json(); }catch(e){ return null; } }
 async function enviarAviso(clienteId,nombre){
   const cuerpo=prompt('Mensaje del aviso para '+(nombre||'TODOS los clientes con la app')+':'); if(!cuerpo) return;
   try{
-    const r=await fetch(SUPABASE_URL+'/functions/v1/enviar-push',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({secret:SYNC_SECRET,titulo:'Saneas',cuerpo,cliente_id:clienteId||undefined})});
-    const d=await r.json().catch(()=>({}));
-    toast(d.ok?('🔔 Aviso enviado a '+(d.enviados||0)+' dispositivo(s)'+(d.enviados?'':' — ese cliente aún no activó las notificaciones')):('Error: '+(d.error||r.status)));
+    let d;
+    if(esAdminActivo()){
+      // con sesion admin: el secreto no viaja, lo pone el servidor
+      d=await rpc('admin_enviar_push',{p_titulo:'Saneas',p_cuerpo:cuerpo,p_cliente_id:clienteId||null})||{};
+      toast(d.ok?'🔔 Aviso encolado':('Error: '+(d.error||'?')));
+    }else{
+      // respaldo mientras no haya sesion admin (Stage C quita esto)
+      const r=await fetch(SUPABASE_URL+'/functions/v1/enviar-push',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({secret:SYNC_SECRET,titulo:'Saneas',cuerpo,cliente_id:clienteId||undefined})});
+      d=await r.json().catch(()=>({}));
+      toast(d.ok?('🔔 Aviso enviado a '+(d.enviados||0)+' dispositivo(s)'+(d.enviados?'':' — ese cliente aún no activó las notificaciones')):('Error: '+(d.error||r.status)));
+    }
   }catch(e){ toast('Error al enviar el aviso'); }
 }
 function toast(m){const t=el('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200);}
@@ -1811,6 +1825,104 @@ async function inExcel(b){
   if(b){b.disabled=false;b.textContent=t0;}
 }
 // ================= FIN INGRESOS =================
+
+
+// ================= LOGIN ADMIN (email + código) =================
+// Aditivo. Da a Oscar una sesion Supabase real; con ella las RPC dejan de
+// necesitar el secreto. El panel sigue entrando con la contraseña de siempre
+// (esa abre la Edge Function 'panel'); esto solo añade la identidad admin.
+document.head.insertAdjacentHTML('beforeend',`<style>
+#adminlogin{position:fixed;inset:0;background:rgba(16,50,58,.55);z-index:80;display:none;align-items:center;justify-content:center;padding:16px}
+#adminlogin.show{display:flex}
+#adminlogin .ab{background:#fff;border-radius:16px;padding:24px;width:min(380px,94vw);position:relative}
+#adminlogin h3{font-size:18px;color:var(--teal-d);margin:0 0 4px}
+#adminlogin p{font-size:13px;color:var(--muted);margin:0 0 14px;line-height:1.45}
+#adminlogin input{width:100%;padding:11px;border:2px solid var(--line);border-radius:9px;font-size:15px;margin-bottom:10px;font-family:inherit}
+#adminlogin button{width:100%;padding:12px;border:0;border-radius:9px;background:var(--teal);color:#fff;font-weight:800;font-size:15px;font-family:inherit;cursor:pointer}
+#adminlogin .ax{position:absolute;top:12px;right:14px;background:var(--soft);border:0;width:30px;height:30px;border-radius:50%;font-size:16px;color:var(--muted);cursor:pointer}
+#adminlogin .amsg{font-size:13px;margin-top:8px;min-height:16px}
+#adminlogin .amsg.err{color:var(--bad)} #adminlogin .amsg.ok{color:var(--good)}
+.adm-pill{background:#fff;border:2px solid var(--line);border-radius:999px;padding:7px 13px;font-weight:700;font-size:13px;color:var(--teal-d);cursor:pointer;white-space:nowrap}
+.adm-pill.on{border-color:var(--good);color:var(--good)}
+</style>`);
+document.body.insertAdjacentHTML('beforeend',`
+<div id="adminlogin"><div class="ab">
+  <button class="ax" onclick="cerrarAdmin()">×</button>
+  <h3>🔐 Modo admin</h3>
+  <p>Entra con tu email para que el panel funcione con tu identidad, sin secreto en el navegador. Te llega un código.</p>
+  <div id="adm_paso1">
+    <input id="adm_email" type="email" placeholder="tu-email@gmail.com" autocomplete="email">
+    <button onclick="adminEnviarCodigo()">Enviarme el código</button>
+  </div>
+  <div id="adm_paso2" style="display:none">
+    <input id="adm_code" inputmode="numeric" placeholder="Código del email" autocomplete="one-time-code">
+    <button onclick="adminVerificar()">Entrar como admin</button>
+  </div>
+  <div class="amsg" id="adm_msg"></div>
+</div></div>`);
+
+let ADM_EMAIL='';
+function abrirAdmin(){ el('adminlogin').classList.add('show'); el('adm_msg').textContent=''; }
+function cerrarAdmin(){ el('adminlogin').classList.remove('show'); }
+function admMsg(t,c){ const m=el('adm_msg'); m.className='amsg'+(c?' '+c:''); m.textContent=t||''; }
+function pintarPastillaAdmin(){
+  let p=el('adm_pill');
+  if(!p){ const top=el('top'); if(top){ top.insertAdjacentHTML('beforeend','<button class="adm-pill" id="adm_pill" onclick="clicPastillaAdmin()"></button>'); p=el('adm_pill'); } }
+  if(!p) return;
+  if(esAdminActivo()){ p.classList.add('on'); p.textContent='🔓 admin: '+(ADMIN_SESS&&ADMIN_SESS._email||'sí'); }
+  else{ p.classList.remove('on'); p.textContent='🔒 activar admin'; }
+}
+function clicPastillaAdmin(){ if(esAdminActivo()){ if(confirm('¿Salir del modo admin?')) salirAdmin(); } else abrirAdmin(); }
+function salirAdmin(){ ADMIN_SESS=null; sessionStorage.removeItem('panel_admin_sess'); pintarPastillaAdmin(); toast('Modo admin cerrado'); }
+
+async function adminEnviarCodigo(){
+  const email=String(el('adm_email').value||'').trim().toLowerCase();
+  if(!email){ admMsg('Escribe tu email','err'); return; }
+  ADM_EMAIL=email; admMsg('Enviando…');
+  try{
+    const r=await fetch(SUPABASE_URL+'/auth/v1/otp',{method:'POST',headers:{'Content-Type':'application/json','apikey':PUBLISHABLE},
+      body:JSON.stringify({email, create_user:false})});
+    if(r.ok){ el('adm_paso1').style.display='none'; el('adm_paso2').style.display='block'; admMsg('Código enviado. Míralo en tu email.','ok'); }
+    else{ const j=await r.json().catch(()=>({})); admMsg(j.msg||j.error_description||'No se pudo enviar el código','err'); }
+  }catch(e){ admMsg('Error de red','err'); }
+}
+async function adminVerificar(){
+  const token=String(el('adm_code').value||'').trim();
+  if(!token){ admMsg('Escribe el código','err'); return; }
+  admMsg('Comprobando…');
+  try{
+    const r=await fetch(SUPABASE_URL+'/auth/v1/verify',{method:'POST',headers:{'Content-Type':'application/json','apikey':PUBLISHABLE},
+      body:JSON.stringify({email:ADM_EMAIL, token, type:'email'})});
+    const j=await r.json().catch(()=>({}));
+    if(r.ok && j.access_token){
+      j._email=ADM_EMAIL;
+      // comprobar que es admin de verdad antes de dar por bueno
+      const prev=ADMIN_SESS; ADMIN_SESS=j;
+      const test=await rpc('es_admin',{});
+      if(test===true){
+        sessionStorage.setItem('panel_admin_sess', JSON.stringify(j));
+        admMsg('Modo admin activado.','ok'); pintarPastillaAdmin();
+        setTimeout(cerrarAdmin, 700);
+      }else{
+        ADMIN_SESS=prev;
+        admMsg('Ese email no es admin.','err');
+      }
+    }else{ admMsg(j.msg||'Código no válido o caducado','err'); }
+  }catch(e){ admMsg('Error de red','err'); }
+}
+async function adminRefresh(){
+  if(!ADMIN_SESS||!ADMIN_SESS.refresh_token) return false;
+  try{
+    const r=await fetch(SUPABASE_URL+'/auth/v1/token?grant_type=refresh_token',{method:'POST',
+      headers:{'Content-Type':'application/json','apikey':PUBLISHABLE},body:JSON.stringify({refresh_token:ADMIN_SESS.refresh_token})});
+    const j=await r.json().catch(()=>({}));
+    if(j&&j.access_token){ j._email=ADMIN_SESS._email; ADMIN_SESS=j; sessionStorage.setItem('panel_admin_sess',JSON.stringify(j)); return true; }
+  }catch(e){}
+  ADMIN_SESS=null; sessionStorage.removeItem('panel_admin_sess'); return false;
+}
+// Al arrancar: si había sesión admin guardada, refrescarla y pintar la pastilla.
+(async()=>{ if(ADMIN_SESS) await adminRefresh(); pintarPastillaAdmin(); })();
+// ================= FIN LOGIN ADMIN =================
 
 </script>
 </body>
