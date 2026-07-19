@@ -441,11 +441,11 @@ const DIAS=[['lunes','Lunes'],['martes','Martes'],['miercoles','Miércoles'],['j
 const PREFIJO={lunes:'L',martes:'M',miercoles:'X',jueves:'J',viernes:'V'};
 const pref=k=>PREFIJO[norm(k)]||'L';
 const NPLAZAS=40;
-let PASS=sessionStorage.getItem('panel_pw')||'';
+let PASS=localStorage.getItem('panel_pw')||'';
 // Sesion admin (email+codigo). Cuando esta, las RPC van con el token de Oscar y ya
 // no hace falta el secreto. Aditivo: si no hay sesion admin, todo sigue como antes.
 let ADMIN_SESS=null;
-try{ ADMIN_SESS=JSON.parse(sessionStorage.getItem('panel_admin_sess')||'null'); }catch(e){ ADMIN_SESS=null; }
+try{ ADMIN_SESS=JSON.parse(localStorage.getItem('panel_admin_sess')||'null'); }catch(e){ ADMIN_SESS=null; }
 const adminToken=()=>(ADMIN_SESS&&ADMIN_SESS.access_token)||'';
 const esAdminActivo=()=>!!adminToken();
 let CLIENTES=[];           // todos los activos
@@ -482,12 +482,12 @@ async function entrar(silent){
   PASS=pw;
   const {status,data}=await api('login');
   if(status!==200){el('loginErr').textContent=data.error||'Error';PASS='';return;}
-  sessionStorage.setItem('panel_pw',PASS);
+  localStorage.setItem('panel_pw',PASS);
   el('login').style.display='none';el('top').style.display='flex';el('app').style.display='block';
   if(!esAdminActivo()){ setTimeout(abrirAdmin, 300); }  // el panel necesita identidad admin para ingresos/generador/etc.
   initDias(); cargar();
 }
-function salir(){sessionStorage.removeItem('panel_pw');location.reload();}
+function salir(){localStorage.removeItem('panel_pw');location.reload();}
 
 function initDias(){
   const hoy=new Date().getDay(); // 0 dom..6 sab
@@ -1864,7 +1864,7 @@ function pintarPastillaAdmin(){
   else{ p.classList.remove('on'); p.textContent='🔒 activar admin'; }
 }
 function clicPastillaAdmin(){ if(esAdminActivo()){ if(confirm('¿Salir del modo admin?')) salirAdmin(); } else abrirAdmin(); }
-function salirAdmin(){ ADMIN_SESS=null; sessionStorage.removeItem('panel_admin_sess'); pintarPastillaAdmin(); toast('Modo admin cerrado'); }
+function salirAdmin(){ ADMIN_SESS=null; localStorage.removeItem('panel_admin_sess'); pintarPastillaAdmin(); toast('Modo admin cerrado'); }
 
 async function adminEnviarCodigo(){
   const email=String(el('adm_email').value||'').trim().toLowerCase();
@@ -1891,7 +1891,7 @@ async function adminVerificar(){
       const prev=ADMIN_SESS; ADMIN_SESS=j;
       const test=await rpc('es_admin',{});
       if(test===true){
-        sessionStorage.setItem('panel_admin_sess', JSON.stringify(j));
+        localStorage.setItem('panel_admin_sess', JSON.stringify(j));
         admMsg('Modo admin activado.','ok'); pintarPastillaAdmin();
         setTimeout(cerrarAdmin, 700);
       }else{
@@ -1907,9 +1907,9 @@ async function adminRefresh(){
     const r=await fetch(SUPABASE_URL+'/auth/v1/token?grant_type=refresh_token',{method:'POST',
       headers:{'Content-Type':'application/json','apikey':PUBLISHABLE},body:JSON.stringify({refresh_token:ADMIN_SESS.refresh_token})});
     const j=await r.json().catch(()=>({}));
-    if(j&&j.access_token){ j._email=ADMIN_SESS._email; ADMIN_SESS=j; sessionStorage.setItem('panel_admin_sess',JSON.stringify(j)); return true; }
+    if(j&&j.access_token){ j._email=ADMIN_SESS._email; ADMIN_SESS=j; localStorage.setItem('panel_admin_sess',JSON.stringify(j)); return true; }
   }catch(e){}
-  ADMIN_SESS=null; sessionStorage.removeItem('panel_admin_sess'); return false;
+  ADMIN_SESS=null; localStorage.removeItem('panel_admin_sess'); return false;
 }
 // Al arrancar: si había sesión admin guardada, refrescarla y pintar la pastilla.
 (async()=>{ if(ADMIN_SESS) await adminRefresh(); pintarPastillaAdmin(); })();
