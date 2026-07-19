@@ -1210,8 +1210,7 @@ function pintarRenovList(q){
   }).join('')||'<p class="vacio">Sin resultados</p>';
 }
 function selRenovar(id,nombre){RENOV_SEL={id,nombre};el('rn_buscar').value=nombre;pintarRenovList(nombre);actualizarDescuentoRenovar();}
-async function confirmarRenovar(){
-  const m=el('renovMsg');
+async function confirmarRenovar(){ const m=el('renovMsg'); if(!esAdminActivo()){ m.className='err'; m.textContent='Activa el modo admin antes de renovar. Si no, la renovacion se aplica pero la factura NO se emite.'; toast('Activa el modo admin'); abrirAdmin(); return; }
   if(!RENOV_SEL){m.className='err';m.textContent='Elige primero un cliente de la lista.';return;}
   const bono=el('rn_bono').value;
   const btn=el('btnRenovar');btn.disabled=true;btn.textContent='Renovando...';
