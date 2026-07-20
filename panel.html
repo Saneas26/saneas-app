@@ -435,7 +435,7 @@ let PASS=localStorage.getItem('panel_pw')||'';
 let ADMIN_SESS=null;
 try{ ADMIN_SESS=JSON.parse(localStorage.getItem('panel_admin_sess')||'null'); }catch(e){ ADMIN_SESS=null; }
 const adminToken=()=>(ADMIN_SESS&&ADMIN_SESS.access_token)||'';
-const esAdminActivo=()=>!!adminToken();
+const esAdminActivo=()=>{ const t=adminToken(); if(!t) return false; try{ return JSON.parse(atob(t.split('.')[1])).exp*1000 > Date.now()+30000; }catch(e){ return false; } };
 let CLIENTES=[];           // todos los activos
 let DIA_ACT='lunes';
 let ASIG_CTX=null;         // {plaza} para asignar
