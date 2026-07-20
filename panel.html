@@ -648,7 +648,7 @@ let FICHA_CLI=null, FICHA_REGS=[], FICHA_INVS=[];
 function pintarFicha(cli,regs){
   FICHA_CLI=cli; FICHA_REGS=regs;
   const o=calcObjetivos(cli);
-  const reales=regs.filter(r=>!r.sin_consulta || r.peso!=null);
+  const reales=regs.filter(r=>r.peso!=null);
   const act=reales[0]||null, ant=reales[1]||null, ini=reales[reales.length-1]||null;
   const nom=`${esc(cli.nombre)} ${esc(cli.apellido||'')} ${esc(cli.apellido2||'')}`.trim();
   const ed=edad(cli.fecha_nacimiento);
