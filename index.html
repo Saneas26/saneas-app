@@ -230,7 +230,18 @@
   .detail.open{transform:none}
   .detail .dbar{background:var(--teal);color:#fff;padding:14px 16px;display:flex;align-items:center;gap:12px;font-weight:700;font-size:16px}
   .detail .dbar .back{font-size:24px;cursor:pointer;background:none;border:none;color:#fff;line-height:1}
-  .pgCard{text-align:center;padding:20px 16px}
+  .qdCard{display:flex;align-items:center;gap:14px;cursor:pointer;border-left:5px solid var(--orange)}
+.qdIco{width:52px;height:52px;border-radius:14px;background:#fff2e6;display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0}
+.qdTxt{flex:1;min-width:0}
+.qdT{display:block;font-size:18px;font-weight:700;color:var(--dark);line-height:1.3}
+.qdD{display:block;font-size:16px;color:var(--muted);line-height:1.45;margin-top:2px}
+.qdChev{color:var(--orange);font-size:22px;font-weight:700;flex-shrink:0}
+.amCard{background:var(--white);border-radius:14px;padding:14px;margin-bottom:10px;box-shadow:var(--shadow)}
+.amTit{font-size:14px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.3px;margin-bottom:6px}
+.amTxt{font-size:16px;line-height:1.55;color:var(--dark)}
+.amBtn{margin-top:12px;width:100%;background:var(--teal);color:#fff;border:0;border-radius:10px;padding:12px;font-size:16px;font-weight:700;font-family:inherit;cursor:pointer}
+.amPie{font-size:14px;color:var(--muted);text-align:center;margin-top:14px;line-height:1.5}
+.pgCard{text-align:center;padding:20px 16px}
 .pgTit{font-size:16px;color:var(--muted)}
 .pgNum{font-size:44px;font-weight:700;color:var(--teal);line-height:1.1;margin:2px 0 4px}
 .pgNum span{font-size:26px}
@@ -1364,7 +1375,7 @@ function renderInicio(){
       </div>
     </div>`:''}
 
-    ${esPlanPC()?`<div style="padding:6px 4px;margin-bottom:20px" onclick="abrirInvitar()">
+    ${esPlanPC()?`<div class="card qdCard" onclick="queDecir()"><span class="qdIco">&#128172;</span><span class="qdTxt"><span class="qdT">&iquest;Y qu&eacute; digo cuando me pregunten?</span><span class="qdD">4 mensajes listos para enviar</span></span><span class="qdChev">&rsaquo;</span></div><div style="padding:6px 4px;margin-bottom:20px" onclick="abrirInvitar()">
       <div style="background:linear-gradient(135deg,#a7f3d0 0%,#e6fffa 100%);padding:20px 18px;border-radius:28px;box-shadow:0 12px 24px rgba(20,184,166,0.12);display:flex;align-items:center;gap:14px;cursor:pointer">
         <div style="flex:1;text-align:left">
           <div style="font-size:18px;font-weight:800;color:#022c22;line-height:1.2;margin-bottom:4px">Hay un Saneamigo en ti</div>
@@ -1947,6 +1958,40 @@ function pintarAvisoPlazo(){
     +'de tu día asignado. La semana que viene te esperamos a tiempo.';
 }
 
+var MSG_AMIGA = [
+  { t: "La sencilla",
+    m: "Oye, \u00bfte acuerdas que te dije que estaba haciendo una cosa con la comida? Es esto. Llevo {S} semanas y por primera vez no lo he dejado. Te paso el enlace por si te sirve, y si no, lo ignoras. https://saneas.es" },
+  { t: "No es una dieta",
+    m: "No s\u00e9 si te interesa, pero por si acaso. Llevo unos meses con un nutricionista, \u00d3scar. No va de pasar hambre ni de prohibirte cosas, va m\u00e1s de que haya alguien encima cada semana. A m\u00ed lo que me est\u00e1 sirviendo es no estar sola en esto. https://saneas.es" },
+  { t: "Si te han preguntado",
+    m: "Es Saneas, lo que te cont\u00e9. Te mandan la comida de la semana y cada semana hablas con \u00e9l y te lo va ajustando. Nada raro: ni batidos, ni pastillas, ni productos. Si quieres te cuento con calma. https://saneas.es" },
+  { t: "Para alguien de confianza",
+    m: "Te lo digo a ti porque s\u00e9 que llevas tiempo d\u00e1ndole vueltas, no para meterte prisa. Yo llevo {S} semanas y lo que m\u00e1s me ha cambiado no es el peso, es dejar de empezar de cero cada lunes. Si alg\u00fan d\u00eda te apetece mirarlo, aqu\u00ed est\u00e1. https://saneas.es" }
+];
+function _semanasClienta(){
+  var s = (window.__PROG && window.__PROG.semanas) || (typeof CLIENTE !== "undefined" && CLIENTE && CLIENTE.semana) || null;
+  return s ? String(s) : "unas cuantas";
+}
+function enviarAmiga(i){
+  var t = MSG_AMIGA[i]; if(!t) return;
+  var txt = t.m.split("{S}").join(_semanasClienta());
+  window.open("https://wa.me/?text=" + encodeURIComponent(txt), "_blank");
+}
+function queDecir(){
+  var s = _semanasClienta();
+  var h = '<div class="faqBody">'
+    + '<div class="fqHero"><div class="fqHeroT">Alguien te habr\u00e1 <em>preguntado</em></div><div class="fqRaya"></div></div>'
+    + '<p class="fqLead">Cuando llevas ' + s + ' semanas y se te empieza a notar, la gente pregunta. Aqu\u00ed tienes preparado qu\u00e9 contestar.</p>';
+  for(var i = 0; i < MSG_AMIGA.length; i++){
+    h += '<div class="amCard"><div class="amTit">' + MSG_AMIGA[i].t + '</div>'
+      + '<div class="amTxt">' + MSG_AMIGA[i].m.split("{S}").join(s).replace(" https://saneas.es","") + '</div>'
+      + '<button class="amBtn" onclick="enviarAmiga(' + i + ')">Enviar por WhatsApp</button></div>';
+  }
+  h += '<div class="fqPie"><span class="e">&#8505;</span><span>Se abre WhatsApp con el texto puesto. Eliges t\u00fa a qui\u00e9n y puedes cambiar lo que quieras antes de enviarlo.</span></div>'
+    + '<div class="amPie">Si alguien entra por ti, tu cuota baja 10 &euro; al mes mientras sig\u00e1is las dos.</div>'
+    + '</div>';
+  abrirDetalle("Qu\u00e9 decir si te preguntan", h);
+}
 function _pg(ini, act, obj){
   if(ini == null || act == null || obj == null) return null;
   if(ini === obj) return 1;
