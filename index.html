@@ -381,7 +381,7 @@
           <div class="field"><label>Suprailíaco (mm)</label><input id="f_pli_suprailiaco" type="number" step="0.1"><a class="vidlink" href="https://www.instagram.com/p/C6RseXBKKru/" target="_blank" rel="noopener">▶ Ver vídeo</a></div>
         </div>
       </div>
-      <button class="btn" id="btnReg_pli" onclick="guardarSeccion('pli')" disabled style="opacity:.45">Cargando…</button>
+      <button class="btn hidden" id="btnReg_pli" onclick="guardarSeccion('pli')" disabled style="opacity:.45">Cargando…</button>
       <div id="r-per" class="card hidden">
         <div id="canonCard"></div>
         <div class="grid2">
@@ -390,7 +390,7 @@
           <div class="field" id="perHombros"><label>Hombros (cm)</label><input id="f_per_hombro" type="number" step="0.1"><a class="vidlink" href="https://www.instagram.com/p/C7CwlqDIWI1/" target="_blank" rel="noopener">▶ Ver vídeo</a></div>
         </div>
       </div>
-      <button class="btn" id="btnReg_per" onclick="guardarSeccion('per')" disabled style="opacity:.45">Cargando…</button>
+      <button class="btn hidden" id="btnReg_per" onclick="guardarSeccion('per')" disabled style="opacity:.45">Cargando…</button>
       <div id="regSaveMsg"></div>
     </div>
 
@@ -1914,13 +1914,29 @@ function pintarBotonesRegistro(){
     var b = document.getElementById("btnReg_"+sec);
     if(!b) return;
     if(!window.__regCargado || typeof CLIENTE === "undefined" || !CLIENTE){
+      var c0 = document.getElementById("r-"+sec);
+      if(c0) b.classList.toggle("hidden", c0.classList.contains("hidden"));
       b.disabled = true; b.style.opacity = ".45"; b.textContent = "Cargando…"; return;
     }
+    var cont = document.getElementById("r-"+sec);
+    if(cont) b.classList.toggle("hidden", cont.classList.contains("hidden"));
     b.disabled = false; b.style.opacity = "";
     b.textContent = seccionEnviada(sec) ? "Enviado ✓ · Corregir" : "Enviar";
   });
 }
+function vigilarPestanas(){
+  ["imp","pli","per"].forEach(function(sec){
+    var c = document.getElementById("r-"+sec);
+    if(!c || c.__vigilado) return;
+    c.__vigilado = true;
+    new MutationObserver(function(){ pintarBotonesRegistro(); })
+      .observe(c, { attributes:true, attributeFilter:["class"] });
+  });
+}
+if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", vigilarPestanas);
+else vigilarPestanas();
 setInterval(function(){
+  vigilarPestanas();
   var f;
   try{ f = (window.__regCargado?"1":"0") + ((typeof CLIENTE!=="undefined" && CLIENTE)?"1":"0") + "|" + ["imp","pli","per"].map(seccionEnviada).join(""); }
   catch(e){ f = "x"; }
