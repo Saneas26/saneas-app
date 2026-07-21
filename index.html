@@ -2192,24 +2192,27 @@ function pintarProgreso(){
     + '<div class="pgPie">Semana ' + window.__PROG.semanas + ' de tu camino en Saneas</div>'
     + '</div>';
 }
-setInterval(function(){ if(window.__PROG){ pintarProgreso(); pintarPedir(); pintar100(); } }, 800);
+setInterval(function(){ pintarReporte(); if(window.__PROG){ pintarProgreso(); pintarPedir(); pintar100(); } }, 800);
+var __REP;
 async function cargarReporte(){
-  var host=document.getElementById("repCard");
-  function dbg(t){ if(host) host.innerHTML='<div class="card" style="border-left:4px solid #d05a4a;font-size:14px;word-break:break-all">DEBUG · '+t+'</div>'; }
   try{
-    if(typeof CLIENTE==="undefined"||!CLIENTE||!CLIENTE.id){ dbg("sin CLIENTE.id"); return; }
+    if(typeof CLIENTE==="undefined"||!CLIENTE||!CLIENTE.id) return;
     var r=await sb.storage.from("reportes").list(CLIENTE.id,{ limit:10, sortBy:{ column:"created_at", order:"desc" } });
-    if(r && r.error){ dbg("list error: "+String(r.error.message||r.error)); return; }
     var files=((r&&r.data)||[]).filter(function(f){ return f.name && f.name.indexOf(".")>0; });
-    if(!files.length){ dbg("0 audios. Mi carpeta: "+CLIENTE.id+" · devueltos: "+(((r&&r.data)||[]).length)); return; }
-    var nombre=files[0].name;
-    var s=await sb.storage.from("reportes").createSignedUrl(CLIENTE.id+"/"+nombre, 3600);
-    if(s && s.error){ dbg("signedUrl error: "+String(s.error.message||s.error)); return; }
+    if(!files.length){ __REP=null; return; }
+    var s=await sb.storage.from("reportes").createSignedUrl(CLIENTE.id+"/"+files[0].name, 3600);
     var url=s && s.data && s.data.signedUrl;
-    if(!url){ dbg("sin signedUrl"); return; }
-    host.innerHTML='<div class="card rpCard"><div class="rpT"><span class="rpIco">&#127908;</span>Tu mensaje de esta semana</div>'
-      +'<audio controls preload="none" src="'+url+'" style="width:100%;margin-top:10px"></audio></div>';
-  }catch(e){ dbg("catch: "+String(e && e.message || e)); }
+    __REP = url ? { url:url } : null;
+  }catch(e){ __REP=null; }
+}
+function pintarReporte(){
+  var host=document.getElementById("repCard");
+  if(!host || typeof __REP==="undefined") return;
+  if(!__REP){ if(host.innerHTML!=="") host.innerHTML=""; return; }
+  if(host.getAttribute("data-rep")==="1") return;
+  host.innerHTML='<div class="card rpCard"><div class="rpT"><span class="rpIco">&#127908;</span>Tu mensaje de esta semana</div>'
+    +'<audio controls preload="none" src="'+__REP.url+'" style="width:100%;margin-top:10px"></audio></div>';
+  host.setAttribute("data-rep","1");
 }
 function seccionEnviada(sec){
   try{
