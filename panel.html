@@ -1018,11 +1018,39 @@ async function crearAlta(){
   if(status!==200){m.className='err';m.textContent=data.error||'Error';return;}
   cerrarAlta(); toast(data.fecha_renovacion?('Alta creada · acceso hasta '+data.fecha_renovacion):'Cliente dado de alta'); await cargar();
 }
-async function darBaja(id,nombre){
-  if(!confirm('¿Dar de baja a '+nombre+'?\n\nSe borrarán TODOS sus datos e historial y su plaza quedará libre. Esta acción no se puede deshacer.')) return;
-  const {status,data}=await api('baja',{cliente_id:id});
-  if(status!==200){toast(data.error||'Error al dar de baja');return;}
-  cerrarFicha(); toast('Cliente dado de baja'); await cargar();
+const MOTIVOS_BAJA = ["Impago","Objetivo conseguido","Motivo economico","Falta de tiempo",
+  "No veia resultados","Problema de salud","Cambio de circunstancias","Se fue sin decir nada","Otro"];
+function darBaja(id,nombre){
+  const ov = document.createElement("div");
+  ov.id = "bajaOv";
+  ov.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:900;display:flex;align-items:center;justify-content:center;padding:16px";
+  ov.innerHTML = '<div style="background:#fff;border-radius:14px;max-width:420px;width:100%;padding:20px">'
+    + '<div style="font-size:18px;font-weight:700;margin-bottom:4px">Dar de baja</div>'
+    + '<div style="font-size:15px;color:#666;margin-bottom:14px">' + nombre + '</div>'
+    + '<label style="font-size:14px;font-weight:600;display:block;margin-bottom:4px">Motivo</label>'
+    + '<select id="bjMot" style="width:100%;padding:10px;font-size:15px;border:1px solid #ccc;border-radius:8px;margin-bottom:12px">'
+    + MOTIVOS_BAJA.map(function(m){ return '<option>' + m + '</option>'; }).join("")
+    + '</select>'
+    + '<label style="font-size:14px;font-weight:600;display:block;margin-bottom:4px">Explicacion</label>'
+    + '<textarea id="bjDet" rows="3" placeholder="Lo que quieras anotar para el futuro" style="width:100%;padding:10px;font-size:15px;border:1px solid #ccc;border-radius:8px;font-family:inherit"></textarea>'
+    + '<div style="font-size:13px;color:#888;margin:10px 0 14px">No se borra nada. Pasa a inactiva y conserva todos sus datos.</div>'
+    + '<div style="display:flex;gap:8px">'
+    + '<button onclick="cerrarBaja()" style="flex:1;padding:12px;border:1px solid #ccc;background:#fff;border-radius:8px;font-size:15px;font-family:inherit;cursor:pointer">Cancelar</button>'
+    + '<button id="bjOk" style="flex:1;padding:12px;border:0;background:#b42318;color:#fff;border-radius:8px;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer">Dar de baja</button>'
+    + '</div></div>';
+  document.body.appendChild(ov);
+  document.getElementById("bjOk").onclick = function(){ confirmarBaja(id); };
+}
+function cerrarBaja(){ const o = document.getElementById("bajaOv"); if(o) o.remove(); }
+async function confirmarBaja(id){
+  const b = document.getElementById("bjOk"); if(b){ b.disabled = true; b.textContent = "Dando de baja..."; }
+  const mot = (document.getElementById("bjMot")||{}).value || null;
+  const det = (document.getElementById("bjDet")||{}).value || null;
+  try{
+    const r = await rpc("saneas_dar_baja", { p_id:id, p_motivo:mot, p_detalle:det });
+    if(r && r.ok === false){ toast(r.error || "No se pudo"); if(b){ b.disabled=false; b.textContent="Dar de baja"; } return; }
+    cerrarBaja(); toast("Baja registrada: " + mot); cerrarFicha(); await cargar();
+  }catch(e){ toast("Error al dar de baja"); if(b){ b.disabled=false; b.textContent="Dar de baja"; } }
 }
 async function sinConsultaFicha(id,nombre){
   if(!confirm('Marcar SIN CONSULTA esta semana para '+nombre+'?\n\nEn su registro y evolución quedará esta semana como "sin datos".')) return;
