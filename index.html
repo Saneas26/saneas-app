@@ -2236,8 +2236,9 @@ function toggleRep(){
 function pintarReporte(){
   var host=document.getElementById("repCard");
   if(!host || typeof __REP==="undefined") return;
-  var ag=document.querySelector("#s-inicio .agenda");
-  if(ag && ag.nextElementSibling!==host){ ag.parentNode.insertBefore(host, ag.nextElementSibling); }
+  var _anc=null, _ps=document.querySelectorAll("#s-inicio p");
+  for(var _i=0;_i<_ps.length;_i++){ if((_ps[_i].textContent||"").indexOf("en Saneas")>=0){ _anc=_ps[_i]; break; } }
+  if(_anc && _anc.nextElementSibling!==host){ _anc.parentNode.insertBefore(host, _anc.nextElementSibling); }
   if(!__REP.length){ if(host.innerHTML!=="") host.innerHTML=""; host.removeAttribute("data-rep"); return; }
   var sig=__REP.map(function(a){ return a.url; }).join("|");
   if(host.getAttribute("data-rep")===sig) return;
