@@ -1077,7 +1077,7 @@ async function repEnviar(){
     var r=await fetch(SUPABASE_URL+"/storage/v1/object/reportes/"+path,{ method:"POST",
       headers:{ apikey:PUBLISHABLE, Authorization:"Bearer "+adminToken(), "Content-Type":REC_blob.type||"audio/mp4", "x-upsert":"true" },
       body:REC_blob });
-    if(!r.ok){ toast("No se pudo enviar ("+r.status+")"); if(btn){btn.disabled=false;btn.textContent="Enviar";} return; }
+    if(!r.ok){ var _tx=""; try{ _tx=(await r.text()).slice(0,140); }catch(e){} alert("Error "+r.status+": "+_tx); toast("No se pudo enviar"); if(btn){btn.disabled=false;btn.textContent="Enviar";} return; }
     cerrarRep(); toast("Reporte enviado"+(REC_nombre?" a "+REC_nombre:""));
   }catch(e){ toast("Error al enviar"); if(btn){btn.disabled=false;btn.textContent="Enviar";} }
 }
