@@ -1872,7 +1872,7 @@ function etiquetaBoton(estado){
 async function cargarEstadoRegistro(){
   if(!CLIENTE || !CLIENTE.id) return;
   const {data}=await sb.from('registros').select('*').eq('cliente_id',CLIENTE.id)
-    .gte('fecha',lunesStrHoy()).order('fecha',{ascending:false}).limit(1);
+    .eq('ciclo', (await sb.rpc('saneas_ciclo_hoy',{p_cliente_id:CLIENTE.id})).data).limit(1);
   REG_SEM=(data&&data[0])||null;
   Object.keys(SECCIONES).forEach(sec=>{
     const S=SECCIONES[sec], estado=REG_SEM?(REG_SEM[S.col]??0):0;
