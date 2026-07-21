@@ -1964,51 +1964,60 @@ function _primero(regs, campo){
   return null;
 }
 function _progresoEn(regs, hasta, obj){
-  var partes = [], total = 0;
-  var pC = _pg(obj.iniCintura, _media3(regs, hasta, "per_cintura"), obj.objCintura);
-  var pG = _pg(obj.iniGrasa,   _media3(regs, hasta, "grasa_rfm"),   obj.objGrasa);
-  var pP = _pg(obj.iniPeso,    _media3(regs, hasta, "peso"),        obj.objPeso);
-  var mm = _media3(regs, hasta, "masa_muscular");
-  if(pC != null){ partes.push([pC, 40]); }
-  if(pG != null){ partes.push([pG, 30]); }
-  if(pP != null){ partes.push([pP, 20]); }
-  if(mm != null && obj.iniMusculo != null){ partes.push([(mm >= obj.iniMusculo - 1) ? 1 : 0, 10]); }
-  if(!partes.length) return null;
+  var P = [
+    ["grasa_corporal", obj.iniGrasa,   obj.objGrasa,   30],
+    ["peso",           obj.iniPeso,    obj.objPeso,    20],
+    ["per_cintura",    obj.iniCintura, obj.objCintura, 20],
+    ["masa_muscular",  obj.iniMusculo, obj.objMusculo, 15],
+    ["agua",           obj.iniAgua,    obj.objAgua,    10],
+    ["proteina",       obj.iniProt,    obj.objProt,     5]
+  ];
   var num = 0, den = 0;
-  for(var i = 0; i < partes.length; i++){ num += partes[i][0] * partes[i][1]; den += partes[i][1]; }
+  for(var i = 0; i < P.length; i++){
+    var v = _pg(P[i][1], _media3(regs, hasta, P[i][0]), P[i][2]);
+    if(v == null) continue;
+    num += v * P[i][3]; den += P[i][3];
+  }
+  if(!den) return null;
   return num / den;
 }
 async function calcularProgreso(){
   try{
     if(typeof CLIENTE === "undefined" || !CLIENTE || !CLIENTE.id) return;
     var r = await sb.from("registros")
-      .select("fecha,peso,per_cintura,grasa_rfm,masa_muscular")
+      .select("fecha,peso,per_cintura,grasa_corporal,agua,masa_muscular,proteina")
       .eq("cliente_id", CLIENTE.id)
       .order("fecha", { ascending: true });
     var regs = ((r && r.data) || []).filter(function(x){
-      return x.peso != null || x.per_cintura != null || x.grasa_rfm != null;
+      return x.peso != null || x.per_cintura != null || x.grasa_corporal != null;
     });
     if(regs.length < 2) return;
     var esHombre = ((CLIENTE.genero || "") + "").toLowerCase().charAt(0) === "h";
     var alt = Number(CLIENTE.altura) || null;
     var iniPeso = _primero(regs, "peso");
+    var iniMus  = _primero(regs, "masa_muscular");
     var obj = {
-      iniCintura: _primero(regs, "per_cintura"),
-      iniGrasa:   _primero(regs, "grasa_rfm"),
+      iniGrasa:   _primero(regs, "grasa_corporal"),
       iniPeso:    iniPeso,
-      iniMusculo: _primero(regs, "masa_muscular"),
-      objCintura: alt ? alt * 0.48 : null,
+      iniCintura: _primero(regs, "per_cintura"),
+      iniMusculo: iniMus,
+      iniAgua:    _primero(regs, "agua"),
+      iniProt:    _primero(regs, "proteina"),
       objGrasa:   esHombre ? 19 : 24,
-      objPeso:    iniPeso ? iniPeso * 0.90 : null
+      objPeso:    iniPeso ? iniPeso * 0.90 : null,
+      objCintura: alt ? alt * 0.48 : null,
+      objMusculo: iniMus ? iniMus + 1 : null,
+      objAgua:    esHombre ? 57 : 52,
+      objProt:    17
     };
-    var mejor = 0, actual = null;
+    var mejor = 0, hubo = false;
     for(var i = 1; i < regs.length; i++){
       var v = _progresoEn(regs, i, obj);
       if(v == null) continue;
-      actual = v;
+      hubo = true;
       if(v > mejor) mejor = v;
     }
-    if(actual == null) return;
+    if(!hubo) return;
     // Tope del 90%: los numeros no son todo el objetivo de una clienta,
     // mostrar un 100% seria decirle que ya no queda nada por hacer.
     window.__PROG = { pct: Math.min(90, Math.round(mejor * 100)), semanas: regs.length };
