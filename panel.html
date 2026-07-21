@@ -779,7 +779,7 @@ function pintarFicha(cli,regs){
       <div class="fh-actions">
         <button class="sc-btn" onclick="enviarAviso('${cli.id}', '${(nom||'este cliente').replace(/'/g,'')}')">🔔 Aviso</button>
         <button class="sc-btn" onclick="sinConsultaFicha('${cli.id}', '${(nom||'este cliente').replace(/'/g,'')}')">Sin consulta</button>
-        <button class="baja-btn" onclick="darBaja('${cli.id}', '${(nom||'este cliente').replace(/'/g,'')}')">Dar de baja</button>
+        <button class="rep-btn" onclick="grabarReporte('${cli.id}', '${(nom||'').replace(/'/g,'')}')">Reporte</button><button class="baja-btn" onclick="darBaja('${cli.id}', '${(nom||'este cliente').replace(/'/g,'')}')">Dar de baja</button>
       </div>
       <h3>${nom||'Cliente'}</h3>
       <div class="sub">
@@ -1017,6 +1017,69 @@ async function crearAlta(){
   btn.disabled=false;btn.textContent='Crear alta';
   if(status!==200){m.className='err';m.textContent=data.error||'Error';return;}
   cerrarAlta(); toast(data.fecha_renovacion?('Alta creada · acceso hasta '+data.fecha_renovacion):'Cliente dado de alta'); await cargar();
+}
+var REC_m=null, REC_ch=[], REC_blob=null, REC_stream=null, REC_id=null, REC_nombre="", REC_t=null, REC_s=0;
+function grabarReporte(id,nombre){
+  REC_id=id; REC_nombre=nombre||""; REC_blob=null; REC_ch=[]; REC_s=0;
+  var ov=document.createElement("div"); ov.id="repOv";
+  ov.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:950;display:flex;align-items:center;justify-content:center;padding:16px";
+  ov.innerHTML='<div id="repBox" style="background:#fff;border-radius:14px;max-width:420px;width:100%;padding:22px;text-align:center"></div>';
+  document.body.appendChild(ov);
+  document.getElementById("repBox")._nombre=nombre;
+  repVista("idle");
+}
+function cerrarRep(){ try{ if(REC_stream) REC_stream.getTracks().forEach(function(t){t.stop()}); }catch(e){}
+  if(REC_t) clearInterval(REC_t); var o=document.getElementById("repOv"); if(o) o.remove(); }
+function _mmss(s){ var m=Math.floor(s/60), r=s%60; return m+":"+(r<10?"0":"")+r; }
+function repVista(estado){
+  var b=document.getElementById("repBox"); if(!b) return;
+  var nom=b._nombre||"";
+  var h='<div style="font-size:18px;font-weight:700;margin-bottom:4px">Reporte de voz</div>'
+    + '<div style="font-size:15px;color:#666;margin-bottom:16px">'+nom+'</div>';
+  if(estado==="idle"){
+    h+='<button onclick="repStart()" style="width:100%;padding:16px;border:0;background:#3890A4;color:#fff;border-radius:10px;font-size:17px;font-weight:700;font-family:inherit;cursor:pointer">Empezar a grabar</button>';
+  } else if(estado==="rec"||estado==="pause"){
+    h+='<div style="font-size:34px;font-weight:700;color:#b42318;margin:6px 0 16px" id="repTime">'+_mmss(REC_s)+'</div>';
+    h+='<div style="display:flex;gap:8px">';
+    if(estado==="rec") h+='<button onclick="repPause()" style="flex:1;padding:14px;border:1px solid #ccc;background:#fff;border-radius:10px;font-size:16px;font-family:inherit;cursor:pointer">Pausar</button>';
+    else h+='<button onclick="repResume()" style="flex:1;padding:14px;border:1px solid #ccc;background:#fff;border-radius:10px;font-size:16px;font-family:inherit;cursor:pointer">Seguir</button>';
+    h+='<button onclick="repStop()" style="flex:1;padding:14px;border:0;background:#3890A4;color:#fff;border-radius:10px;font-size:16px;font-weight:700;font-family:inherit;cursor:pointer">Parar</button></div>';
+  } else if(estado==="preview"){
+    var url=URL.createObjectURL(REC_blob);
+    h+='<div style="font-size:15px;color:#666;margin-bottom:8px">Esc&uacute;chalo antes de enviarlo</div>';
+    h+='<audio controls src="'+url+'" style="width:100%;margin-bottom:14px"></audio>';
+    h+='<div style="display:flex;gap:8px"><button onclick="repBorrar()" style="flex:1;padding:14px;border:1px solid #ccc;background:#fff;border-radius:10px;font-size:16px;font-family:inherit;cursor:pointer">Borrar y repetir</button>';
+    h+='<button id="repEnv" onclick="repEnviar()" style="flex:1;padding:14px;border:0;background:#2f9e6f;color:#fff;border-radius:10px;font-size:16px;font-weight:700;font-family:inherit;cursor:pointer">Enviar</button></div>';
+  }
+  h+='<button onclick="cerrarRep()" style="margin-top:14px;background:none;border:0;color:#999;font-size:15px;font-family:inherit;cursor:pointer">Cancelar</button>';
+  b.innerHTML=h;
+}
+async function repStart(){
+  try{
+    REC_stream=await navigator.mediaDevices.getUserMedia({audio:true});
+    REC_ch=[]; REC_m=new MediaRecorder(REC_stream);
+    REC_m.ondataavailable=function(e){ if(e.data && e.data.size>0) REC_ch.push(e.data); };
+    REC_m.onstop=function(){ REC_blob=new Blob(REC_ch, {type:(REC_ch[0]&&REC_ch[0].type)||"audio/mp4"}); repVista("preview"); };
+    REC_m.start(); REC_s=0; repVista("rec");
+    REC_t=setInterval(function(){ REC_s++; var e=document.getElementById("repTime"); if(e) e.textContent=_mmss(REC_s); },1000);
+  }catch(e){ toast("No puedo acceder al micr&oacute;fono"); }
+}
+function repPause(){ if(REC_m&&REC_m.state==="recording"){ REC_m.pause(); if(REC_t)clearInterval(REC_t); repVista("pause"); } }
+function repResume(){ if(REC_m&&REC_m.state==="paused"){ REC_m.resume(); REC_t=setInterval(function(){ REC_s++; var e=document.getElementById("repTime"); if(e) e.textContent=_mmss(REC_s); },1000); repVista("rec"); } }
+function repStop(){ if(REC_t)clearInterval(REC_t); if(REC_m&&REC_m.state!=="inactive") REC_m.stop(); if(REC_stream) REC_stream.getTracks().forEach(function(t){t.stop()}); }
+function repBorrar(){ REC_blob=null; REC_ch=[]; REC_s=0; repVista("idle"); }
+async function repEnviar(){
+  if(!REC_blob) return;
+  var btn=document.getElementById("repEnv"); if(btn){ btn.disabled=true; btn.textContent="Enviando..."; }
+  try{
+    var ext=(REC_blob.type.indexOf("mp4")>=0||REC_blob.type.indexOf("aac")>=0)?"m4a":(REC_blob.type.indexOf("webm")>=0?"webm":(REC_blob.type.indexOf("mpeg")>=0?"mp3":"m4a"));
+    var path=REC_id+"/"+Date.now()+"."+ext;
+    var r=await fetch(SUPABASE_URL+"/storage/v1/object/reportes/"+path,{ method:"POST",
+      headers:{ apikey:PUBLISHABLE, Authorization:"Bearer "+adminToken(), "Content-Type":REC_blob.type||"audio/mp4", "x-upsert":"true" },
+      body:REC_blob });
+    if(!r.ok){ toast("No se pudo enviar ("+r.status+")"); if(btn){btn.disabled=false;btn.textContent="Enviar";} return; }
+    cerrarRep(); toast("Reporte enviado"+(REC_nombre?" a "+REC_nombre:""));
+  }catch(e){ toast("Error al enviar"); if(btn){btn.disabled=false;btn.textContent="Enviar";} }
 }
 const MOTIVOS_BAJA = ["Impago","Objetivo conseguido","Motivo economico","Falta de tiempo",
   "No veia resultados","Problema de salud","Cambio de circunstancias","Se fue sin decir nada","Otro"];
