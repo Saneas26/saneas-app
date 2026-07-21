@@ -253,6 +253,9 @@
 .f1Btn{margin-top:10px;width:100%;background:var(--teal);color:#fff;border:0;border-radius:10px;padding:12px;font-size:16px;font-weight:700;font-family:inherit;cursor:pointer}
 .f1Cita{font-size:18px;line-height:1.6;color:var(--dark);font-style:italic;margin:10px 0}
 .f1D{font-size:16px;color:var(--muted);line-height:1.5}
+.rpCard{border-left:5px solid var(--teal)}
+.rpT{font-size:18px;font-weight:700;color:var(--dark);display:flex;align-items:center;gap:8px;line-height:1.3}
+.rpIco{font-size:22px}
 .pgCard{text-align:center;padding:20px 16px}
 .pgTit{font-size:16px;color:var(--muted)}
 .pgNum{font-size:44px;font-weight:700;color:var(--teal);line-height:1.1;margin:2px 0 4px}
@@ -967,6 +970,7 @@ async function iniciarSesion(){
   ULTIMO=(regs&&regs[0])||null;
   window.__regCargado = true;
   calcularProgreso();
+  cargarReporte();
   const {data:regs0}=await sb.from('registros').select('*').eq('cliente_id',user.id).order('semana',{ascending:true,nullsFirst:false}).order('fecha',{ascending:true}).limit(1);
   PRIMERO=(regs0&&regs0[0])||null;
   await cargarDieta();
@@ -1326,7 +1330,7 @@ function renderInicio(){
       </div>`:''}
     </div>
 
-    <div id="progCard"></div>
+    <div id="repCard"></div><div id="progCard"></div>
     <h2 class="sec">🧭 Tu pizarra</h2>
     <div class="choices">
       <div class="choice active" onclick="pizarra('dieta',this)"><span class="ic">🥗</span>Dieta de hoy</div>
@@ -2189,6 +2193,25 @@ function pintarProgreso(){
     + '</div>';
 }
 setInterval(function(){ if(window.__PROG){ pintarProgreso(); pintarPedir(); pintar100(); } }, 800);
+async function cargarReporte(){
+  try{
+    if(typeof CLIENTE==="undefined" || !CLIENTE || !CLIENTE.id) return;
+    var r = await sb.storage.from("reportes").list(CLIENTE.id, { limit:10, sortBy:{ column:"created_at", order:"desc" } });
+    var files = (r && r.data) || [];
+    files = files.filter(function(f){ return f.name && f.name.indexOf(".")>0; });
+    if(!files.length){ var c0=document.getElementById("repCard"); if(c0) c0.innerHTML=""; return; }
+    var nombre = files[0].name;
+    var s = await sb.storage.from("reportes").createSignedUrl(CLIENTE.id + "/" + nombre, 3600);
+    var url = s && s.data && s.data.signedUrl;
+    if(!url) return;
+    var host = document.getElementById("repCard");
+    if(!host) return;
+    host.innerHTML = '<div class="card rpCard">'
+      + '<div class="rpT"><span class="rpIco">&#127908;</span>Tu mensaje de esta semana</div>'
+      + '<audio controls preload="none" src="'+url+'" style="width:100%;margin-top:10px"></audio>'
+      + '</div>';
+  }catch(e){ }
+}
 function seccionEnviada(sec){
   try{
     if(!ULTIMO) return false;
