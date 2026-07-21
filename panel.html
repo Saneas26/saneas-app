@@ -1899,7 +1899,7 @@ async function adminRefresh(){
   ADMIN_SESS=null; localStorage.removeItem('panel_admin_sess'); return false;
 }
 // Al arrancar: si había sesión admin guardada, refrescarla y pintar la pastilla.
-(async()=>{ if(ADMIN_SESS) await adminRefresh(); pintarPastillaAdmin(); })();
+(async()=>{ if(ADMIN_SESS) await adminRefresh(); pintarPastillaAdmin(); })(); setInterval(()=>{ if(ADMIN_SESS) adminRefresh().then(pintarPastillaAdmin); }, 1500000); document.addEventListener('visibilitychange',()=>{ if(!document.hidden && ADMIN_SESS) adminRefresh().then(pintarPastillaAdmin); });
 // ================= FIN LOGIN ADMIN =================
 
 </script>
