@@ -230,7 +230,14 @@
   .detail.open{transform:none}
   .detail .dbar{background:var(--teal);color:#fff;padding:14px 16px;display:flex;align-items:center;gap:12px;font-weight:700;font-size:16px}
   .detail .dbar .back{font-size:24px;cursor:pointer;background:none;border:none;color:#fff;line-height:1}
-  .detail .orow{font-size:16px}
+  .pgCard{text-align:center;padding:20px 16px}
+.pgTit{font-size:16px;color:var(--muted)}
+.pgNum{font-size:44px;font-weight:700;color:var(--teal);line-height:1.1;margin:2px 0 4px}
+.pgNum span{font-size:26px}
+.pgBar{height:12px;background:var(--light);border-radius:6px;overflow:hidden;margin:10px 0 8px}
+.pgBar i{display:block;height:100%;background:var(--teal);border-radius:6px;transition:width .6s ease}
+.pgPie{font-size:16px;font-weight:700;color:var(--dark)}
+.detail .orow{font-size:16px}
 .detail .dsec{font-size:16px}
 .detail .hitomsg{font-size:16px;line-height:1.55}
 .detail .empty{font-size:16px}
@@ -936,6 +943,7 @@ async function iniciarSesion(){
   const {data:regs}=await sb.from('registros').select('*').eq('cliente_id',user.id).not('peso','is',null).order('fecha',{ascending:false}).order('semana',{ascending:false,nullsFirst:false}).limit(1);
   ULTIMO=(regs&&regs[0])||null;
   window.__regCargado = true;
+  calcularProgreso();
   const {data:regs0}=await sb.from('registros').select('*').eq('cliente_id',user.id).order('semana',{ascending:true,nullsFirst:false}).order('fecha',{ascending:true}).limit(1);
   PRIMERO=(regs0&&regs0[0])||null;
   await cargarDieta();
@@ -1295,6 +1303,7 @@ function renderInicio(){
       </div>`:''}
     </div>
 
+    <div id="progCard"></div>
     <h2 class="sec">🧭 Tu pizarra</h2>
     <div class="choices">
       <div class="choice active" onclick="pizarra('dieta',this)"><span class="ic">🥗</span>Dieta de hoy</div>
@@ -1938,6 +1947,82 @@ function pintarAvisoPlazo(){
     +'de tu día asignado. La semana que viene te esperamos a tiempo.';
 }
 
+function _pg(ini, act, obj){
+  if(ini == null || act == null || obj == null) return null;
+  if(ini === obj) return 1;
+  return Math.max(0, Math.min(1, (ini - act) / (ini - obj)));
+}
+function _media3(regs, hasta, campo){
+  var v = [];
+  for(var i = hasta; i >= 0 && v.length < 3; i--){ if(regs[i][campo] != null) v.push(Number(regs[i][campo])); }
+  if(!v.length) return null;
+  var s = 0; for(var j = 0; j < v.length; j++) s += v[j];
+  return s / v.length;
+}
+function _primero(regs, campo){
+  for(var i = 0; i < regs.length; i++){ if(regs[i][campo] != null) return Number(regs[i][campo]); }
+  return null;
+}
+function _progresoEn(regs, hasta, obj){
+  var partes = [], total = 0;
+  var pC = _pg(obj.iniCintura, _media3(regs, hasta, "per_cintura"), obj.objCintura);
+  var pG = _pg(obj.iniGrasa,   _media3(regs, hasta, "grasa_rfm"),   obj.objGrasa);
+  var pP = _pg(obj.iniPeso,    _media3(regs, hasta, "peso"),        obj.objPeso);
+  var mm = _media3(regs, hasta, "masa_muscular");
+  if(pC != null){ partes.push([pC, 40]); }
+  if(pG != null){ partes.push([pG, 30]); }
+  if(pP != null){ partes.push([pP, 20]); }
+  if(mm != null && obj.iniMusculo != null){ partes.push([(mm >= obj.iniMusculo - 1) ? 1 : 0, 10]); }
+  if(!partes.length) return null;
+  var num = 0, den = 0;
+  for(var i = 0; i < partes.length; i++){ num += partes[i][0] * partes[i][1]; den += partes[i][1]; }
+  return num / den;
+}
+async function calcularProgreso(){
+  try{
+    if(typeof CLIENTE === "undefined" || !CLIENTE || !CLIENTE.id) return;
+    var r = await sb.from("registros")
+      .select("fecha,peso,per_cintura,grasa_rfm,masa_muscular")
+      .eq("cliente_id", CLIENTE.id).not("hora_envio", "is", null)
+      .order("fecha", { ascending: true });
+    var regs = (r && r.data) || [];
+    if(regs.length < 2) return;
+    var esHombre = ((CLIENTE.genero || "") + "").toLowerCase().charAt(0) === "h";
+    var alt = Number(CLIENTE.altura) || null;
+    var iniPeso = _primero(regs, "peso");
+    var obj = {
+      iniCintura: _primero(regs, "per_cintura"),
+      iniGrasa:   _primero(regs, "grasa_rfm"),
+      iniPeso:    iniPeso,
+      iniMusculo: _primero(regs, "masa_muscular"),
+      objCintura: alt ? alt * 0.48 : null,
+      objGrasa:   esHombre ? 19 : 24,
+      objPeso:    iniPeso ? iniPeso * 0.90 : null
+    };
+    var mejor = 0, actual = null;
+    for(var i = 1; i < regs.length; i++){
+      var v = _progresoEn(regs, i, obj);
+      if(v == null) continue;
+      actual = v;
+      if(v > mejor) mejor = v;
+    }
+    if(actual == null) return;
+    window.__PROG = { pct: Math.round(mejor * 100), semanas: regs.length };
+    pintarProgreso();
+  }catch(e){ }
+}
+function pintarProgreso(){
+  var el = document.getElementById("progCard");
+  if(!el || !window.__PROG) return;
+  var p = window.__PROG.pct;
+  el.innerHTML = '<div class="card pgCard">'
+    + '<div class="pgTit">Llevas recorrido</div>'
+    + '<div class="pgNum">' + p + '<span>%</span></div>'
+    + '<div class="pgBar"><i style="width:' + p + '%"></i></div>'
+    + '<div class="pgPie">Semana ' + window.__PROG.semanas + ' de tu camino en Saneas</div>'
+    + '</div>';
+}
+setInterval(function(){ if(window.__PROG) pintarProgreso(); }, 800);
 function seccionEnviada(sec){
   try{
     if(!ULTIMO) return false;
