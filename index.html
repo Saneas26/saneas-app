@@ -905,6 +905,7 @@ async function iniciarSesion(){
   document.getElementById('avatar').textContent=((CLIENTE.nombre||'?')[0]||'?').toUpperCase()+((CLIENTE.apellido||'')[0]||'').toUpperCase();
   const {data:regs}=await sb.from('registros').select('*').eq('cliente_id',user.id).not('peso','is',null).order('fecha',{ascending:false}).order('semana',{ascending:false,nullsFirst:false}).limit(1);
   ULTIMO=(regs&&regs[0])||null;
+  window.__regCargado = true;
   const {data:regs0}=await sb.from('registros').select('*').eq('cliente_id',user.id).order('semana',{ascending:true,nullsFirst:false}).order('fecha',{ascending:true}).limit(1);
   PRIMERO=(regs0&&regs0[0])||null;
   await cargarDieta();
@@ -1912,7 +1913,7 @@ function pintarBotonesRegistro(){
   ["imp","pli","per"].forEach(function(sec){
     var b = document.getElementById("btnReg_"+sec);
     if(!b) return;
-    if(typeof CLIENTE === "undefined" || !CLIENTE){
+    if(!window.__regCargado || typeof CLIENTE === "undefined" || !CLIENTE){
       b.disabled = true; b.style.opacity = ".45"; b.textContent = "Cargando…"; return;
     }
     b.disabled = false; b.style.opacity = "";
@@ -1921,7 +1922,7 @@ function pintarBotonesRegistro(){
 }
 setInterval(function(){
   var f;
-  try{ f = ((typeof CLIENTE!=="undefined" && CLIENTE)?"1":"0") + "|" + ["imp","pli","per"].map(seccionEnviada).join(""); }
+  try{ f = (window.__regCargado?"1":"0") + ((typeof CLIENTE!=="undefined" && CLIENTE)?"1":"0") + "|" + ["imp","pli","per"].map(seccionEnviada).join(""); }
   catch(e){ f = "x"; }
   if(f !== window.__regFirma){ window.__regFirma = f; pintarBotonesRegistro(); }
 }, 400);
