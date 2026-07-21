@@ -253,6 +253,9 @@
 .f1Btn{margin-top:10px;width:100%;background:var(--teal);color:#fff;border:0;border-radius:10px;padding:12px;font-size:16px;font-weight:700;font-family:inherit;cursor:pointer}
 .f1Cita{font-size:18px;line-height:1.6;color:var(--dark);font-style:italic;margin:10px 0}
 .f1D{font-size:16px;color:var(--muted);line-height:1.5}
+.rpItem{margin-top:12px}
+.rpFecha{font-size:14px;color:var(--muted);margin-bottom:4px}
+.rpItem audio{width:100%}
 .rpCard{border-left:5px solid var(--teal)}
 .rpT{font-size:18px;font-weight:700;color:var(--dark);display:flex;align-items:center;gap:8px;line-height:1.3}
 .rpIco{font-size:22px}
@@ -2198,21 +2201,42 @@ async function cargarReporte(){
   try{
     if(typeof CLIENTE==="undefined"||!CLIENTE||!CLIENTE.id) return;
     var r=await sb.storage.from("reportes").list(CLIENTE.id,{ limit:10, sortBy:{ column:"created_at", order:"desc" } });
-    var files=((r&&r.data)||[]).filter(function(f){ return f.name && f.name.indexOf(".")>0; });
-    if(!files.length){ __REP=null; return; }
-    var s=await sb.storage.from("reportes").createSignedUrl(CLIENTE.id+"/"+files[0].name, 3600);
-    var url=s && s.data && s.data.signedUrl;
-    __REP = url ? { url:url } : null;
-  }catch(e){ __REP=null; }
+    var files=((r&&r.data)||[]).filter(function(f){ return f.name && f.name.indexOf(".")>0; }).slice(0,3);
+    if(!files.length){ __REP=[]; return; }
+    var out=[];
+    for(var i=0;i<files.length;i++){
+      var s=await sb.storage.from("reportes").createSignedUrl(CLIENTE.id+"/"+files[i].name, 3600);
+      var url=s && s.data && s.data.signedUrl;
+      if(url){
+        var ms=parseInt(files[i].name,10);
+        var fecha=(ms && !isNaN(ms)) ? new Date(ms) : (files[i].created_at ? new Date(files[i].created_at) : null);
+        out.push({ url:url, fecha:fecha });
+      }
+    }
+    __REP=out;
+  }catch(e){ __REP=[]; }
+}
+function _repFecha(d){
+  if(!d) return "";
+  try{ var s=d.toLocaleString("es-ES",{ timeZone:"Europe/Madrid", weekday:"long", day:"2-digit", month:"long", hour:"2-digit", minute:"2-digit" });
+    return s.charAt(0).toUpperCase()+s.slice(1); }catch(e){ return ""; }
 }
 function pintarReporte(){
   var host=document.getElementById("repCard");
   if(!host || typeof __REP==="undefined") return;
-  if(!__REP){ if(host.innerHTML!=="") host.innerHTML=""; return; }
-  if(host.getAttribute("data-rep")==="1") return;
-  host.innerHTML='<div class="card rpCard"><div class="rpT"><span class="rpIco">&#127908;</span>Tu mensaje de esta semana</div>'
-    +'<audio controls preload="none" src="'+__REP.url+'" style="width:100%;margin-top:10px"></audio></div>';
-  host.setAttribute("data-rep","1");
+  var par=host.parentNode;
+  if(par && par.firstElementChild!==host){ par.insertBefore(host, par.firstElementChild); }
+  if(!__REP.length){ if(host.innerHTML!=="") host.innerHTML=""; host.removeAttribute("data-rep"); return; }
+  var sig=__REP.map(function(a){ return a.url; }).join("|");
+  if(host.getAttribute("data-rep")===sig) return;
+  var h='<div class="card rpCard"><div class="rpT"><span class="rpIco">&#127908;</span>Ya tienes tu reporte disponible</div>';
+  __REP.forEach(function(a){
+    h+='<div class="rpItem"><div class="rpFecha">'+_repFecha(a.fecha)+'</div>'
+      +'<audio controls preload="none" src="'+a.url+'"></audio></div>';
+  });
+  h+='</div>';
+  host.innerHTML=h;
+  host.setAttribute("data-rep",sig);
 }
 function seccionEnviada(sec){
   try{
