@@ -247,6 +247,12 @@
 .pdBtns{display:flex;gap:8px;margin-top:14px}
 .pdSi{flex:1;background:var(--teal);color:#fff;border:0;border-radius:10px;padding:12px;font-size:16px;font-weight:700;font-family:inherit;cursor:pointer}
 .pdNo{background:none;border:1px solid var(--light);color:var(--muted);border-radius:10px;padding:12px 16px;font-size:16px;font-family:inherit;cursor:pointer}
+.f1Card{border-left:5px solid var(--teal)}
+.f1T{font-size:18px;font-weight:700;color:var(--dark);line-height:1.3}
+.f1Ta{width:100%;margin-top:10px;padding:12px;font-size:16px;line-height:1.5;border:1px solid var(--light);border-radius:10px;font-family:inherit;resize:vertical}
+.f1Btn{margin-top:10px;width:100%;background:var(--teal);color:#fff;border:0;border-radius:10px;padding:12px;font-size:16px;font-weight:700;font-family:inherit;cursor:pointer}
+.f1Cita{font-size:18px;line-height:1.6;color:var(--dark);font-style:italic;margin:10px 0}
+.f1D{font-size:16px;color:var(--muted);line-height:1.5}
 .pgCard{text-align:center;padding:20px 16px}
 .pgTit{font-size:16px;color:var(--muted)}
 .pgNum{font-size:44px;font-weight:700;color:var(--teal);line-height:1.1;margin:2px 0 4px}
@@ -2073,6 +2079,7 @@ async function calcularProgreso(){
     // mostrar un 100% seria decirle que ya no queda nada por hacer.
     window.__PROG = { pct: Math.min(90, Math.round(mejor * 100)), semanas: regs.length, pedir: _elegible(regs) };
     pintarProgreso();
+    cargarFrase100();
   }catch(e){ }
 }
 function _silenciado(){
@@ -2114,6 +2121,62 @@ function pintarPedir(){
     + '<button class="pdNo" onclick="ahoraNo()">Ahora no</button></div>';
   host.parentNode.insertBefore(d, host.nextSibling);
 }
+var FRASE100 = null;
+async function cargarFrase100(){
+  try{
+    if(typeof CLIENTE === "undefined" || !CLIENTE || !CLIENTE.id) return;
+    var r = await sb.from("saneas_frases").select("id,texto,creado_en,devuelta_en")
+      .eq("cliente_id", CLIENTE.id).order("creado_en", { ascending:false }).limit(1);
+    FRASE100 = (r && r.data && r.data[0]) || null;
+    pintar100();
+  }catch(e){ }
+}
+async function guardar100(){
+  var ta = document.getElementById("f100txt");
+  if(!ta || !ta.value.trim()) return;
+  var b = document.getElementById("f100ok"); if(b){ b.disabled = true; b.textContent = "Guardando..."; }
+  try{
+    await sb.from("saneas_frases").insert({ cliente_id: CLIENTE.id,
+      texto: ta.value.trim(), semanas: (window.__PROG && window.__PROG.semanas) || null });
+    var c = document.getElementById("f100"); if(c) c.remove();
+    await cargarFrase100();
+  }catch(e){ if(b){ b.disabled=false; b.textContent="Guardar"; } }
+}
+function enviar100(){
+  if(!FRASE100) return;
+  var txt = FRASE100.texto + "\n\nhttps://saneas.es";
+  window.open("https://wa.me/?text=" + encodeURIComponent(txt), "_blank");
+  try{ sb.from("saneas_frases").update({ devuelta_en: new Date().toISOString() }).eq("id", FRASE100.id); }catch(e){}
+  var c = document.getElementById("f100dev"); if(c) c.remove();
+}
+function ocultar100(){ var c = document.getElementById("f100dev"); if(c) c.remove();
+  try{ sb.from("saneas_frases").update({ devuelta_en: new Date().toISOString() }).eq("id", FRASE100.id); }catch(e){} }
+function pintar100(){
+  var host = document.getElementById("progCard");
+  if(!host || !window.__PROG) return;
+  var sem = window.__PROG.semanas || 0;
+  if(!FRASE100 && sem >= 14 && !document.getElementById("f100")){
+    var d = document.createElement("div");
+    d.id = "f100"; d.className = "card f1Card";
+    d.innerHTML = '<div class="f1T">&iquest;Qu&eacute; le dir&iacute;as a la t&uacute; de hace 100 d&iacute;as?</div>'
+      + '<textarea id="f100txt" rows="3" class="f1Ta" placeholder="Lo que te habr&iacute;a gustado que alguien te dijera"></textarea>'
+      + '<button id="f100ok" class="f1Btn" onclick="guardar100()">Guardar</button>';
+    host.parentNode.insertBefore(d, host.nextSibling);
+    return;
+  }
+  if(FRASE100 && !FRASE100.devuelta_en && !document.getElementById("f100dev")){
+    var dias = (Date.now() - new Date(FRASE100.creado_en).getTime()) / 86400000;
+    if(dias < 2) return;
+    var e = document.createElement("div");
+    e.id = "f100dev"; e.className = "card f1Card";
+    e.innerHTML = '<div class="f1T">Esto lo escribiste t&uacute;</div>'
+      + '<div class="f1Cita">&laquo;' + esc(FRASE100.texto) + '&raquo;</div>'
+      + '<div class="f1D">&iquest;Hay alguien a quien le vendr&iacute;a bien leerlo?</div>'
+      + '<div class="pdBtns"><button class="pdSi" onclick="enviar100()">Mand&aacute;rselo</button>'
+      + '<button class="pdNo" onclick="ocultar100()">Ahora no</button></div>';
+    host.parentNode.insertBefore(e, host.nextSibling);
+  }
+}
 function pintarProgreso(){
   var el = document.getElementById("progCard");
   if(!el || !window.__PROG) return;
@@ -2125,7 +2188,7 @@ function pintarProgreso(){
     + '<div class="pgPie">Semana ' + window.__PROG.semanas + ' de tu camino en Saneas</div>'
     + '</div>';
 }
-setInterval(function(){ if(window.__PROG){ pintarProgreso(); pintarPedir(); } }, 800);
+setInterval(function(){ if(window.__PROG){ pintarProgreso(); pintarPedir(); pintar100(); } }, 800);
 function seccionEnviada(sec){
   try{
     if(!ULTIMO) return false;
