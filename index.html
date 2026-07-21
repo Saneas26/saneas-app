@@ -2009,7 +2009,9 @@ async function calcularProgreso(){
       if(v > mejor) mejor = v;
     }
     if(actual == null) return;
-    window.__PROG = { pct: Math.round(mejor * 100), semanas: regs.length };
+    // Tope del 90%: los numeros no son todo el objetivo de una clienta,
+    // mostrar un 100% seria decirle que ya no queda nada por hacer.
+    window.__PROG = { pct: Math.min(90, Math.round(mejor * 100)), semanas: regs.length };
     pintarProgreso();
   }catch(e){ }
 }
