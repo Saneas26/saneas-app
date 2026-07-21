@@ -1078,6 +1078,7 @@ async function repEnviar(){
       headers:{ apikey:PUBLISHABLE, Authorization:"Bearer "+adminToken(), "Content-Type":REC_blob.type||"audio/mp4", "x-upsert":"true" },
       body:REC_blob });
     if(!r.ok){ var _tx=""; try{ _tx=(await r.text()).slice(0,140); }catch(e){} alert("Error "+r.status+": "+_tx); toast("No se pudo enviar"); if(btn){btn.disabled=false;btn.textContent="Enviar";} return; }
+    try{ await rpc("admin_enviar_push",{ p_titulo:"Reporte entregado", p_cuerpo:"Ya puedes escucharlo en tu app", p_cliente_id:REC_id }); }catch(e){}
     cerrarRep(); toast("Reporte enviado"+(REC_nombre?" a "+REC_nombre:""));
   }catch(e){ toast("Error al enviar"); if(btn){btn.disabled=false;btn.textContent="Enviar";} }
 }
