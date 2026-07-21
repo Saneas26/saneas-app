@@ -1983,9 +1983,11 @@ async function calcularProgreso(){
     if(typeof CLIENTE === "undefined" || !CLIENTE || !CLIENTE.id) return;
     var r = await sb.from("registros")
       .select("fecha,peso,per_cintura,grasa_rfm,masa_muscular")
-      .eq("cliente_id", CLIENTE.id).not("hora_envio", "is", null)
+      .eq("cliente_id", CLIENTE.id)
       .order("fecha", { ascending: true });
-    var regs = (r && r.data) || [];
+    var regs = ((r && r.data) || []).filter(function(x){
+      return x.peso != null || x.per_cintura != null || x.grasa_rfm != null;
+    });
     if(regs.length < 2) return;
     var esHombre = ((CLIENTE.genero || "") + "").toLowerCase().charAt(0) === "h";
     var alt = Number(CLIENTE.altura) || null;
