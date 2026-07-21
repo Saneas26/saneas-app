@@ -2511,8 +2511,8 @@ function renderPagos(target){
   const _nInv=Math.round(_desc/10);
   // Fila Saneamigos (solo planes Completo/Premium, que son los que se benefician)
   const saneamigoRow = esPlanPC() ? `
-      <div class="orow"><span style="color:#d97757;font-weight:800">Saneamigos</span><b>${_nInv} / 6</b></div>
-      ${_nInv<6?`<p class="note">Cada Saneamigo activo te descuenta 10€ de tu cuota. ¡Con 6 tu cuota mensual es 0€! 🎉</p>`:`<p class="note">¡Enhorabuena! Tienes el máximo y tu cuota es gratis 🎉</p>`}` : '';
+      <div class="orow"><span style="color:#d97757;font-weight:800">Saneamigos</span><b>${_nInv}</b></div>
+      ${_nInv<6?`<p class="note">Cada Saneamigo de plan Completo o Premium te descuenta 10€. En plan Básico, cada dos suman 10€. El descuento nunca pasa de tu cuota. 🎉</p>`:`<p class="note">Cada Saneamigo de plan Completo o Premium te descuenta 10€. En plan Básico, cada dos suman 10€. El descuento nunca pasa de tu cuota. 🎉</p>`}` : '';
   const cuotaRow = _base>0 ? `
       <div class="orow"><span>Tu cuota${_desc>0?' este mes':''}</span><b>${_desc>0
         ? `<span style="text-decoration:line-through;color:var(--muted);font-weight:600">${_base}€</span> <span style="color:var(--teal)">${_neta}€</span>`
