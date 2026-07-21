@@ -370,7 +370,7 @@
         </div>
         <p style="font-size:12.5px;color:var(--muted);margin:10px 4px 0">El <b>peso sin grasa</b>, la <b>edad metabólica</b> y el <b>IMC</b> los calculamos nosotros a partir de tu peso, tu grasa corporal y tu edad. No hace falta que los rellenes.</p>
       </div>
-      <button class="btn" id="btnReg_imp" onclick="guardarSeccion('imp')">Enviar</button>
+      <button class="btn" id="btnReg_imp" onclick="guardarSeccion('imp')" disabled style="opacity:.45">Cargando…</button>
       <div id="r-pli" class="card hidden">
         <div class="grid2">
           <div class="field"><label>Bicipital (mm)</label><input id="f_pli_bicipital" type="number" step="0.1"><a class="vidlink" href="https://www.instagram.com/p/C6RuBniISsi/" target="_blank" rel="noopener">▶ Ver vídeo</a></div>
@@ -381,7 +381,7 @@
           <div class="field"><label>Suprailíaco (mm)</label><input id="f_pli_suprailiaco" type="number" step="0.1"><a class="vidlink" href="https://www.instagram.com/p/C6RseXBKKru/" target="_blank" rel="noopener">▶ Ver vídeo</a></div>
         </div>
       </div>
-      <button class="btn" id="btnReg_pli" onclick="guardarSeccion('pli')">Enviar</button>
+      <button class="btn" id="btnReg_pli" onclick="guardarSeccion('pli')" disabled style="opacity:.45">Cargando…</button>
       <div id="r-per" class="card hidden">
         <div id="canonCard"></div>
         <div class="grid2">
@@ -390,7 +390,7 @@
           <div class="field" id="perHombros"><label>Hombros (cm)</label><input id="f_per_hombro" type="number" step="0.1"><a class="vidlink" href="https://www.instagram.com/p/C7CwlqDIWI1/" target="_blank" rel="noopener">▶ Ver vídeo</a></div>
         </div>
       </div>
-      <button class="btn" id="btnReg_per" onclick="guardarSeccion('per')">Enviar</button>
+      <button class="btn" id="btnReg_per" onclick="guardarSeccion('per')" disabled style="opacity:.45">Cargando…</button>
       <div id="regSaveMsg"></div>
     </div>
 
@@ -1896,6 +1896,35 @@ function pintarAvisoPlazo(){
     +'de tu día asignado. La semana que viene te esperamos a tiempo.';
 }
 
+function seccionEnviada(sec){
+  try{
+    if(!ULTIMO) return false;
+    var c = SECCIONES[sec] && SECCIONES[sec].campos;
+    if(!c) return false;
+    for(var i=0;i<c.length;i++){
+      var v = ULTIMO[c[i]];
+      if(v !== null && v !== undefined && v !== "") return true;
+    }
+    return false;
+  }catch(e){ return false; }
+}
+function pintarBotonesRegistro(){
+  ["imp","pli","per"].forEach(function(sec){
+    var b = document.getElementById("btnReg_"+sec);
+    if(!b) return;
+    if(typeof CLIENTE === "undefined" || !CLIENTE){
+      b.disabled = true; b.style.opacity = ".45"; b.textContent = "Cargando…"; return;
+    }
+    b.disabled = false; b.style.opacity = "";
+    b.textContent = seccionEnviada(sec) ? "Enviado ✓ · Corregir" : "Enviar";
+  });
+}
+setInterval(function(){
+  var f;
+  try{ f = ((typeof CLIENTE!=="undefined" && CLIENTE)?"1":"0") + "|" + ["imp","pli","per"].map(seccionEnviada).join(""); }
+  catch(e){ f = "x"; }
+  if(f !== window.__regFirma){ window.__regFirma = f; pintarBotonesRegistro(); }
+}, 400);
 async function guardarSeccion(sec){
   const S=SECCIONES[sec], btn=document.getElementById('btnReg_'+sec);
   const estado=REG_SEM?(REG_SEM[S.col]??0):0;
