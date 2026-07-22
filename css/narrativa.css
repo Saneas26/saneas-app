@@ -1,0 +1,50 @@
+/* SANEAS · css/narrativa.css · Inicio narrativo: capítulo, misión, mapa, victorias, niveles (+ toast de descarga) */
+  /* ---------- Narrativa: capítulo, misión, mapa, victorias, niveles ---------- */
+  .capChip{display:inline-flex;align-items:center;gap:7px;background:var(--dark);color:#fff;border-radius:999px;padding:6px 14px;font-size:14px;font-weight:700;margin:2px 6px 4px;cursor:pointer}
+  .capChip .chev{color:#7ad3a0;font-weight:900}
+  .capFrase{font-size:15px;font-weight:700;color:var(--teal);margin:4px 6px 2px;line-height:1.4}
+  .subSem{font-size:13px;font-weight:700;color:var(--muted);margin:0 6px 12px}
+  .msnCard{background:linear-gradient(150deg,#1a2e35,#2b6478);color:#fff}
+  .msnCard h3{color:#fff;display:flex;align-items:center;gap:8px;font-size:18px}
+  .msnSub{font-size:13.5px;font-weight:600;color:rgba(255,255,255,.75);margin-top:-2px}
+  .msnIt{display:flex;align-items:center;gap:11px;width:100%;background:rgba(255,255,255,.08);border:none;border-radius:12px;padding:11px 12px;margin-top:8px;font-family:inherit;font-size:15px;font-weight:700;color:#fff;cursor:pointer;text-align:left}
+  .msnIt .chk{flex:none;width:26px;height:26px;border-radius:50%;border:2px solid rgba(255,255,255,.5);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:900;color:transparent}
+  .msnIt.done .chk{background:#7ad3a0;border-color:#7ad3a0;color:#0c2a1a}
+  .msnIt.done .t{text-decoration:line-through;opacity:.7}
+  .msnIt .t{flex:1;line-height:1.3}
+  .msnIt .auto{font-size:11px;font-weight:800;letter-spacing:.5px;color:rgba(255,255,255,.55);flex:none}
+  .msnBarW{height:12px;background:rgba(255,255,255,.18);border-radius:6px;overflow:hidden;margin-top:14px}
+  .msnBarW i{display:block;height:100%;background:#7ad3a0;border-radius:6px;transition:width .5s ease}
+  .msnPie{display:flex;justify-content:space-between;align-items:center;margin-top:8px;font-size:14.5px;font-weight:800}
+  .msnPie .pct{font-size:19px;color:#7ad3a0}
+  .msnPrem{margin-top:12px;background:rgba(255,255,255,.12);border-radius:10px;padding:9px 12px;font-size:13.5px;font-weight:600;text-align:center;line-height:1.4}
+  .msnPrem b{color:#7ad3a0}
+  .mapCard{padding:20px 16px 16px}
+  .mapTit{font-size:16px;font-weight:800;margin-bottom:16px;display:flex;gap:8px;align-items:center}
+  .mapTrack{position:relative;height:34px;margin:0 14px}
+  .mapLine{position:absolute;left:0;right:0;top:50%;height:8px;transform:translateY(-50%);background:var(--light);border-radius:4px}
+  .mapFill{position:absolute;left:0;top:50%;height:8px;transform:translateY(-50%);background:var(--teal);border-radius:4px;transition:width .6s ease}
+  .mapDot{position:absolute;top:50%;width:14px;height:14px;border-radius:50%;background:#fff;border:3px solid #cfe3e9;transform:translate(-50%,-50%)}
+  .mapDot.on{border-color:var(--teal);background:var(--teal)}
+  .mapYo{position:absolute;top:50%;transform:translate(-50%,-58%);font-size:26px;line-height:1;filter:drop-shadow(0 2px 3px rgba(26,46,53,.3))}
+  .mapMeta{position:absolute;right:-16px;top:50%;transform:translateY(-54%);font-size:22px}
+  .mapRow{display:flex;justify-content:space-between;font-size:12.5px;font-weight:700;color:var(--muted);margin:8px 2px 0}
+  .mapPie{text-align:center;font-size:15px;font-weight:800;color:var(--dark);margin-top:12px}
+  .mapSub{text-align:center;font-size:13.5px;font-weight:600;color:var(--muted);margin-top:4px;line-height:1.45}
+  .mapHito{background:#eaf6f9;border-radius:10px;padding:9px 12px;margin-top:12px;font-size:14px;font-weight:700;text-align:center;color:var(--dark)}
+  .agenda .lema{font-size:13.5px;font-weight:600;color:rgba(255,255,255,.8);margin:-4px 0 8px;line-height:1.4}
+  .vicCard{border-left:5px solid var(--green)}
+  .vicT{font-size:18px;font-weight:800;line-height:1.3}
+  .vicD{font-size:14px;color:var(--muted);font-weight:600;margin-top:2px}
+  .vicIt{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px dashed #dbe6e9;font-size:15px;font-weight:700}
+  .vicIt:last-child{border-bottom:none}
+  .vicIt .ok{flex:none;width:26px;height:26px;border-radius:50%;background:#e8f4ec;color:var(--green);display:flex;align-items:center;justify-content:center;font-weight:900}
+  .vicIt b{color:var(--green)}
+  .lvlRow{display:flex;align-items:center;gap:12px;padding:12px;border-radius:12px;margin-bottom:8px;background:#f4f8f9;font-size:15px;font-weight:700}
+  .lvlRow.now{background:var(--teal);color:#fff}
+  .lvlRow .n{flex:none;width:30px;height:30px;border-radius:50%;background:#fff;color:var(--teal);display:flex;align-items:center;justify-content:center;font-weight:900;box-shadow:var(--shadow)}
+  .lvlRow .d{font-size:12.5px;font-weight:600;opacity:.8;display:block;margin-top:1px}
+  #dl-toast{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(.94);z-index:100000;display:inline-flex;align-items:center;gap:10px;background:rgba(26,46,53,.92);color:#fff;font-weight:800;font-size:15px;padding:14px 22px;border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,.28);opacity:0;visibility:hidden;pointer-events:none;transition:opacity .2s ease,transform .2s ease}
+  #dl-toast.show{opacity:1;visibility:visible;transform:translate(-50%,-50%) scale(1)}
+  #dl-toast .dl-spin{width:16px;height:16px;border-radius:50%;border:2.5px solid rgba(255,255,255,.35);border-top-color:#fff;animation:dl-rot .7s linear infinite}
+  @keyframes dl-rot{to{transform:rotate(360deg)}}
