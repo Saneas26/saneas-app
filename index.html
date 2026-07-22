@@ -536,6 +536,7 @@
       </div>
       <div id="m-pagos" class="hidden"></div>
       <div id="m-opinion" class="hidden"></div>
+      <p style="text-align:center;color:var(--muted);font-size:12px;font-weight:600;margin:24px 0 4px" id="appVersion"></p>
     </div>
 
     <div class="nav">
@@ -558,12 +559,14 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script>
 // ====== CONFIG ======
+const APP_VERSION = 'Saneas26 v1.2';   // v1.2 = inicio narrativo (capítulos, misión, mapa, victorias)
 const SUPABASE_URL = 'https://uisrxztowgdpkxeuznfh.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_8ybOGHnn9rsMDf57mx-Igw_AVvWK30D';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const SANEAMIGO_BADGE = 'https://storage.googleapis.com/glide-prod.appspot.com/uploads-v2/8pyKPaxFUSTzXE3Nvb27/pub/pwzgsPkZR23ml2h0ysC3.png';
 const esEmbajador = () => Number((CLIENTE&&CLIENTE.descuento_invitados)||0) > 0;
 const esPlanPC = () => /completo|premium/i.test((CLIENTE&&CLIENTE.plan)||'');
+(function(){ const e=document.getElementById('appVersion'); if(e) e.textContent=APP_VERSION; })();
 
 // ====== STATE ======
 let CLIENTE=null, ULTIMO=null, PRIMERO=null, DIETA=null, TOMAS_HOY=[], REG_NOMBRE=null, PENDING=null;
