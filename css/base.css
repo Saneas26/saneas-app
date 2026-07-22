@@ -13,7 +13,7 @@
   #splash #splashTxt{font-size:26px;font-weight:300;text-align:center;line-height:1.3}
   #splash #splashTxt b{font-weight:700}
   #splash #splashNom{font-size:26px;font-weight:700;text-align:center;line-height:1.3;display:flex;align-items:center}
-  #splash #splashFrase{flex-basis:100%;text-align:center;font-size:clamp(19px,5.6vw,26px);font-weight:300;font-style:italic;
+  #splash #splashFrase{flex-basis:100%;text-align:center;font-size:clamp(17px,5.2vw,24px);font-weight:700;font-style:italic;
     color:rgba(255,255,255,.9);line-height:1.35;margin-top:16px;padding:0 14px}
   /* Entrada escalonada del splash: logo, saludo y frase */
   @keyframes spEntra{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
