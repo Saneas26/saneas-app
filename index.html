@@ -2277,7 +2277,8 @@ function pintarFase(){
   else if(cont.firstElementChild!==host){ cont.insertBefore(host, cont.firstElementChild); }
   if(host.getAttribute("data-fase")===String(__FASE.semana)) return;
   var abierta = !_faseLeida(__FASE.semana);
-    var sub = (typeof DIETA!=="undefined" && DIETA && DIETA.nombre_plan) ? fmt(DIETA.nombre_plan) : (__FASE.fase||"");
+    var _nd = (typeof DIETA!=="undefined" && DIETA && DIETA.nombre_plan) ? String(DIETA.nombre_plan).replace(/_S\d+$/,"").replace(/_/g," ").trim() : "";
+    var sub = (_nd && _nd.toLowerCase()!==String(__FASE.titulo||"").toLowerCase()) ? _nd : (__FASE.fase||"");
   host.innerHTML = '<div class="card faCard">'
     + '<button class="faHead" onclick="toggleFase()">'
     + '<span class="faIco">&#128220;</span>'
