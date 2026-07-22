@@ -228,6 +228,8 @@ function renderInicio(){
       <div class="cap">${vid?'Toca para ver el vídeo de esta semana':'Sin vídeo esta semana'}</div>
     </div>
 
+    <div id="repPlayer"></div>
+
     <div id="reflexHost"></div>
 
     <h2 class="sec">📊 Tu historial y estadísticas</h2>
@@ -281,6 +283,8 @@ function renderInicio(){
         <div class="mcol"><div class="mn">Grasas</div><div class="mv">${MAC.grasa}<em>g</em></div></div>
       </div>
     </div>`:''}
+
+    <div id="faqHost"></div>
 
     ${esPlanPC()?`<div class="card qdCard" onclick="queDecir()"><span class="qdIco">&#128172;</span><span class="qdTxt"><span class="qdT">&iquest;Y qu&eacute; digo cuando me pregunten?</span><span class="qdD">4 mensajes listos para enviar</span></span><span class="qdChev">&rsaquo;</span></div><div style="padding:6px 4px;margin-bottom:20px" onclick="abrirInvitar()">
       <div style="background:linear-gradient(135deg,#a7f3d0 0%,#e6fffa 100%);padding:20px 18px;border-radius:28px;box-shadow:0 12px 24px rgba(20,184,166,0.12);display:flex;align-items:center;gap:14px;cursor:pointer">
