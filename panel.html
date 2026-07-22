@@ -250,7 +250,7 @@
   </div>
 </div>
 
-<style>header#top{background:#fff;border-bottom:1px solid var(--line);padding:0;display:flex;flex-direction:column;align-items:stretch;gap:0;position:sticky;top:0;z-index:10}header#top .hdr-top{background:var(--teal-d);display:flex;align-items:center;gap:12px;padding:9px 24px}header#top .hdr-main{display:flex;align-items:center;gap:9px;padding:11px 24px;flex-wrap:wrap}header#top .logo{font-weight:800;font-size:18px;color:#fff;letter-spacing:-.2px}header#top .logo span{color:var(--orange)}header#top .hdr-sub{font-size:12.5px;color:#9fc9d1}header#top .sp{flex:1}header#top .count{font-size:12.5px;color:#cfe6ea}header#top .out{font-size:12.5px;color:#fff;background:rgba(255,255,255,.16);border:0;border-radius:8px;padding:6px 13px;text-decoration:none;font-weight:600}header#top .out:hover{background:rgba(255,255,255,.28)}header#top .dias{display:flex;gap:6px;margin-left:0;flex-wrap:wrap}header#top .dias button{padding:8px 15px;border:1px solid var(--line);background:#fff;border-radius:999px;font-weight:600;font-size:13.5px;color:var(--muted)}header#top .dias button.on{background:var(--teal);border-color:var(--teal);color:#fff}header#top .hdr-btn{display:inline-flex;align-items:center;background:#fff;border:1px solid var(--line);border-radius:9px;padding:8px 13px;font-size:13.5px;font-weight:600;color:var(--text)}header#top .hdr-btn:hover{border-color:var(--teal);color:var(--teal-d)}header#top .alta-btn{display:inline-flex;align-items:center;background:var(--orange);border:0;border-radius:9px;padding:9px 15px;font-size:13.5px;font-weight:700;color:#fff}header#top .adm-pill{font-size:12px;border-radius:999px;padding:5px 11px;border:1px solid rgba(255,255,255,.35);background:transparent;color:#cfe6ea;font-weight:600}header#top .adm-pill.on{background:#fff;color:var(--teal-d);border-color:#fff}header#top svg.i{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;margin-right:7px;flex:none}@media(max-width:760px){header#top .hdr-top{padding:8px 12px;gap:8px}header#top .hdr-main{padding:9px 12px;gap:6px}header#top .count{display:none}header#top .hdr-sub{display:none}header#top .dias{width:100%;gap:5px}header#top .dias button{flex:1;text-align:center;padding:8px 4px;font-size:13px}header#top .hdr-btn,header#top .alta-btn{flex:1 1 44%;justify-content:center;padding:10px 8px;font-size:13px}header#top .sp{display:none}}</style><header style="display:none" id="top"><div class="hdr-top"><div class="logo">Saneas<span>·</span></div><span class="hdr-sub">Panel de consulta</span><div class="sp"></div><div class="count" id="count"></div><button class="out" onclick="salir()">Salir</button></div><div class="hdr-main"><div class="dias" id="dias"></div><div class="sp"></div><button class="hdr-btn" onclick="abrirInforme()"><svg class="i" viewBox="0 0 24 24"><path d="M9 3h6v3H9z"/><path d="M9 4.5H6.5A1.5 1.5 0 0 0 5 6v14a1.5 1.5 0 0 0 1.5 1.5h11A1.5 1.5 0 0 0 19 20V6a1.5 1.5 0 0 0-1.5-1.5H15"/></svg>Informe del día</button><button class="hdr-btn" onclick="abrirScore()"><svg class="i" viewBox="0 0 24 24"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>Permanencia</button><button class="hdr-btn" onclick="abrirFacturas()"><svg class="i" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg>Facturas</button><button class="hdr-btn" onclick="abrirOpiniones()"><svg class="i" viewBox="0 0 24 24"><path d="M20 15a2 2 0 0 1-2 2H8l-4 3V5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2z"/></svg>Opiniones</button><button class="hdr-btn" onclick="enviarAviso(null,null)"><svg class="i" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>Aviso a todos</button><button class="hdr-btn" onclick="abrirRenovar()"><svg class="i" viewBox="0 0 24 24"><path d="M21 4v6h-6"/><path d="M19.4 14A8 8 0 1 1 17 5.6L21 10"/></svg>Renovar</button><button class="alta-btn" onclick="abrirAlta()"><svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Dar de alta</button></div></header>
+<style>header#top{background:#fff;border-bottom:1px solid var(--line);padding:0;display:flex;flex-direction:column;align-items:stretch;gap:0;position:sticky;top:0;z-index:10}header#top .hdr-top{background:var(--teal-d);display:flex;align-items:center;gap:12px;padding:9px 24px}header#top .hdr-main{display:flex;align-items:center;gap:9px;padding:11px 24px;flex-wrap:wrap}header#top .logo{font-weight:800;font-size:18px;color:#fff;letter-spacing:-.2px}header#top .logo span{color:var(--orange)}header#top .hdr-sub{font-size:12.5px;color:#9fc9d1}header#top .sp{flex:1}header#top .count{font-size:12.5px;color:#cfe6ea}header#top .out{font-size:12.5px;color:#fff;background:rgba(255,255,255,.16);border:0;border-radius:8px;padding:6px 13px;text-decoration:none;font-weight:600}header#top .out:hover{background:rgba(255,255,255,.28)}header#top .dias{display:flex;gap:6px;margin-left:0;flex-wrap:wrap}header#top .dias button{padding:8px 15px;border:1px solid var(--line);background:#fff;border-radius:999px;font-weight:600;font-size:13.5px;color:var(--muted)}header#top .dias button.on{background:var(--teal);border-color:var(--teal);color:#fff}header#top .hdr-btn{display:inline-flex;align-items:center;background:#fff;border:1px solid var(--line);border-radius:9px;padding:8px 13px;font-size:13.5px;font-weight:600;color:var(--text)}header#top .hdr-btn:hover{border-color:var(--teal);color:var(--teal-d)}header#top .alta-btn{display:inline-flex;align-items:center;background:var(--orange);border:0;border-radius:9px;padding:9px 15px;font-size:13.5px;font-weight:700;color:#fff}header#top .adm-pill{font-size:12px;border-radius:999px;padding:5px 11px;border:1px solid rgba(255,255,255,.35);background:transparent;color:#cfe6ea;font-weight:600}header#top .adm-pill.on{background:#fff;color:var(--teal-d);border-color:#fff}header#top svg.i{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;margin-right:7px;flex:none}@media(max-width:760px){header#top .hdr-top{padding:8px 12px;gap:8px}header#top .hdr-main{padding:9px 12px;gap:6px}header#top .count{display:none}header#top .hdr-sub{display:none}header#top .dias{width:100%;gap:5px}header#top .dias button{flex:1;text-align:center;padding:8px 4px;font-size:13px}header#top .hdr-btn,header#top .alta-btn{flex:1 1 44%;justify-content:center;padding:10px 8px;font-size:13px}header#top .sp{display:none}}</style><header style="display:none" id="top"><div class="hdr-top"><div class="logo">Saneas<span>·</span></div><span class="hdr-sub">Panel de consulta</span><div class="sp"></div><div class="count" id="count"></div><button class="out" onclick="salir()">Salir</button></div><div class="hdr-main"><div class="dias" id="dias"></div><div class="sp"></div><button class="hdr-btn" onclick="abrirInforme()"><svg class="i" viewBox="0 0 24 24"><path d="M9 3h6v3H9z"/><path d="M9 4.5H6.5A1.5 1.5 0 0 0 5 6v14a1.5 1.5 0 0 0 1.5 1.5h11A1.5 1.5 0 0 0 19 20V6a1.5 1.5 0 0 0-1.5-1.5H15"/></svg>Informe del día</button><button class="hdr-btn" onclick="abrirScore()"><svg class="i" viewBox="0 0 24 24"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>Permanencia</button><button class="hdr-btn" onclick="abrirFacturas()"><svg class="i" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg>Facturas</button><button class="hdr-btn" onclick="abrirComentarios()">Comentarios</button><button class="hdr-btn" onclick="abrirOpiniones()"><svg class="i" viewBox="0 0 24 24"><path d="M20 15a2 2 0 0 1-2 2H8l-4 3V5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2z"/></svg>Opiniones</button><button class="hdr-btn" onclick="enviarAviso(null,null)"><svg class="i" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>Aviso a todos</button><button class="hdr-btn" onclick="abrirRenovar()"><svg class="i" viewBox="0 0 24 24"><path d="M21 4v6h-6"/><path d="M19.4 14A8 8 0 1 1 17 5.6L21 10"/></svg>Renovar</button><button class="alta-btn" onclick="abrirAlta()"><svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Dar de alta</button></div></header>
 
 <main style="display:none" id="app">
   <h2 class="t" id="tituloDia">Plazas</h2>
@@ -1081,6 +1081,61 @@ async function repEnviar(){
     try{ await rpc("admin_enviar_push",{ p_titulo:"Reporte entregado", p_cuerpo:"Ya puedes escucharlo en tu app", p_cliente_id:REC_id }); }catch(e){}
     cerrarRep(); toast("Reporte enviado"+(REC_nombre?" a "+REC_nombre:""));
   }catch(e){ toast("Error al enviar"); if(btn){btn.disabled=false;btn.textContent="Enviar";} }
+}
+var COM_ROWS=[];
+async function tabla(metodo, qs, body){
+  var o={ method:metodo, headers:{ apikey:PUBLISHABLE, Authorization:"Bearer "+adminToken(),
+    "Content-Type":"application/json", Prefer:"return=representation" } };
+  if(body) o.body=JSON.stringify(body);
+  var r=await fetch(SUPABASE_URL+"/rest/v1/saneas_comentarios_fase"+(qs||""), o);
+  if(!r.ok){ throw new Error(r.status+" "+(await r.text()).slice(0,120)); }
+  var t=await r.text(); return t?JSON.parse(t):[];
+}
+async function abrirComentarios(){
+  var ov=document.createElement("div"); ov.id="comOv";
+  ov.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:960;overflow:auto;padding:20px";
+  ov.innerHTML='<div id="comBox" style="background:#fff;border-radius:14px;max-width:760px;margin:0 auto;padding:22px">Cargando...</div>';
+  document.body.appendChild(ov);
+  try{
+    COM_ROWS=await tabla("GET","?select=*&order=semana.asc");
+    pintarComentarios();
+  }catch(e){ document.getElementById("comBox").innerHTML="Error: "+e.message; }
+}
+function cerrarComentarios(){ var o=document.getElementById("comOv"); if(o) o.remove(); }
+function pintarComentarios(){
+  var b=document.getElementById("comBox"); if(!b) return;
+  var h='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">'
+    +'<div style="font-size:19px;font-weight:700">Comentarios por fase</div>'
+    +'<button onclick="cerrarComentarios()" style="background:none;border:0;font-size:22px;cursor:pointer;color:#999">&times;</button></div>'
+    +'<div style="font-size:14px;color:#666;margin-bottom:16px">La clienta solo lo ve si está <b>publicado</b>. Usa <b>{nombre}</b> y se sustituye por su nombre.</div>';
+  COM_ROWS.forEach(function(r){
+    var cab="Semana "+r.semana+(r.fase?" · "+r.fase:"")+(r.tema?" · "+r.tema:"");
+    h+='<div style="border:1px solid #e2e8ea;border-radius:10px;padding:14px;margin-bottom:12px">'
+      +'<div style="font-size:15px;font-weight:700;color:#1a2e35">'+cab+'</div>'
+      +'<input id="ti_'+r.semana+'" value="'+((r.titulo||"").replace(/"/g,"&quot;"))+'" placeholder="Título" '
+      +'style="width:100%;margin-top:8px;padding:9px;font-size:15px;border:1px solid #ccc;border-radius:8px;font-family:inherit">'
+      +'<textarea id="tx_'+r.semana+'" rows="6" placeholder="Pega aquí el comentario de esta fase" '
+      +'style="width:100%;margin-top:8px;padding:10px;font-size:15px;line-height:1.5;border:1px solid #ccc;border-radius:8px;font-family:inherit">'
+      +((r.texto||"").replace(/</g,"&lt;"))+'</textarea>'
+      +'<div style="display:flex;align-items:center;gap:12px;margin-top:10px">'
+      +'<label style="font-size:15px;display:flex;align-items:center;gap:6px;cursor:pointer">'
+      +'<input type="checkbox" id="pu_'+r.semana+'" '+(r.publicado?"checked":"")+'> Publicado</label>'
+      +'<button onclick="guardarComentario('+r.semana+')" style="margin-left:auto;padding:9px 18px;border:0;background:#3890A4;color:#fff;border-radius:8px;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer">Guardar</button>'
+      +'</div></div>';
+  });
+  b.innerHTML=h;
+}
+async function guardarComentario(sem){
+  var ti=(document.getElementById("ti_"+sem)||{}).value||null;
+  var tx=(document.getElementById("tx_"+sem)||{}).value||null;
+  var pu=!!(document.getElementById("pu_"+sem)||{}).checked;
+  if(pu && !(tx||"").trim()){ toast("No puedes publicar una semana sin texto"); return; }
+  try{
+    await tabla("PATCH","?semana=eq."+sem,{ titulo:ti, texto:tx, publicado:pu, actualizado:new Date().toISOString() });
+    var f=COM_ROWS.filter(function(x){return x.semana===sem;})[0];
+    if(f){ f.titulo=ti; f.texto=tx; f.publicado=pu; }
+    toast("Semana "+sem+(pu?" publicada":" guardada"));
+  }catch(e){ toast("No se pudo guardar: "+e.message.slice(0,60)); }
 }
 const MOTIVOS_BAJA = ["Impago","Objetivo conseguido","Motivo economico","Falta de tiempo",
   "No veia resultados","Problema de salud","Cambio de circunstancias","Se fue sin decir nada","Otro"];
