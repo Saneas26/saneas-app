@@ -618,6 +618,10 @@ function _repPinta(id){
   // No se espera con await: si esto falla o tarda, la ficha se abre igual.
   (async function(){
     try{
+      // Espera SIEMPRE un ciclo: si los datos ya estan en memoria, sin esto
+      // intentaria escribirse antes de que la ficha exista y no se pintaria.
+      await new Promise(function(r){ setTimeout(r,0); });
+      var e0=document.getElementById('repLn'); if(!e0) await new Promise(function(r){ setTimeout(r,120); });
       if(!REP_ULT){ var d=await rpc('panel_reportes_ultimos',{}); REP_ULT={}; (d||[]).forEach(function(x){ REP_ULT[x.cliente_id]={u:x.ultimo,n:x.total}; }); }
       var r=REP_ULT[id], e=document.getElementById('repLn'); if(!e) return;
       var base='display:inline-block;margin:0 0 6px;padding:5px 11px;border-radius:8px;font-size:14px;font-weight:700';
