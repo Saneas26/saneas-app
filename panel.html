@@ -612,12 +612,24 @@ async function cargarDietas(){
   const {status,data}=await api('dietas',{});
   if(status===200&&data.dietas) DIETAS=data.dietas;
 }
+var REP_ULT=null;
+async function repUltimo(id){
+  try{
+    if(!REP_ULT){ var d=await rpc('panel_reportes_ultimos',{}); REP_ULT={}; (d||[]).forEach(function(x){ REP_ULT[x.cliente_id]={u:x.ultimo,n:x.total}; }); }
+    var r=REP_ULT[id];
+    var base='display:inline-block;margin:2px 0 8px;padding:5px 11px;border-radius:8px;font-size:14px;font-weight:700';
+    if(!r) return '<div style="'+base+';background:#f1f4f5;color:#6b878f">🎙 Sin reporte enviado</div>';
+    var f=new Date(r.u).toLocaleString('es-ES',{timeZone:'Europe/Madrid',day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+    return '<div style="'+base+';background:#e6f4ea;color:#12a150">🎙 Reporte enviado · '+f+(r.n>1?' · '+r.n+' guardados':'')+'</div>';
+  }catch(e){ return ''; }
+}
 async function abrirFicha(id){
   el('ov').classList.add('show'); el('ficha').classList.add('show');
   el('ficha').innerHTML='<div class="fh"><h3>Cargando…</h3></div>';
   await cargarDietas();
   const {status,data}=await api('ficha',{cliente_id:id});
-  if(status!==200){el('ficha').innerHTML=`<div class="fh"><button class="x" onclick="cerrarFicha()">×</button><h3>Error</h3></div><div class="fbody"><p class="empty-msg">${data.error||''}</p></div>`;return;}
+  if(status!==200){const _repLn = await repUltimo(cli.id);
+  el('ficha').innerHTML=`<div class="fh"><button class="x" onclick="cerrarFicha()">×</button><h3>Error</h3></div><div class="fbody"><p class="empty-msg">${data.error||''}</p></div>`;return;}
   (FICHA_INVS=data.invitados||[], pintarFicha(data.cliente,data.registros||[]));
   rpc('accesos_resumen',{p_cliente:id}).then(res=>{
     const e=el('fActividad'); if(!e) return;
@@ -781,6 +793,7 @@ function pintarFicha(cli,regs){
         <button class="sc-btn" onclick="sinConsultaFicha('${cli.id}', '${(nom||'este cliente').replace(/'/g,'')}')">Sin consulta</button>
         <button class="rep-btn" onclick="grabarReporte('${cli.id}', '${(nom||'').replace(/'/g,'')}')">Reporte</button><button class="baja-btn" onclick="darBaja('${cli.id}', '${(nom||'este cliente').replace(/'/g,'')}')">Dar de baja</button>
       </div>
+      ${_repLn}
       <h3>${nom||'Cliente'}</h3>
       <div class="sub">
         <span>${gen}${ed!=null?' · '+ed+' años':''}</span>
