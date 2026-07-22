@@ -12,6 +12,11 @@
   .msnIt.done .t{text-decoration:line-through;opacity:.7}
   .msnIt .t{flex:1;line-height:1.3}
   .msnIt .auto{font-size:11px;font-weight:800;letter-spacing:.5px;color:rgba(255,255,255,.55);flex:none}
+  .msnIt .t small{font-size:12px;font-weight:600;opacity:.8}
+  .msnPasos{display:flex;gap:8px;margin-top:8px}
+  .msnPasos input{flex:1;min-width:0;padding:10px 12px;border:0;border-radius:12px;font-size:16px;font-family:inherit;outline:none;background:rgba(255,255,255,.95);color:var(--dark)}
+  .msnPasos button{background:var(--orange);color:#fff;border:0;border-radius:12px;padding:10px 16px;font-weight:800;font-family:inherit;font-size:14px;cursor:pointer;white-space:nowrap}
+  .msnPasosSem{font-size:12px;font-weight:600;color:rgba(255,255,255,.75);margin-top:6px;text-align:right}
   .msnBarW{height:12px;background:rgba(255,255,255,.18);border-radius:6px;overflow:hidden;margin-top:14px}
   .msnBarW i{display:block;height:100%;background:#7ad3a0;border-radius:6px;transition:width .5s ease}
   .msnPie{display:flex;justify-content:space-between;align-items:center;margin-top:8px;font-size:14.5px;font-weight:800}

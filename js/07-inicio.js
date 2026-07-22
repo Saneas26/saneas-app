@@ -64,12 +64,15 @@ function pintarCapitulo(){
 // (localStorage, clave por día); pasos y datos de consulta se marcan solos.
 function _misionKey(){ try{ return 'saneas_mision_'+_hoyCanarias(); }catch(e){ return 'saneas_mision'; } }
 function _misionGet(){ try{ return JSON.parse(localStorage.getItem(_misionKey())||'{}'); }catch(e){ return {}; } }
+let MSN_PASOS_ABIERTO=false;   // el editor de pasos dentro de la misión (se abre tocando el ítem)
 function misionItems(){
   const m=_misionGet();
   const litros=aguaDiariaTexto();
+  const aguaLn=aguaDiariaL();
+  const vasos=aguaLn!=null?Math.round(aguaLn*4):0;   // vasos de 250 ml
   const it=[
-    {k:'agua',ico:'💧',t:'Beber '+(litros?litros+' L de agua':'tu agua del día'),done:!!m.agua,manual:true},
-    {k:'pasos',ico:'👟',t:META_DIA.toLocaleString('es-ES')+' pasos',done:PASOS_HOY>=META_DIA,manual:false},
+    {k:'agua',ico:'💧',t:'Beber '+(litros?litros+' L de agua'+(vasos?' <small>(≈ '+vasos+' vasos)</small>':''):'tu agua del día'),done:!!m.agua,manual:true},
+    {k:'pasos',ico:'👟',t:PASOS_HOY.toLocaleString('es-ES')+' / '+META_DIA.toLocaleString('es-ES')+' pasos',done:PASOS_HOY>=META_DIA,manual:false},
     {k:'dieta',ico:'🥗',t:'Seguir la dieta de hoy',done:!!m.dieta,manual:true},
     {k:'entreno',ico:'💪',t:'Completar tu entrenamiento',done:!!m.entreno,manual:true}
   ];
@@ -79,7 +82,7 @@ function misionItems(){
 function misionTap(k){
   const it=misionItems().find(x=>x.k===k); if(!it) return;
   if(it.manual){ const m=_misionGet(); m[k]=!m[k]; try{ localStorage.setItem(_misionKey(),JSON.stringify(m)); }catch(e){} pintarMision(); return; }
-  if(k==='pasos'){ const e=document.getElementById('pasosInput'); if(e){ e.scrollIntoView({behavior:'smooth',block:'center'}); setTimeout(()=>e.focus(),350); } return; }
+  if(k==='pasos'){ MSN_PASOS_ABIERTO=!MSN_PASOS_ABIERTO; pintarMision(); if(MSN_PASOS_ABIERTO){ const e=document.getElementById('pasosInput'); if(e) e.focus(); } return; }
   if(k==='datos') irA('registro');
 }
 function irA(id){ const bts=document.querySelectorAll('.nav button'); const idx={inicio:0,dieta:1,gym:2,registro:3,mas:4}[id]; if(bts[idx]) go(id,bts[idx]); }
@@ -88,11 +91,17 @@ function pintarMision(){
   const items=misionItems();
   const hechas=items.filter(i=>i.done).length;
   const pct=Math.round(hechas/items.length*100);
-  const sig=items.map(i=>i.k+(i.done?'1':'0')).join('');
+  const sig=items.map(i=>i.k+(i.done?'1':'0')).join('')+'|'+PASOS_HOY+'|'+(MSN_PASOS_ABIERTO?'1':'0');
   if(el.getAttribute('data-msn')===sig) return;   // el interval repinta: solo tocar el DOM si algo cambió
+  const faltan=META_SEMANA-PASOS_SEM;
   el.innerHTML=`<h3>🎯 Tu misión de hoy</h3>
     <div class="msnSub">Gana el día de hoy y estarás un paso más cerca.</div>
-    ${items.map(i=>`<button class="msnIt${i.done?' done':''}" onclick="misionTap('${i.k}')"><span class="chk">✓</span><span style="font-size:18px;flex:none">${i.ico}</span><span class="t">${i.t}</span>${!i.manual&&!i.done?'<span class="auto">AUTO</span>':''}</button>`).join('')}
+    ${items.map(i=>`<button class="msnIt${i.done?' done':''}" onclick="misionTap('${i.k}')"><span class="chk">✓</span><span style="font-size:18px;flex:none">${i.ico}</span><span class="t">${i.t}</span>${i.k==='pasos'&&!i.done?'<span class="auto">➕ AÑADIR</span>':!i.manual&&!i.done?'<span class="auto">AUTO</span>':''}</button>${i.k==='pasos'&&MSN_PASOS_ABIERTO?`
+      <div class="msnPasos">
+        <input id="pasosInput" type="number" inputmode="numeric" min="1" placeholder="Añade los pasos que hiciste hoy">
+        <button onclick="sumarPasos()">Sumar</button>
+      </div>
+      <div class="msnPasosSem">${PASOS_SEM>=META_SEMANA?'✅ ¡Reto semanal conseguido! 🎉':'Esta semana: '+PASOS_SEM.toLocaleString('es-ES')+' de '+META_SEMANA.toLocaleString('es-ES')+' · te quedan '+faltan.toLocaleString('es-ES')+' 👟'}</div>`:''}`).join('')}
     <div class="msnBarW"><i style="width:${pct}%"></i></div>
     <div class="msnPie"><span>${pct===100?'🏆 ¡Día ganado!':'Hoy puedes ganar el día'}</span><span class="pct">${pct}%</span></div>
     <div class="msnPrem">${pct===100?'Recompensa conseguida: <b>+1 día</b> hacia tu objetivo 🎉':'Recompensa: <b>+1 día</b> hacia tu objetivo'}</div>`;
@@ -137,10 +146,6 @@ function renderInicio(){
   const metaFinal=OBJ?OBJ.promedio:CLIENTE.peso_objetivo;
   const prog=(pesoIni&&metaFinal&&pesoHoy)?
     Math.max(0,Math.min(100,Math.round((pesoIni-pesoHoy)/(pesoIni-metaFinal)*100))):0;
-  const aguaL=aguaDiariaL();
-  const litros=aguaDiariaTexto()||'—';
-  const vasos=aguaL!=null?Math.round(aguaL*4):0;   // vasos de 250 ml
-  let glasses='';for(let i=0;i<vasos;i++)glasses+='<span class="full"></span>';
   const vid=CLIENTE.video_semana_url;
   // La miniatura la pone YouTube a partir del id, y el id sale de la URL guardada.
   // Sirve tanto youtu.be/ID como youtube.com/watch?v=ID o /embed/ID.
@@ -198,28 +203,6 @@ function renderInicio(){
       <div class="choice" onclick="pizarra('prox',this)"><span class="ic">🛒</span>Próxima dieta + compra</div>
     </div>
     <div class="card" id="pizarra"></div>
-
-    <h2 class="sec">🔋 Tus retos de hoy</h2>
-    <div class="card water">
-      <div class="drop">💧</div>
-      <div style="flex:1"><h3 style="margin:0">Agua de hoy</h3>
-        <div><span class="big">${litros} L</span> <span style="font-size:14px;color:var(--muted)">${aguaL!=null?'≈ '+vasos+' vasos':'registra tu peso'}</span></div>
-        <div class="glasses">${glasses}</div></div>
-    </div>
-
-    <div class="card steps">
-      <div class="foot">👟</div>
-      <div style="flex:1">
-        <h3 style="margin:0">Reto de hoy</h3>
-        <div><span class="big" id="pasosTotal">${PASOS_HOY.toLocaleString('es-ES')}</span> <span style="font-size:14px;color:var(--dark);font-weight:700">/ 8.800 pasos</span></div>
-        <div class="bar"><span id="pasosBar" style="width:${Math.min(100,Math.round(PASOS_SEM/61600*100))}%"></span></div>
-        <div class="smsg" id="pasosMsg"></div>
-        <div style="display:flex;gap:8px;margin-top:10px">
-          <input id="pasosInput" type="number" inputmode="numeric" min="1" placeholder="Añade los pasos que hiciste hoy">
-          <button onclick="sumarPasos()">Sumar</button>
-        </div>
-      </div>
-    </div>
 
     <h2 class="sec">🎬 Vídeo de la semana</h2>
     <div class="video">
