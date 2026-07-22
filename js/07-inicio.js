@@ -140,7 +140,7 @@ function avisoVacaciones(){
   if(!vh) return '';
   var hoy = new Date().toLocaleDateString('en-CA',{timeZone:'Europe/Madrid'});
   if(vh < hoy) return '';
-  var f = new Date(vh+'T00:00:00').toLocaleDateString('es-ES',{timeZone:'Europe/Madrid',day:'2-digit',month:'2-digit'});
+  var f = vh.slice(8,10)+'/'+vh.slice(5,7);
   return `<div class="card" style="background:#fff4e6;border:1px solid #ffe0b3;color:#8a5a00;font-size:16px;line-height:1.45;padding:14px 16px">\u23f8\ufe0f <b>Est\u00e1s en pausa por vacaciones</b> hasta el ${f}. Estos d\u00edas tu plan y tu pr\u00f3xima cita se quedan esper\u00e1ndote \u2014 desconecta con tranquilidad y retomamos a tu ritmo. \ud83c\udf34</div>`;
 }
 
