@@ -213,7 +213,7 @@ function renderInicio(){
 
     <div id="reflexHost"></div>
 
-    <h2 class="sec">📊 Tu historial y estadísticas</h2>
+    <h2 class="sec">🏆 Tu transformación y logros</h2>
     <div class="card">
       <div class="evo"><div class="lbl">Peso (kg)</div>
         <div class="stat">
