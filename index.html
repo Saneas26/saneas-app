@@ -253,6 +253,14 @@
 .f1Btn{margin-top:10px;width:100%;background:var(--teal);color:#fff;border:0;border-radius:10px;padding:12px;font-size:16px;font-weight:700;font-family:inherit;cursor:pointer}
 .f1Cita{font-size:18px;line-height:1.6;color:var(--dark);font-style:italic;margin:10px 0}
 .f1D{font-size:16px;color:var(--muted);line-height:1.5}
+.faCard{border-left:5px solid var(--teal);padding:0;overflow:hidden}
+.faHead{display:flex;align-items:center;gap:12px;width:100%;padding:16px;background:none;border:0;font-family:inherit;cursor:pointer;text-align:left}
+.faIco{font-size:24px;flex-shrink:0}
+.faTxt{flex:1;min-width:0}
+.faTit{display:block;font-size:18px;font-weight:700;color:var(--dark);line-height:1.3}
+.faSub{display:block;font-size:14px;color:var(--muted);margin-top:2px}
+.faChev{font-size:24px;color:var(--teal);flex-shrink:0;transition:transform .2s}
+.faBody{padding:0 16px 16px;font-size:16px;line-height:1.6;color:var(--dark)}
 .rpAviso{background:rgba(245,134,46,.5);border:0;display:flex;align-items:center;gap:10px;font-size:16px;font-weight:600;color:var(--dark);line-height:1.4}
 .rpCard{border-left:5px solid var(--teal)}
 .rpT{font-size:18px;font-weight:700;color:var(--dark);display:flex;align-items:center;gap:8px;line-height:1.3;margin-bottom:4px}
@@ -975,6 +983,7 @@ async function iniciarSesion(){
   window.__regCargado = true;
   calcularProgreso();
   cargarReporte();
+  cargarFase();
   const {data:regs0}=await sb.from('registros').select('*').eq('cliente_id',user.id).order('semana',{ascending:true,nullsFirst:false}).order('fecha',{ascending:true}).limit(1);
   PRIMERO=(regs0&&regs0[0])||null;
   await cargarDieta();
@@ -2196,7 +2205,7 @@ function pintarProgreso(){
     + '<div class="pgPie">Semana ' + window.__PROG.semanas + ' de tu camino en Saneas</div>'
     + '</div>';
 }
-setInterval(function(){ pintarReporte(); if(window.__PROG){ pintarProgreso(); pintarPedir(); pintar100(); } }, 800);
+setInterval(function(){ pintarReporte(); pintarFase(); if(window.__PROG){ pintarProgreso(); pintarPedir(); pintar100(); } }, 800);
 var __REP;
 async function cargarReporte(){
   try{
@@ -2221,6 +2230,48 @@ function _repFecha(d){
   if(!d) return "";
   try{ var s=d.toLocaleString("es-ES",{ timeZone:"Europe/Madrid", weekday:"long", day:"2-digit", month:"long", hour:"2-digit", minute:"2-digit" });
     return s.charAt(0).toUpperCase()+s.slice(1); }catch(e){ return ""; }
+}
+var __FASE;
+async function cargarFase(){
+  try{
+    if(typeof CLIENTE==="undefined"||!CLIENTE) return;
+    var s = Number(CLIENTE.semana)||0;
+    if(!s){ __FASE=null; return; }
+    var r = await sb.from("saneas_comentarios_fase").select("*")
+      .lte("semana", s).gte("semana_hasta", s).eq("publicado", true).limit(1);
+    __FASE = (r && r.data && r.data[0]) || null;
+  }catch(e){ __FASE=null; }
+}
+function _faseLeida(k){ try{ return localStorage.getItem("saneas_fase_"+k)==="1"; }catch(e){ return false; } }
+function toggleFase(){
+  if(!__FASE) return;
+  var c=document.getElementById("faseCuerpo"), ch=document.getElementById("faseChev");
+  if(!c) return;
+  var abierto = c.style.display!=="none";
+  c.style.display = abierto ? "none" : "block";
+  if(ch) ch.style.transform = abierto ? "" : "rotate(90deg)";
+  if(abierto){ try{ localStorage.setItem("saneas_fase_"+__FASE.semana,"1"); }catch(e){} }
+}
+function pintarFase(){
+  if(typeof __FASE==="undefined") return;
+  var cont=document.getElementById("s-dieta"); if(!cont) return;
+  var host=document.getElementById("fasePanel");
+  if(!__FASE){ if(host) host.remove(); return; }
+  if(!host){ host=document.createElement("div"); host.id="fasePanel"; cont.insertBefore(host, cont.firstElementChild); }
+  else if(cont.firstElementChild!==host){ cont.insertBefore(host, cont.firstElementChild); }
+  if(host.getAttribute("data-fase")===String(__FASE.semana)) return;
+  var abierta = !_faseLeida(__FASE.semana);
+  var sub = "Semanas "+__FASE.semana+"-"+__FASE.semana_hasta+(__FASE.fase?" · "+__FASE.fase:"");
+  host.innerHTML = '<div class="card faCard">'
+    + '<button class="faHead" onclick="toggleFase()">'
+    + '<span class="faIco">&#128220;</span>'
+    + '<span class="faTxt"><span class="faTit">'+esc(__FASE.titulo||"Tu fase")+'</span>'
+    + '<span class="faSub">'+esc(sub)+'</span></span>'
+    + '<span class="faChev" id="faseChev" style="'+(abierta?"transform:rotate(90deg)":"")+'">&rsaquo;</span></button>'
+    + '<div class="faBody" id="faseCuerpo" style="display:'+(abierta?"block":"none")+'">'
+    + (__FASE.texto||"")
+    + '</div></div>';
+  host.setAttribute("data-fase", String(__FASE.semana));
 }
 function pintarReporte(){
   if(typeof __REP==="undefined") return;
