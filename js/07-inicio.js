@@ -1,14 +1,16 @@
 // SANEAS · js/07-inicio.js · Pantalla de inicio: agua, narrativa (capítulo/misión/niveles/victorias) y datos fiscales
 // ====== RENDER INICIO ======
-// Agua diaria = peso actual / 20 (litros). Ej: 80 kg -> 4,0 L
+// Agua diaria = peso actual / 30, con TECHO de 3 L. Ej: 80 kg -> 2,7 L
+// Decision clinica de Oscar (22/07/2026) tras la revision de nutri: el /20 daba 5 L
+// a 100 kg, con riesgo de hiponatremia en quien toma tiazidas o ISRS. NO subirlo.
 // UNA sola formula: la tarjeta "Agua de hoy" (inicio) y el plan semanal en PDF
-// leen las dos de aqui. No se copia el /20 a ningun otro sitio.
+// leen las dos de aqui. No se copia el /30 ni el techo a ningun otro sitio.
 function aguaDiariaL(){
   const pesoHoy=(ULTIMO&&ULTIMO.peso!=null)?Number(ULTIMO.peso):null;
   const pesoIni=(PRIMERO&&PRIMERO.peso!=null)?Number(PRIMERO.peso)
                :(CLIENTE&&CLIENTE.peso_inicial!=null?Number(CLIENTE.peso_inicial):null);
   const p=pesoHoy||pesoIni||null;
-  return p?(p/20):null;
+  return p?Math.min(3, p/30):null;
 }
 function aguaDiariaTexto(){
   const l=aguaDiariaL();
