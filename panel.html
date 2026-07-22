@@ -1732,11 +1732,14 @@ async function genPDF(){
     node.remove(); node=null;
     const ratio=canvas.height/canvas.width;
     // Orientacion automatica: apaisado si es ancho, vertical si es alto
-    const apaisado=ratio<=194/281;
-    const W=apaisado?281:194, H=apaisado?194:281, M=8;
-    const pdf=new window.jspdf.jsPDF({orientation:apaisado?'landscape':'portrait',unit:'mm',format:'a4'});
-    const h=W*ratio;
-    if(h<=H){ pdf.addImage(canvas.toDataURL('image/jpeg',0.92),'JPEG',M,M,W,h); }
+    // A4 SIEMPRE APAISADO, margenes estrechos y a pagina completa (Oscar, 22/07/2026).
+    const M=5, W=297-2*M, H=210-2*M;
+    const pdf=new window.jspdf.jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
+    let iw=W, ih=W*ratio;
+    if(ih>H){ ih=H; iw=H/ratio; }   // encaja entero en UNA sola pagina
+    const ox=M+(W-iw)/2, oy=M+(H-ih)/2;  // centrado
+    const h=ih;
+    if(h<=H){ pdf.addImage(canvas.toDataURL('image/jpeg',0.92),'JPEG',ox,oy,iw,ih); }
     else{
       const pagePx=Math.floor(canvas.width*H/W); let y=0,primera=true;
       while(y<canvas.height){
