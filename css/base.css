@@ -15,6 +15,12 @@
   #splash #splashNom{font-size:26px;font-weight:700;text-align:center;line-height:1.3;display:flex;align-items:center}
   #splash #splashFrase{flex-basis:100%;text-align:center;font-size:13px;font-weight:300;font-style:italic;
     color:rgba(255,255,255,.82);line-height:1.35;margin-top:12px;padding:0 16px}
+  /* Entrada escalonada del splash: logo, saludo y frase */
+  @keyframes spEntra{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  #splash .sp-logo{animation:spEntra .55s cubic-bezier(.22,.61,.36,1) both}
+  #splash #splashTxt,#splash #splashNom{animation:spEntra .55s .22s cubic-bezier(.22,.61,.36,1) both}
+  #splash #splashFrase{animation:spEntra .75s .55s cubic-bezier(.22,.61,.36,1) both}
+  @media (prefers-reduced-motion:reduce){#splash .sp-logo,#splash #splashTxt,#splash #splashNom,#splash #splashFrase{animation:none}}
   /* ---------- AUTH ---------- */
   #auth{flex:1;display:flex;flex-direction:column;justify-content:center;padding:40px 24px;
     background:linear-gradient(160deg,#3890a4,#1a2e35);color:#fff;min-height:100vh;overflow-y:auto}
