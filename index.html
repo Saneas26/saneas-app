@@ -311,6 +311,51 @@
     #rotateGuard{display:flex;position:fixed;inset:0;z-index:99999;background:var(--teal);color:#fff;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px}
     .app{display:none!important}
   }
+  /* ---------- Narrativa: capítulo, misión, mapa, victorias, niveles ---------- */
+  .capChip{display:inline-flex;align-items:center;gap:7px;background:var(--dark);color:#fff;border-radius:999px;padding:6px 14px;font-size:14px;font-weight:700;margin:2px 6px 4px;cursor:pointer}
+  .capChip .chev{color:#7ad3a0;font-weight:900}
+  .capFrase{font-size:15px;font-weight:700;color:var(--teal);margin:4px 6px 2px;line-height:1.4}
+  .subSem{font-size:13px;font-weight:700;color:var(--muted);margin:0 6px 12px}
+  .msnCard{background:linear-gradient(150deg,#1a2e35,#2b6478);color:#fff}
+  .msnCard h3{color:#fff;display:flex;align-items:center;gap:8px;font-size:18px}
+  .msnSub{font-size:13.5px;font-weight:600;color:rgba(255,255,255,.75);margin-top:-2px}
+  .msnIt{display:flex;align-items:center;gap:11px;width:100%;background:rgba(255,255,255,.08);border:none;border-radius:12px;padding:11px 12px;margin-top:8px;font-family:inherit;font-size:15px;font-weight:700;color:#fff;cursor:pointer;text-align:left}
+  .msnIt .chk{flex:none;width:26px;height:26px;border-radius:50%;border:2px solid rgba(255,255,255,.5);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:900;color:transparent}
+  .msnIt.done .chk{background:#7ad3a0;border-color:#7ad3a0;color:#0c2a1a}
+  .msnIt.done .t{text-decoration:line-through;opacity:.7}
+  .msnIt .t{flex:1;line-height:1.3}
+  .msnIt .auto{font-size:11px;font-weight:800;letter-spacing:.5px;color:rgba(255,255,255,.55);flex:none}
+  .msnBarW{height:12px;background:rgba(255,255,255,.18);border-radius:6px;overflow:hidden;margin-top:14px}
+  .msnBarW i{display:block;height:100%;background:#7ad3a0;border-radius:6px;transition:width .5s ease}
+  .msnPie{display:flex;justify-content:space-between;align-items:center;margin-top:8px;font-size:14.5px;font-weight:800}
+  .msnPie .pct{font-size:19px;color:#7ad3a0}
+  .msnPrem{margin-top:12px;background:rgba(255,255,255,.12);border-radius:10px;padding:9px 12px;font-size:13.5px;font-weight:600;text-align:center;line-height:1.4}
+  .msnPrem b{color:#7ad3a0}
+  .mapCard{padding:20px 16px 16px}
+  .mapTit{font-size:16px;font-weight:800;margin-bottom:16px;display:flex;gap:8px;align-items:center}
+  .mapTrack{position:relative;height:34px;margin:0 14px}
+  .mapLine{position:absolute;left:0;right:0;top:50%;height:8px;transform:translateY(-50%);background:var(--light);border-radius:4px}
+  .mapFill{position:absolute;left:0;top:50%;height:8px;transform:translateY(-50%);background:var(--teal);border-radius:4px;transition:width .6s ease}
+  .mapDot{position:absolute;top:50%;width:14px;height:14px;border-radius:50%;background:#fff;border:3px solid #cfe3e9;transform:translate(-50%,-50%)}
+  .mapDot.on{border-color:var(--teal);background:var(--teal)}
+  .mapYo{position:absolute;top:50%;transform:translate(-50%,-58%);font-size:26px;line-height:1;filter:drop-shadow(0 2px 3px rgba(26,46,53,.3))}
+  .mapMeta{position:absolute;right:-16px;top:50%;transform:translateY(-54%);font-size:22px}
+  .mapRow{display:flex;justify-content:space-between;font-size:12.5px;font-weight:700;color:var(--muted);margin:8px 2px 0}
+  .mapPie{text-align:center;font-size:15px;font-weight:800;color:var(--dark);margin-top:12px}
+  .mapSub{text-align:center;font-size:13.5px;font-weight:600;color:var(--muted);margin-top:4px;line-height:1.45}
+  .mapHito{background:#eaf6f9;border-radius:10px;padding:9px 12px;margin-top:12px;font-size:14px;font-weight:700;text-align:center;color:var(--dark)}
+  .agenda .lema{font-size:13.5px;font-weight:600;color:rgba(255,255,255,.8);margin:-4px 0 8px;line-height:1.4}
+  .vicCard{border-left:5px solid var(--green)}
+  .vicT{font-size:18px;font-weight:800;line-height:1.3}
+  .vicD{font-size:14px;color:var(--muted);font-weight:600;margin-top:2px}
+  .vicIt{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px dashed #dbe6e9;font-size:15px;font-weight:700}
+  .vicIt:last-child{border-bottom:none}
+  .vicIt .ok{flex:none;width:26px;height:26px;border-radius:50%;background:#e8f4ec;color:var(--green);display:flex;align-items:center;justify-content:center;font-weight:900}
+  .vicIt b{color:var(--green)}
+  .lvlRow{display:flex;align-items:center;gap:12px;padding:12px;border-radius:12px;margin-bottom:8px;background:#f4f8f9;font-size:15px;font-weight:700}
+  .lvlRow.now{background:var(--teal);color:#fff}
+  .lvlRow .n{flex:none;width:30px;height:30px;border-radius:50%;background:#fff;color:var(--teal);display:flex;align-items:center;justify-content:center;font-weight:900;box-shadow:var(--shadow)}
+  .lvlRow .d{font-size:12.5px;font-weight:600;opacity:.8;display:block;margin-top:1px}
   #dl-toast{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(.94);z-index:100000;display:inline-flex;align-items:center;gap:10px;background:rgba(26,46,53,.92);color:#fff;font-weight:800;font-size:15px;padding:14px 22px;border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,.28);opacity:0;visibility:hidden;pointer-events:none;transition:opacity .2s ease,transform .2s ease}
   #dl-toast.show{opacity:1;visibility:visible;transform:translate(-50%,-50%) scale(1)}
   #dl-toast .dl-spin{width:16px;height:16px;border-radius:50%;border:2.5px solid rgba(255,255,255,.35);border-top-color:#fff;animation:dl-rot .7s linear infinite}
@@ -875,7 +920,7 @@ let PASOS_HOY=0, PASOS_SEM=0;
 function _hoyCanarias(){ return new Date().toLocaleDateString('en-CA',{timeZone:'Atlantic/Canary'}); }
 function _inicioSemana(){ const d=new Date(_hoyCanarias()+'T12:00:00Z'); d.setUTCDate(d.getUTCDate()-d.getUTCDay()); return d.toISOString().slice(0,10); }
 async function cargarPasos(){ try{ if(!CLIENTE||!CLIENTE.id) return; const {data}=await sb.from('pasos').select('pasos,fecha').eq('cliente_id',CLIENTE.id).gte('fecha',_inicioSemana()); const hoy=_hoyCanarias(); PASOS_SEM=(data||[]).reduce((s,r)=>s+(+r.pasos||0),0); PASOS_HOY=(data||[]).filter(r=>r.fecha===hoy).reduce((s,r)=>s+(+r.pasos||0),0); pintarPasos(); }catch(e){ console.error('pasos',e); } }
-function pintarPasos(){ const el=document.getElementById('pasosTotal'); if(!el) return; el.textContent=PASOS_HOY.toLocaleString('es-ES'); const pct=Math.min(100,Math.round(PASOS_SEM/META_SEMANA*100)); const b=document.getElementById('pasosBar'); if(b) b.style.width=pct+'%'; const m=document.getElementById('pasosMsg'); if(m){ m.textContent = PASOS_SEM>=META_SEMANA ? '✅ ¡Reto de la semana conseguido! 🎉' : ('Te quedan '+(META_SEMANA-PASOS_SEM).toLocaleString('es-ES')+' pasos para esta semana 👟'); } }
+function pintarPasos(){ const el=document.getElementById('pasosTotal'); if(!el) return; el.textContent=PASOS_HOY.toLocaleString('es-ES'); const pct=Math.min(100,Math.round(PASOS_SEM/META_SEMANA*100)); const b=document.getElementById('pasosBar'); if(b) b.style.width=pct+'%'; const m=document.getElementById('pasosMsg'); if(m){ m.textContent = PASOS_SEM>=META_SEMANA ? '✅ ¡Reto de la semana conseguido! 🎉' : ('Te quedan '+(META_SEMANA-PASOS_SEM).toLocaleString('es-ES')+' pasos para esta semana 👟'); } if(typeof pintarMision==='function') pintarMision(); }
 async function sumarPasos(){ const inp=document.getElementById('pasosInput'); if(!inp) return; const v=parseInt(inp.value,10); if(!v||v<=0){ inp.focus(); return; } const btn=inp.nextElementSibling; inp.disabled=true; if(btn) btn.disabled=true; try{ await sb.from('pasos').insert({cliente_id:CLIENTE.id, fecha:_hoyCanarias(), pasos:v}); PASOS_HOY+=v; PASOS_SEM+=v; inp.value=''; pintarPasos(); }catch(e){ alert('No se pudieron guardar los pasos, inténtalo de nuevo.'); } inp.disabled=false; if(btn) btn.disabled=false; inp.focus(); }
 // ---- Tarjeta para activar las notificaciones (iOS exige un toque del usuario) ----
 function pintarPushCard(){
@@ -1289,6 +1334,110 @@ function aguaDiariaTexto(){
   const l=aguaDiariaL();
   return l!=null?l.toFixed(1).replace('.',','):null;
 }
+// ====== NARRATIVA: capítulo, nivel, misión del día, victorias ======
+// El cliente no entra en una app: entra en su historia. Cada semana es un
+// capítulo, cada día una misión y cada mejora una batalla ganada.
+const NIVELES=[
+  {n:1,nombre:'Despertar',desde:1,d:'Decidiste empezar. El paso más difícil ya está dado.'},
+  {n:2,nombre:'Aprender',desde:5,d:'Estás descubriendo cómo funciona tu cuerpo.'},
+  {n:3,nombre:'Constancia',desde:13,d:'Ya no es motivación: es hábito.'},
+  {n:4,nombre:'Disciplina',desde:25,d:'Haces lo que toca, también los días difíciles.'},
+  {n:5,nombre:'Transformación',desde:41,d:'Los demás ya notan el cambio.'},
+  {n:6,nombre:'Referente',desde:65,d:'Eres la prueba viva de que se puede.'},
+  {n:7,nombre:'Embajador Saneas',desde:null,d:'Tu ejemplo ya está ayudando a otras personas.'}
+];
+function nivelSaneas(){
+  if(esEmbajador()) return NIVELES[6];   // el nivel 7 no se gana por semanas: se gana trayendo a un Saneamigo
+  const s=Number(CLIENTE&&CLIENTE.semana)||1;
+  let out=NIVELES[0];
+  for(const l of NIVELES){ if(l.desde!=null&&s>=l.desde) out=l; }
+  return out;
+}
+function verNiveles(){
+  const act=nivelSaneas();
+  const html=NIVELES.map(l=>{
+    const now=l.n===act.n;
+    const como=l.desde!=null?('Desde la semana '+l.desde):'Se gana invitando a un Saneamigo';
+    return `<div class="lvlRow${now?' now':''}"><span class="n">${l.n<act.n?'✓':l.n}</span><span style="flex:1">${l.nombre}<span class="d">${l.d}</span><span class="d">${como}</span></span>${now?'<span style="font-size:18px">📍</span>':''}</div>`;
+  }).join('');
+  abrirDetalle('Tu camino de niveles',`<p style="font-size:14px;color:var(--muted);line-height:1.5;margin-bottom:14px">En Saneas no subes de nivel por suerte: lo ganas con tu comportamiento, semana a semana.</p>${html}`);
+}
+const FRASES_CAP=[
+  'Cada semana te pareces menos a quien empezó y más a quien quieres ser.',
+  'Hoy continúa tu historia. ¿Cuál es tu siguiente misión?',
+  'El cuerpo es el resultado de todas tus pequeñas victorias.',
+  'No estás haciendo una dieta: estás escribiendo tu historia.',
+  'El enemigo no es la báscula: es el sedentarismo. Y le estás ganando.'
+];
+// Título del capítulo: el de la fase (hoja de ruta de Oscar) si existe; si no, una frase del pool
+function tituloCapitulo(){
+  if(typeof __FASE!=='undefined'&&__FASE&&__FASE.titulo) return '«'+__FASE.titulo+'»';
+  const s=Number(CLIENTE&&CLIENTE.semana)||0;
+  return FRASES_CAP[s%FRASES_CAP.length];
+}
+function pintarCapitulo(){
+  const el=document.getElementById('capFrase'); if(!el) return;
+  const t=tituloCapitulo();
+  if(el.textContent!==t) el.textContent=t;
+}
+// --- Misión de hoy: checklist diaria. Agua/dieta/entreno los marca el cliente
+// (localStorage, clave por día); pasos y datos de consulta se marcan solos.
+function _misionKey(){ try{ return 'saneas_mision_'+_hoyCanarias(); }catch(e){ return 'saneas_mision'; } }
+function _misionGet(){ try{ return JSON.parse(localStorage.getItem(_misionKey())||'{}'); }catch(e){ return {}; } }
+function misionItems(){
+  const m=_misionGet();
+  const litros=aguaDiariaTexto();
+  const it=[
+    {k:'agua',ico:'💧',t:'Beber '+(litros?litros+' L de agua':'tu agua del día'),done:!!m.agua,manual:true},
+    {k:'pasos',ico:'👟',t:META_DIA.toLocaleString('es-ES')+' pasos',done:PASOS_HOY>=META_DIA,manual:false},
+    {k:'dieta',ico:'🥗',t:'Seguir la dieta de hoy',done:!!m.dieta,manual:true},
+    {k:'entreno',ico:'💪',t:'Completar tu entrenamiento',done:!!m.entreno,manual:true}
+  ];
+  if(esDiaConsultaHoy()) it.push({k:'datos',ico:'📝',t:'Enviar tus datos de consulta',done:consultaProcesada()||enviadoATiempo(),manual:false});
+  return it;
+}
+function misionTap(k){
+  const it=misionItems().find(x=>x.k===k); if(!it) return;
+  if(it.manual){ const m=_misionGet(); m[k]=!m[k]; try{ localStorage.setItem(_misionKey(),JSON.stringify(m)); }catch(e){} pintarMision(); return; }
+  if(k==='pasos'){ const e=document.getElementById('pasosInput'); if(e){ e.scrollIntoView({behavior:'smooth',block:'center'}); setTimeout(()=>e.focus(),350); } return; }
+  if(k==='datos') irA('registro');
+}
+function irA(id){ const bts=document.querySelectorAll('.nav button'); const idx={inicio:0,dieta:1,gym:2,registro:3,mas:4}[id]; if(bts[idx]) go(id,bts[idx]); }
+function pintarMision(){
+  const el=document.getElementById('msnCard'); if(!el) return;
+  const items=misionItems();
+  const hechas=items.filter(i=>i.done).length;
+  const pct=Math.round(hechas/items.length*100);
+  const sig=items.map(i=>i.k+(i.done?'1':'0')).join('');
+  if(el.getAttribute('data-msn')===sig) return;   // el interval repinta: solo tocar el DOM si algo cambió
+  el.innerHTML=`<h3>🎯 Tu misión de hoy</h3>
+    <div class="msnSub">Gana el día de hoy y estarás un paso más cerca.</div>
+    ${items.map(i=>`<button class="msnIt${i.done?' done':''}" onclick="misionTap('${i.k}')"><span class="chk">✓</span><span style="font-size:18px;flex:none">${i.ico}</span><span class="t">${i.t}</span>${!i.manual&&!i.done?'<span class="auto">AUTO</span>':''}</button>`).join('')}
+    <div class="msnBarW"><i style="width:${pct}%"></i></div>
+    <div class="msnPie"><span>${pct===100?'🏆 ¡Día ganado!':'Hoy puedes ganar el día'}</span><span class="pct">${pct}%</span></div>
+    <div class="msnPrem">${pct===100?'Recompensa conseguida: <b>+1 día</b> hacia tu objetivo 🎉':'Recompensa: <b>+1 día</b> hacia tu objetivo'}</div>`;
+  el.setAttribute('data-msn',sig);
+}
+// --- Victorias: lo que el cliente ya ha derrotado desde su primer registro
+function victoriasCliente(){
+  if(!PRIMERO||!ULTIMO) return [];
+  const d=(a,b)=>(a!=null&&b!=null)?Number(a)-Number(b):null;
+  const v=[];
+  const peso=d(PRIMERO.peso,ULTIMO.peso);          if(peso!=null&&peso>=0.5) v.push(['⚖️',`<b>${r1(peso)} kg</b> derrotados`]);
+  const cin=d(PRIMERO.per_cintura,ULTIMO.per_cintura); if(cin!=null&&cin>=1)   v.push(['📏',`<b>${r1(cin)} cm</b> menos de cintura`]);
+  const gra=d(PRIMERO.grasa_rfm,ULTIMO.grasa_rfm); if(gra!=null&&gra>=0.5)    v.push(['🔥',`<b>${r1(gra)} puntos</b> menos de grasa corporal`]);
+  const vis=d(PRIMERO.grasa_visceral,ULTIMO.grasa_visceral); if(vis!=null&&vis>=0.5) v.push(['🛡️',`<b>${r1(vis)} puntos</b> menos de grasa visceral`]);
+  const mus=d(ULTIMO.masa_muscular,PRIMERO.masa_muscular); if(mus!=null&&mus>=0.3)   v.push(['💪',`<b>${r1(mus)} kg</b> más de músculo`]);
+  return v;
+}
+// Hito del viaje por días recorridos (semana × 7): dopamina honesta, sin inventar datos
+function hitoViaje(){
+  const dias=(Number(CLIENTE&&CLIENTE.semana)||0)*7;
+  const HITOS=[[730,'🏅 Más de 2 años caminando hacia tu mejor versión'],[500,'🔥 Más de 500 días de viaje. Imparable'],[365,'🏆 Más de un año escribiendo tu historia'],[200,'💪 Más de 200 días de constancia'],[100,'🎉 Más de 100 días de viaje. La mayoría nunca llega hasta aquí']];
+  for(const h of HITOS){ if(dias>=h[0]) return h[1]; }
+  return null;
+}
+
 function renderInicio(){
   const hoy=new Date();
   const esConsulta=(CLIENTE.dia_consulta||'').toLowerCase()===DIA_NOMBRE[hoy.getDay()];
@@ -1318,9 +1467,14 @@ function renderInicio(){
   const _ytId=u=>{ const m=String(u||'').match(/(?:youtu\.be\/|v=|\/embed\/|\/shorts\/)([A-Za-z0-9_-]{11})/); return m?m[1]:null; };
   const vidThumb=_ytId(vid);
 
+  const nivel=nivelSaneas();
+  const vics=victoriasCliente();
+
   document.getElementById('s-inicio').innerHTML=`
-    <p style="font-size:20px;font-weight:700;margin:4px 6px 2px">Hola, ${CLIENTE.nombre||''}${esEmbajador()?` <img src="${SANEAMIGO_BADGE}" title="Embajador Saneas" style="height:24px;vertical-align:-5px">`:''} 👋</p>
-    <p style="font-size:16px;font-weight:800;color:var(--teal);margin:0 6px 8px">Semana ${fmt(CLIENTE.semana)} en Saneas · ${fmt(CLIENTE.nivel)}</p>
+    <p style="font-size:20px;font-weight:700;margin:4px 6px 4px">Hola, ${CLIENTE.nombre||''}${esEmbajador()?` <img src="${SANEAMIGO_BADGE}" title="Embajador Saneas" style="height:24px;vertical-align:-5px">`:''} 👋</p>
+    <div class="capChip" onclick="verNiveles()">📖 Capítulo ${fmt(CLIENTE.semana)} · Nivel ${nivel.n} — ${nivel.nombre} <span class="chev">›</span></div>
+    <p class="capFrase" id="capFrase">${tituloCapitulo()}</p>
+    <p class="subSem">Semana ${fmt(CLIENTE.semana)} en Saneas</p>
 
     <div class="card" id="datosFaltanCard" style="display:none"></div>
 
@@ -1328,23 +1482,34 @@ function renderInicio(){
 
     <div class="card" id="pushCard" style="display:none"></div>
 
+    <div class="card msnCard" id="msnCard"></div>
+
+    <div id="repCard"></div><div id="progCard"></div>
+
     <div class="card agenda">
-      <h3>📅 Tu agenda</h3>
+      <h3>🏁 Tu próxima victoria</h3>
+      <div class="lema">Cada revisión es una oportunidad para subir de nivel.</div>
       <div style="font-size:14px;font-weight:700;margin:-2px 0 8px">Hoy es ${hoy.toLocaleDateString('es-ES',{day:'numeric',month:'long'})}</div>
-      <div class="row" style="font-weight:800"><span>Próxima consulta</span><span>${fechaLarga(fechaProximaConsulta())}</span></div>
+      <div class="row" style="font-weight:800"><span>Tu revisión semanal</span><span>${fechaLarga(fechaProximaConsulta())}</span></div>
       <div class="row" style="font-weight:800"><span>Próxima renovación</span><span>${fechaCorta(CLIENTE.fecha_renovacion)}</span></div>
       <div class="today">${consultaHoyPendiente()
         ? '💬 La constancia vence al impulso. El cambio real no ocurre en un día de dieta perfecta, sino en los cien días que decidiste no tirar la toalla.'  /* el mensaje de consulta ya sale arriba; aquí una frase fija, no aleatoria */
         : 'Hoy no es día de consulta. Recuerda enviar tus datos antes de las 10:00 (hora Madrid) del '+fmt(CLIENTE.dia_consulta)+', tu día de consulta 🕙'}</div>
       ${(CAL&&(CAL.get-CAL.objetivo)>0)?`<div class="objsem">
-        <div class="cap">🎯 TU OBJETIVO ESTA SEMANA</div>
+        <div class="cap">🎯 TU BATALLA DE ESTA SEMANA</div>
         <div class="big">${CAL.get-CAL.objetivo}<em>g</em></div>
-        <div class="sub">es lo que toca bajar</div>
+        <div class="sub">es lo que toca derrotar</div>
       </div>`:''}
     </div>
 
-    <div id="repCard"></div><div id="progCard"></div>
-    <h2 class="sec">🧭 Tu pizarra</h2>
+    ${vics.length?`<div class="card vicCard">
+      <div class="vicT">⚔️ Así has cambiado</div>
+      <div class="vicD">Desde que empezaste este camino has derrotado:</div>
+      <div style="margin-top:8px">${vics.map(v=>`<div class="vicIt"><span class="ok">✓</span><span style="font-size:18px;flex:none">${v[0]}</span><span>${v[1]}</span></div>`).join('')}</div>
+      ${hito&&hito.texto?`<div class="hitomsg">${hito.texto}</div>`:''}
+    </div>`:''}
+
+    <h2 class="sec">🧭 Tu pizarra de hoy</h2>
     <div class="choices">
       <div class="choice active" onclick="pizarra('dieta',this)"><span class="ic">🥗</span>Dieta de hoy</div>
       <div class="choice" onclick="pizarra('gym',this)"><span class="ic">💪</span>Entreno de hoy</div>
@@ -1352,7 +1517,38 @@ function renderInicio(){
     </div>
     <div class="card" id="pizarra"></div>
 
-    <h2 class="sec">📈 Tu evolución</h2>
+    <h2 class="sec">🔋 Tus retos de hoy</h2>
+    <div class="card water">
+      <div class="drop">💧</div>
+      <div style="flex:1"><h3 style="margin:0">Agua de hoy</h3>
+        <div><span class="big">${litros} L</span> <span style="font-size:14px;color:var(--muted)">${aguaL!=null?'≈ '+vasos+' vasos':'registra tu peso'}</span></div>
+        <div class="glasses">${glasses}</div></div>
+    </div>
+
+    <div class="card steps">
+      <div class="foot">👟</div>
+      <div style="flex:1">
+        <h3 style="margin:0">Reto de hoy</h3>
+        <div><span class="big" id="pasosTotal">${PASOS_HOY.toLocaleString('es-ES')}</span> <span style="font-size:14px;color:var(--dark);font-weight:700">/ 8.800 pasos</span></div>
+        <div class="bar"><span id="pasosBar" style="width:${Math.min(100,Math.round(PASOS_SEM/61600*100))}%"></span></div>
+        <div class="smsg" id="pasosMsg"></div>
+        <div style="display:flex;gap:8px;margin-top:10px">
+          <input id="pasosInput" type="number" inputmode="numeric" min="1" placeholder="Añade los pasos que hiciste hoy">
+          <button onclick="sumarPasos()">Sumar</button>
+        </div>
+      </div>
+    </div>
+
+    <h2 class="sec">🎬 Vídeo de la semana</h2>
+    <div class="video">
+      ${vidThumb?`<img class="thumb" src="https://img.youtube.com/vi/${vidThumb}/hqdefault.jpg" alt="" loading="lazy" onerror="this.remove()">`:''}
+      ${vid?`<a class="play" href="${vid}" target="_blank" rel="noopener">▶</a>`:'<div class="play">▶</div>'}
+      <div class="cap">${vid?'Toca para ver el vídeo de esta semana':'Sin vídeo esta semana'}</div>
+    </div>
+
+    <div id="reflexHost"></div>
+
+    <h2 class="sec">📊 Tu historial y estadísticas</h2>
     <div class="card">
       <div class="evo"><div class="lbl">Peso (kg)</div>
         <div class="stat">
@@ -1412,36 +1608,9 @@ function renderInicio(){
           <div style="font-size:16px;font-weight:700;color:#fff;background:#064e3b;padding:5px 12px;border-radius:12px;display:inline-block;line-height:1.1">${esEmbajador()?`Ya ahorras ${CLIENTE.descuento_invitados}€`:'Le harás un gran favor'}</div>
         </div>
       </div>
-    </div>`:''}
-
-    <div class="card water">
-      <div class="drop">💧</div>
-      <div style="flex:1"><h3 style="margin:0">Agua de hoy</h3>
-        <div><span class="big">${litros} L</span> <span style="font-size:14px;color:var(--muted)">${aguaL!=null?'≈ '+vasos+' vasos':'registra tu peso'}</span></div>
-        <div class="glasses">${glasses}</div></div>
-    </div>
-
-    <div class="card steps">
-      <div class="foot">👟</div>
-      <div style="flex:1">
-        <h3 style="margin:0">Reto de hoy</h3>
-        <div><span class="big" id="pasosTotal">${PASOS_HOY.toLocaleString('es-ES')}</span> <span style="font-size:14px;color:var(--dark);font-weight:700">/ 8.800 pasos</span></div>
-        <div class="bar"><span id="pasosBar" style="width:${Math.min(100,Math.round(PASOS_SEM/61600*100))}%"></span></div>
-        <div class="smsg" id="pasosMsg"></div>
-        <div style="display:flex;gap:8px;margin-top:10px">
-          <input id="pasosInput" type="number" inputmode="numeric" min="1" placeholder="Añade los pasos que hiciste hoy">
-          <button onclick="sumarPasos()">Sumar</button>
-        </div>
-      </div>
-    </div>
-
-    <h2 class="sec">🎬 Vídeo de la semana</h2>
-    <div class="video">
-      ${vidThumb?`<img class="thumb" src="https://img.youtube.com/vi/${vidThumb}/hqdefault.jpg" alt="" loading="lazy" onerror="this.remove()">`:''}
-      ${vid?`<a class="play" href="${vid}" target="_blank" rel="noopener">▶</a>`:'<div class="play">▶</div>'}
-      <div class="cap">${vid?'Toca para ver el vídeo de esta semana':'Sin vídeo esta semana'}</div>
-    </div>`;
+    </div>`:''}`;
   pizarra('dieta',document.querySelector('#s-inicio .choice'));
+  pintarMision();
   pintarPasos();
   pintarPushCard();
   pintarDatosCard(); pintarFAQCard();
@@ -2126,7 +2295,8 @@ function _elegible(regs){
   return true;
 }
 function pintarPedir(){
-  var host = document.getElementById("progCard");
+  // La reflexión y "qué contestar" viven al final de la historia (reflexHost); si no existe, junto al mapa
+  var host = document.getElementById("reflexHost") || document.getElementById("progCard");
   if(!host || !window.__PROG || !window.__PROG.pedir) return;
   if(document.getElementById("pedirCard")) return;
   var d = document.createElement("div");
@@ -2136,7 +2306,8 @@ function pintarPedir(){
     + '<div class="pdD">Cuando llevas ' + window.__PROG.semanas + ' semanas y se te empieza a notar, la gente pregunta. Te dejamos preparado qu&eacute; contestar.</div>'
     + '<div class="pdBtns"><button class="pdSi" onclick="queDecir()">Ver qu&eacute; puedo mandar</button>'
     + '<button class="pdNo" onclick="ahoraNo()">Ahora no</button></div>';
-  host.parentNode.insertBefore(d, host.nextSibling);
+  if(host.id==="reflexHost") host.appendChild(d);
+  else host.parentNode.insertBefore(d, host.nextSibling);
 }
 var FRASE100 = null;
 async function cargarFrase100(){
@@ -2169,16 +2340,17 @@ function enviar100(){
 function ocultar100(){ var c = document.getElementById("f100dev"); if(c) c.remove();
   try{ sb.from("saneas_frases").update({ devuelta_en: new Date().toISOString() }).eq("id", FRASE100.id); }catch(e){} }
 function pintar100(){
-  var host = document.getElementById("progCard");
+  var host = document.getElementById("reflexHost") || document.getElementById("progCard");
   if(!host || !window.__PROG) return;
+  var mete = function(el){ if(host.id==="reflexHost") host.appendChild(el); else host.parentNode.insertBefore(el, host.nextSibling); };
   var sem = window.__PROG.semanas || 0;
   if(!FRASE100 && sem >= 14 && !document.getElementById("f100")){
     var d = document.createElement("div");
     d.id = "f100"; d.className = "card f1Card";
-    d.innerHTML = '<div class="f1T">&iquest;Qu&eacute; le dir&iacute;as a tu yo de hace 100 d&iacute;as?</div>'
-      + '<textarea id="f100txt" rows="3" class="f1Ta" placeholder="Lo que te habr&iacute;a gustado que alguien te dijera"></textarea>'
+    d.innerHTML = '<div class="f1T">&#128172; Tu legado: &iquest;qu&eacute; le dir&iacute;as a la persona que empez&oacute; este camino?</div>'
+      + '<textarea id="f100txt" rows="3" class="f1Ta" placeholder="Escr&iacute;belo. Cuando llegues a tu objetivo volver&aacute;s a leerlo."></textarea>'
       + '<button id="f100ok" class="f1Btn" onclick="guardar100()">Guardar</button>';
-    host.parentNode.insertBefore(d, host.nextSibling);
+    mete(d);
     return;
   }
   if(FRASE100 && !FRASE100.devuelta_en && !document.getElementById("f100dev")){
@@ -2191,21 +2363,35 @@ function pintar100(){
       + '<div class="f1D">&iquest;Hay alguien a quien le vendr&iacute;a bien leerlo?</div>'
       + '<div class="pdBtns"><button class="pdSi" onclick="enviar100()">Mand&aacute;rselo</button>'
       + '<button class="pdNo" onclick="ocultar100()">Ahora no</button></div>';
-    host.parentNode.insertBefore(e, host.nextSibling);
+    mete(e);
   }
 }
 function pintarProgreso(){
   var el = document.getElementById("progCard");
   if(!el || !window.__PROG) return;
-  var p = window.__PROG.pct;
-  el.innerHTML = '<div class="card pgCard">'
-    + '<div class="pgTit">Llevas recorrido</div>'
-    + '<div class="pgNum">' + p + '<span>%</span></div>'
-    + '<div class="pgBar"><i style="width:' + p + '%"></i></div>'
-    + '<div class="pgPie">Semana ' + window.__PROG.semanas + ' de tu camino en Saneas</div>'
+  var p = window.__PROG.pct, sem = window.__PROG.semanas;
+  var sig = p + "|" + sem;
+  if(el.getAttribute("data-prog") === sig) return;   // el interval repinta: no tocar el DOM si nada cambió
+  var dots = "";
+  [0,25,50,75].forEach(function(q){ dots += '<span class="mapDot' + (p>=q?' on':'') + '" style="left:' + q + '%"></span>'; });
+  var hv = hitoViaje();
+  el.innerHTML = '<div class="card mapCard">'
+    + '<div class="mapTit">🗺️ El mapa de tu viaje</div>'
+    + '<div class="mapTrack">'
+    +   '<span class="mapLine"></span>'
+    +   '<span class="mapFill" style="width:' + p + '%"></span>'
+    +   dots
+    +   '<span class="mapYo" style="left:' + p + '%">🚶</span>'
+    +   '<span class="mapMeta">🏁</span>'
+    + '</div>'
+    + '<div class="mapRow"><span>Semana 1</span><span>Tu objetivo</span></div>'
+    + '<div class="mapPie">Empezaste hace ' + sem + ' semanas · Has recorrido el ' + p + '%</div>'
+    + '<div class="mapSub">El camino que ya has andado nadie te lo puede quitar.</div>'
+    + (hv ? '<div class="mapHito">' + hv + '</div>' : '')
     + '</div>';
+  el.setAttribute("data-prog", sig);
 }
-setInterval(function(){ pintarReporte(); pintarFase(); if(window.__PROG){ pintarProgreso(); pintarPedir(); pintar100(); } }, 800);
+setInterval(function(){ pintarReporte(); pintarFase(); pintarCapitulo(); pintarMision(); if(window.__PROG){ pintarProgreso(); pintarPedir(); pintar100(); } }, 800);
 var __REP;
 async function cargarReporte(){
   try{
