@@ -78,6 +78,11 @@ function misionItems(){
     {k:'dieta',ico:'🥗',t:'Seguir la dieta de hoy',done:!!m.dieta,manual:true},
     {k:'entreno',ico:'💪',t:'Completar tu entrenamiento',done:!!m.entreno,manual:true}
   ];
+  // Fase 2 del diario: si el diario está activo, apuntar 3 comidas es parte de la misión
+  if(typeof DIARIO_HOY!=='undefined'&&DIARIO_HOY!==null&&!DIARIO_ERROR){
+    const n=DIARIO_HOY.length;
+    it.push({k:'diario',ico:'📒',t:'Apuntar tus comidas <small>('+Math.min(n,3)+'/3)</small>',done:n>=3,manual:false});
+  }
   if(esDiaConsultaHoy()) it.push({k:'datos',ico:'📝',t:'Enviar tus datos de consulta',done:consultaProcesada()||enviadoATiempo(),manual:false});
   return it;
 }
@@ -85,6 +90,7 @@ function misionTap(k){
   const it=misionItems().find(x=>x.k===k); if(!it) return;
   if(it.manual){ const m=_misionGet(); m[k]=!m[k]; try{ localStorage.setItem(_misionKey(),JSON.stringify(m)); }catch(e){} pintarMision(); return; }
   if(k==='pasos'){ MSN_PASOS_ABIERTO=!MSN_PASOS_ABIERTO; pintarMision(); if(MSN_PASOS_ABIERTO){ const e=document.getElementById('pasosInput'); if(e) e.focus(); } return; }
+  if(k==='diario'){ irA('dieta'); return; }
   if(k==='datos') irA('registro');
 }
 function irA(id){ const bts=document.querySelectorAll('.nav button'); const idx={inicio:0,dieta:1,gym:2,registro:3,mas:4}[id]; if(bts[idx]) go(id,bts[idx]); }
@@ -93,7 +99,7 @@ function pintarMision(){
   const items=misionItems();
   const hechas=items.filter(i=>i.done).length;
   const pct=Math.round(hechas/items.length*100);
-  const sig=items.map(i=>i.k+(i.done?'1':'0')).join('')+'|'+PASOS_HOY+'|'+(MSN_PASOS_ABIERTO?'1':'0');
+  const sig=items.map(i=>i.k+(i.done?'1':'0')).join('')+'|'+PASOS_HOY+'|'+(MSN_PASOS_ABIERTO?'1':'0')+'|'+((typeof DIARIO_HOY!=='undefined'&&DIARIO_HOY)?DIARIO_HOY.length:'x');
   if(el.getAttribute('data-msn')===sig) return;   // el interval repinta: solo tocar el DOM si algo cambió
   const faltan=META_SEMANA-PASOS_SEM;
   el.innerHTML=`<h3>🎯 Tu misión de hoy</h3>

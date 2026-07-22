@@ -215,7 +215,7 @@ function pintarProgreso(){
     + '</div>';
   el.setAttribute("data-prog", sig);
 }
-setInterval(function(){ pintarReporte(); pintarFase(); pintarCapitulo(); pintarMision(); if(window.__PROG){ pintarProgreso(); pintarPedir(); pintar100(); } }, 800);
+setInterval(function(){ pintarReporte(); pintarFase(); pintarCapitulo(); pintarMision(); if(typeof pintarDiario==='function') pintarDiario(); if(window.__PROG){ pintarProgreso(); pintarPedir(); pintar100(); } }, 800);
 var __REP;
 async function cargarReporte(){
   try{
