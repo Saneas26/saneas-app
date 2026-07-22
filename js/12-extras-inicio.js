@@ -296,9 +296,12 @@ function pintarReporte(){
   if(typeof __REP==="undefined") return;
   var cont=document.getElementById("s-inicio");
   var host=document.getElementById("repBadge");
-  // El reproductor vive en su hueco del inicio (posición 9: tras el vídeo); solo se crea si faltara
+  // El reproductor vive abajo del todo de la página (decidido por Oscar el 22/07)
   var pl=document.getElementById("repPlayer");
-  if(cont && !pl){ pl=document.createElement("div"); pl.id="repPlayer"; cont.appendChild(pl); }
+  if(cont){
+    if(!pl){ pl=document.createElement("div"); pl.id="repPlayer"; cont.appendChild(pl); }
+    else if(cont.lastElementChild!==pl){ cont.appendChild(pl); }
+  }
   if(!__REP.length){
     if(host && host.innerHTML!==""){ host.innerHTML=""; host.removeAttribute("data-rep"); }
     if(pl && pl.innerHTML!==""){ pl.innerHTML=""; pl.removeAttribute("data-rep"); }
@@ -308,7 +311,7 @@ function pintarReporte(){
   if(host && host.getAttribute("data-rep")!==sig){
     host.innerHTML='<button class="repBadge" onclick="irAlReporte()">'
       +'<span class="rbTop">&#127911; Audio listo <span class="rbFlecha">&darr;</span></span>'
-      +'<span class="rbSub">Tu reporte te espera abajo: toca y te llevo</span></button>';
+      +'<span class="rbSub">Tu reporte te espera al final de la p&aacute;gina</span></button>';
     host.setAttribute("data-rep",sig);
   }
   if(pl && pl.getAttribute("data-rep")!==sig){

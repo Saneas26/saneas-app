@@ -228,8 +228,6 @@ function renderInicio(){
       <div class="cap">${vid?'Toca para ver el vídeo de esta semana':'Sin vídeo esta semana'}</div>
     </div>
 
-    <div id="repPlayer"></div>
-
     <div id="reflexHost"></div>
 
     <h2 class="sec">📊 Tu historial y estadísticas</h2>
