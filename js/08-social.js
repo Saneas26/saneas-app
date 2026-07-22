@@ -161,7 +161,6 @@ async function renderPizarraProx(){
   cont.innerHTML='<div class="empty">Cargando tu próxima dieta…</div>';
   const pid=CLIENTE.dieta_proxima_id;
   const {data:d}=await sb.from('dietas').select('*').eq('id',pid).maybeSingle();
-  const url=d&&d.dieta_url;
   const soloP = await sinTomas(pid);
   const bs="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;background:#fff;color:var(--teal);border:2px solid var(--teal);border-radius:12px;padding:12px;font-family:inherit;font-weight:800;font-size:15px;cursor:pointer;text-decoration:none;margin-top:10px";
   const cart='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3890a4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1.5"/><circle cx="19" cy="21" r="1.5"/><path d="M1 1h3l2.6 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"/></svg>';
@@ -169,7 +168,6 @@ async function renderPizarraProx(){
   ${soloP?'<p style="font-size:14px;font-weight:600;color:var(--muted);margin:0">Sin dieta: solo pautas</p>':'<p style="font-size:14px;font-weight:600;color:var(--muted);margin:0">Tu próxima dieta y su compra</p>'}
   ${soloP?'':`
     <button onclick="verDietaCompleta('${pid}')" style="${bs}">📋 Ver dieta completa</button>
-    ${url?`<a href="${url}" target="_blank" rel="noopener" style="${bs}">⬇️ Descargar dieta</a>`:`<button disabled style="${bs};opacity:.5;cursor:default">⬇️ Descarga próximamente</button>`}
     <button onclick="abrirCompra('${pid}')" style="${bs}">${cart} Lista de la compra</button>`}`;
 }
 async function verDietaCompleta(dietaId){
