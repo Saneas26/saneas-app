@@ -266,6 +266,7 @@ function toggleFase(){
   var abierto = c.style.display!=="none";
   c.style.display = abierto ? "none" : "block";
   if(ch) ch.style.transform = abierto ? "" : "rotate(90deg)";
+  var lb = document.getElementById("faseLbl"); if(lb) lb.textContent = abierto ? "Desplegar" : "Ocultar";
   if(abierto){ try{ localStorage.setItem("saneas_fase_"+__FASE.semana,"1"); }catch(e){} }
 }
 function pintarFase(){
@@ -277,12 +278,14 @@ function pintarFase(){
   else if(cont.firstElementChild!==host){ cont.insertBefore(host, cont.firstElementChild); }
   if(host.getAttribute("data-fase")===String(__FASE.semana)) return;
   var abierta = !_faseLeida(__FASE.semana);
-    var sub = (typeof DIETA!=="undefined" && DIETA && DIETA.nombre_plan) ? fmt(DIETA.nombre_plan) : (__FASE.fase||"");
+    var _nd = (typeof DIETA!=="undefined" && DIETA && DIETA.nombre_plan) ? String(DIETA.nombre_plan).replace(/_S\d+$/,"").replace(/_/g," ").trim() : "";
+    var sub = (_nd && _nd.toLowerCase()!==String(__FASE.titulo||"").toLowerCase()) ? _nd : (__FASE.fase||"");
   host.innerHTML = '<div class="card faCard">'
     + '<button class="faHead" onclick="toggleFase()">'
     + '<span class="faIco">&#128220;</span>'
     + '<span class="faTxt"><span class="faTit">'+esc(__FASE.titulo||"Tu fase")+'</span>'
     + '<span class="faSub">'+esc(sub)+'</span></span>'
+      + '<span id="faseLbl" style="font-size:14px;font-weight:700;color:var(--muted);margin-right:8px;white-space:nowrap">'+(abierta?"Ocultar":"Desplegar")+'</span>'
     + '<span class="faChev" id="faseChev" style="'+(abierta?"transform:rotate(90deg)":"")+'">&rsaquo;</span></button>'
     + '<div class="faBody" id="faseCuerpo" style="display:'+(abierta?"block":"none")+'">'
     + (__FASE.texto||"")

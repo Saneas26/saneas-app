@@ -1083,6 +1083,7 @@ async function repEnviar(){
   }catch(e){ toast("Error al enviar"); if(btn){btn.disabled=false;btn.textContent="Enviar";} }
 }
 var COM_ROWS=[];
+var COM_DIETAS=[];
 async function tabla(metodo, qs, body){
   var o={ method:metodo, headers:{ apikey:PUBLISHABLE, Authorization:"Bearer "+adminToken(),
     "Content-Type":"application/json", Prefer:"return=representation" } };
@@ -1098,6 +1099,7 @@ async function abrirComentarios(){
   document.body.appendChild(ov);
   try{
     COM_ROWS=await tabla("GET","?select=*&order=semana.asc");
+    COM_DIETAS = (await rpc("panel_dietas_comentario",{})) || [];
     pintarComentarios();
   }catch(e){ document.getElementById("comBox").innerHTML="Error: "+e.message; }
 }
@@ -1109,7 +1111,7 @@ function pintarComentarios(){
     +'<button onclick="cerrarComentarios()" style="background:none;border:0;font-size:22px;cursor:pointer;color:#999">&times;</button></div>'
     +'<div style="font-size:14px;color:#666;margin-bottom:16px">La clienta solo lo ve si está <b>publicado</b>. Usa <b>{nombre}</b> y se sustituye por su nombre.</div>';
   COM_ROWS.forEach(function(r){
-    var cab="Semana "+r.semana+(r.fase?" · "+r.fase:"")+(r.tema?" · "+r.tema:"");
+    var cab="Bloque "+r.semana+(r.fase?" · "+r.fase:"")+(r.tema?" · "+r.tema:"");
     h+='<div style="border:1px solid #e2e8ea;border-radius:10px;padding:14px;margin-bottom:12px">'
       +'<div style="font-size:15px;font-weight:700;color:#1a2e35">'+cab+'</div>'
       +'<input id="ti_'+r.semana+'" value="'+((r.titulo||"").replace(/"/g,"&quot;"))+'" placeholder="Título" '
@@ -1117,6 +1119,10 @@ function pintarComentarios(){
       +'<textarea id="tx_'+r.semana+'" rows="6" placeholder="Pega aquí el comentario de esta fase" '
       +'style="width:100%;margin-top:8px;padding:10px;font-size:15px;line-height:1.5;border:1px solid #ccc;border-radius:8px;font-family:inherit">'
       +((r.texto||"").replace(/</g,"&lt;"))+'</textarea>'
+      +'<div style="margin-top:12px;font-size:14px;color:#666">Dietas que muestran este comentario (Cmd o Ctrl para varias)</div>'
+      +'<select id="di_'+r.semana+'" multiple size="6" style="width:100%;margin-top:6px;padding:6px;font-size:14px;border:1px solid #ccc;border-radius:8px;font-family:inherit">'
+      +COM_DIETAS.map(function(d){var otro=(d.comentario_bloque!=null&&d.comentario_bloque!==r.semana);return '<option value="'+d.id+'"'+(d.comentario_bloque===r.semana?' selected':'')+(otro?' disabled':'')+'>'+(d.orden!=null?d.orden+' · ':'')+d.nombre_plan+(otro?'  → bloque '+d.comentario_bloque:'')+'</option>';}).join('')
+      +'</select>'
       +'<div style="display:flex;align-items:center;gap:12px;margin-top:10px">'
       +'<label style="font-size:15px;display:flex;align-items:center;gap:6px;cursor:pointer">'
       +'<input type="checkbox" id="pu_'+r.semana+'" '+(r.publicado?"checked":"")+'> Publicado</label>'
@@ -1134,6 +1140,12 @@ async function guardarComentario(sem){
     await tabla("PATCH","?semana=eq."+sem,{ titulo:ti, texto:tx, publicado:pu, actualizado:new Date().toISOString() });
     var f=COM_ROWS.filter(function(x){return x.semana===sem;})[0];
     if(f){ f.titulo=ti; f.texto=tx; f.publicado=pu; }
+      var _sel=document.getElementById("di_"+sem);
+      if(_sel){
+        var _ids=Array.prototype.slice.call(_sel.options).filter(function(o){return o.selected;}).map(function(o){return o.value;});
+        await rpc("panel_asignar_comentario",{p_bloque:sem,p_dietas:_ids});
+        COM_DIETAS.forEach(function(d){ if(d.comentario_bloque===sem) d.comentario_bloque=null; if(_ids.indexOf(d.id)>-1) d.comentario_bloque=sem; });
+      }
     toast("Semana "+sem+(pu?" publicada":" guardada"));
   }catch(e){ toast("No se pudo guardar: "+e.message.slice(0,60)); }
 }
