@@ -16,6 +16,7 @@
 .diaItem .quitar{flex:none;width:30px;height:30px;border-radius:50%;border:0;background:#fdecea;color:var(--red);font-weight:900;font-size:14px;cursor:pointer}
 .diaVacio{font-size:14px;font-weight:600;color:var(--muted);line-height:1.5;margin:6px 0 2px}
 .diaBtn{width:100%;margin-top:12px;background:var(--teal);color:#fff;border:0;border-radius:12px;padding:12px;font-family:inherit;font-weight:800;font-size:15px;cursor:pointer}
+.diaScan{width:100%;margin-top:12px;background:var(--dark);background:linear-gradient(135deg,var(--teal),#2b7180);color:#fff;border:0;border-radius:12px;padding:12px;font-family:inherit;font-weight:800;font-size:15px;cursor:pointer;box-shadow:0 4px 12px rgba(56,144,164,.3)}
 .diaMano{width:100%;margin-top:10px;background:none;border:2px dashed var(--orange);color:var(--orange);border-radius:12px;padding:11px;font-family:inherit;font-weight:800;font-size:14px;cursor:pointer}
 .diaFuente{font-size:11.5px;font-weight:600;color:var(--muted);text-align:center;margin-top:10px}
 .diaRes{display:flex;align-items:center;gap:10px;width:100%;background:#fff;border:0;border-bottom:1px solid var(--light);padding:12px 6px;font-family:inherit;cursor:pointer;text-align:left}
