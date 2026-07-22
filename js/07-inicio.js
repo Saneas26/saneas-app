@@ -151,7 +151,10 @@ function renderInicio(){
   const vics=victoriasCliente();
 
   document.getElementById('s-inicio').innerHTML=`
-    <p style="font-size:20px;font-weight:700;margin:4px 6px 4px">Hola, ${CLIENTE.nombre||''}${esEmbajador()?` <img src="${SANEAMIGO_BADGE}" title="Embajador Saneas" style="height:24px;vertical-align:-5px">`:''} 👋</p>
+    <div class="holaRow">
+      <p style="font-size:20px;font-weight:700;margin:4px 6px 4px">Hola, ${CLIENTE.nombre||''}${esEmbajador()?` <img src="${SANEAMIGO_BADGE}" title="Embajador Saneas" style="height:24px;vertical-align:-5px">`:''} 👋</p>
+      <div id="repBadge"></div>
+    </div>
     <div class="capChip" onclick="verNiveles()">📖 Capítulo ${fmt(CLIENTE.semana)} · Nivel ${nivel.n} — ${nivel.nombre} <span class="chev">›</span></div>
     <p class="capFrase" id="capFrase">${tituloCapitulo()}</p>
 
@@ -163,7 +166,7 @@ function renderInicio(){
 
     <div class="card msnCard" id="msnCard"></div>
 
-    <div id="repCard"></div><div id="progCard"></div>
+    <div id="progCard"></div>
 
     <div class="card agenda">
       <h3>🏁 Tu próxima victoria</h3>

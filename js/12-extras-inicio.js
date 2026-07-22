@@ -289,15 +289,13 @@ function pintarFase(){
     + '</div></div>';
   host.setAttribute("data-fase", String(__FASE.semana));
 }
+// El distintivo "Audio listo" vive arriba a la derecha, a la altura del "Hola".
+// Se enciende solo cuando el panel sube un reporte (__REP) y al tocarlo baja al reproductor.
+function irAlReporte(){ var p=document.getElementById("repPlayer"); if(p) p.scrollIntoView({behavior:"smooth",block:"center"}); }
 function pintarReporte(){
   if(typeof __REP==="undefined") return;
   var cont=document.getElementById("s-inicio");
-  var host=document.getElementById("repCard");
-  if(host){
-    var _anc=null,_ps=document.querySelectorAll("#s-inicio p");
-    for(var _i=0;_i<_ps.length;_i++){ if((_ps[_i].textContent||"").indexOf("en Saneas")>=0){ _anc=_ps[_i]; break; } }
-    if(_anc && _anc.nextElementSibling!==host){ _anc.parentNode.insertBefore(host, _anc.nextElementSibling); }
-  }
+  var host=document.getElementById("repBadge");
   var pl=document.getElementById("repPlayer");
   if(cont){
     if(!pl){ pl=document.createElement("div"); pl.id="repPlayer"; cont.appendChild(pl); }
@@ -310,8 +308,9 @@ function pintarReporte(){
   }
   var sig=__REP.map(function(a){ return a.url; }).join("|");
   if(host && host.getAttribute("data-rep")!==sig){
-    host.innerHTML='<div class="card rpAviso"><span class="rpIco">&#127908;</span>'
-      +'<span>Ya est&aacute; disponible tu reporte. Escúchalo abajo del todo de esta p&aacute;gina.</span></div>';
+    host.innerHTML='<button class="repBadge" onclick="irAlReporte()">'
+      +'<span class="rbTop">&#127911; Audio listo <span class="rbFlecha">&darr;</span></span>'
+      +'<span class="rbSub">Tu reporte te espera al final de la p&aacute;gina</span></button>';
     host.setAttribute("data-rep",sig);
   }
   if(pl && pl.getAttribute("data-rep")!==sig){
