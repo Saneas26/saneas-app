@@ -612,6 +612,21 @@ async function cargarDietas(){
   const {status,data}=await api('dietas',{});
   if(status===200&&data.dietas) DIETAS=data.dietas;
 }
+var REP_ULT=null;
+function _repPinta(id){
+  // Aviso informativo del ultimo reporte. Se pinta APARTE, despues de la ficha.
+  // No se espera con await: si esto falla o tarda, la ficha se abre igual.
+  (async function(){
+    try{
+      if(!REP_ULT){ var d=await rpc('panel_reportes_ultimos',{}); REP_ULT={}; (d||[]).forEach(function(x){ REP_ULT[x.cliente_id]={u:x.ultimo,n:x.total}; }); }
+      var r=REP_ULT[id], e=document.getElementById('repLn'); if(!e) return;
+      var base='display:inline-block;margin:0 0 6px;padding:5px 11px;border-radius:8px;font-size:14px;font-weight:700';
+      if(!r){ e.outerHTML='<div style="'+base+';background:#f1f4f5;color:#6b878f">🎙 Sin reporte enviado</div>'; return; }
+      var f=new Date(r.u).toLocaleString('es-ES',{timeZone:'Europe/Madrid',day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+      e.outerHTML='<div style="'+base+';background:#e6f4ea;color:#12a150">🎙 Reporte enviado · '+f+(r.n>1?' · '+r.n+' guardados':'')+'</div>';
+    }catch(e){}
+  })();
+}
 async function abrirFicha(id){
   el('ov').classList.add('show'); el('ficha').classList.add('show');
   el('ficha').innerHTML='<div class="fh"><h3>Cargando…</h3></div>';
@@ -773,6 +788,7 @@ function pintarFicha(cli,regs){
           <span id="dietaMsg" class="dieta-msg"></span>
         </div>
       </div>`;
+  _repPinta(cli.id);
   el('ficha').innerHTML=`
     <div class="fh">
       <button class="x" onclick="cerrarFicha()">×</button>
@@ -781,6 +797,7 @@ function pintarFicha(cli,regs){
         <button class="sc-btn" onclick="sinConsultaFicha('${cli.id}', '${(nom||'este cliente').replace(/'/g,'')}')">Sin consulta</button>
         <button class="rep-btn" onclick="grabarReporte('${cli.id}', '${(nom||'').replace(/'/g,'')}')">Reporte</button><button class="baja-btn" onclick="darBaja('${cli.id}', '${(nom||'este cliente').replace(/'/g,'')}')">Dar de baja</button>
       </div>
+      <span id="repLn"></span>
       <h3>${nom||'Cliente'}</h3>
       <div class="sub">
         <span>${gen}${ed!=null?' · '+ed+' años':''}</span>
