@@ -1,6 +1,6 @@
 /* SANEAS · css/base.css · Variables, splash y pantalla de acceso */
   :root{--teal:#3890a4;--dark:#1a2e35;--light:#e8f4f7;--muted:#3a5a64;--bg:#f4f7f8;
-    --white:#fff;--green:#2f9e5f;--red:#d05a4a;--shadow:0 6px 20px rgba(26,46,53,.08)}
+    --white:#fff;--green:#2f9e5f;--red:#d05a4a;--orange:#F5862E;--shadow:0 6px 20px rgba(26,46,53,.08)}
   *{box-sizing:border-box;margin:0;padding:0}
   body{font-family:'Quicksand',sans-serif;background:var(--bg);color:var(--dark)}
   .app{max-width:480px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;position:relative}

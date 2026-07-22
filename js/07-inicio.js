@@ -154,7 +154,6 @@ function renderInicio(){
     <p style="font-size:20px;font-weight:700;margin:4px 6px 4px">Hola, ${CLIENTE.nombre||''}${esEmbajador()?` <img src="${SANEAMIGO_BADGE}" title="Embajador Saneas" style="height:24px;vertical-align:-5px">`:''} 👋</p>
     <div class="capChip" onclick="verNiveles()">📖 Capítulo ${fmt(CLIENTE.semana)} · Nivel ${nivel.n} — ${nivel.nombre} <span class="chev">›</span></div>
     <p class="capFrase" id="capFrase">${tituloCapitulo()}</p>
-    <p class="subSem">Semana ${fmt(CLIENTE.semana)} en Saneas</p>
 
     <div class="card" id="datosFaltanCard" style="display:none"></div>
 
