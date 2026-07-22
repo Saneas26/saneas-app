@@ -179,6 +179,12 @@ async function tomasDe(dietaId,dia){
   if(error){console.error(error);return[];}
   return data||[];
 }
+async function sinTomas(dietaId){
+  if(!dietaId) return false;
+  const {count,error} = await sb.from('dieta_tomas').select('*',{count:'exact',head:true}).eq('dieta_id',dietaId);
+  if(error){console.error(error);return false;}
+  return !count;
+}
 // Cachés para abrir la ficha concreta al tocar un chip
 const PRODUCTOS_CACHE={}, RECETAS_CACHE={};
 

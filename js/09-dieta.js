@@ -7,6 +7,7 @@ async function renderDieta(){
   DIA_SEL=DIA_SEL||DIA_MAP[new Date().getDay()];
   const dias=[['1_Dia1','Lun'],['2_Dia2','Mar'],['3_Dia3','Mié'],['4_Dia4','Jue'],['5_Dia5','Vie'],['6_Dia6','Sáb'],['7_Domingo','Dom']];
   const tomas=await tomasDe(DIETA.id,DIA_SEL);
+    const soloPautas = tomas.length===0 && await sinTomas(DIETA.id);
   const CAL=calcCalorias();
   const pctMap=repartoComidas(comidasCalDe(tomas));
   cont.innerHTML=`
@@ -15,14 +16,15 @@ async function renderDieta(){
         <p style="font-size:18px;font-weight:800;margin:0">Tu dieta</p>
         <p style="font-size:16px;font-weight:800;color:#d97757;margin:3px 0 0">${fmt(DIETA.nombre_plan)}</p>
       </div>
+        ${soloPautas?'':`
       <div style="display:flex;flex-direction:column;gap:8px;align-items:stretch;flex-shrink:0">
         <button onclick="abrirGen()" style="display:flex;align-items:center;justify-content:center;gap:7px;background:var(--teal);color:#fff;border:2px solid var(--teal);border-radius:12px;padding:8px 13px;font-family:inherit;font-weight:800;font-size:14px;white-space:nowrap;cursor:pointer;box-shadow:0 2px 6px rgba(26,46,53,.10)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="9" y1="10" x2="9" y2="22"/><line x1="15" y1="10" x2="15" y2="22"/></svg>Tu plan semanal</button>
         <button onclick="abrirCompra(CLIENTE.dieta_actual_id)" style="display:flex;align-items:center;justify-content:center;gap:7px;background:#fff;color:var(--teal);border:2px solid var(--teal);border-radius:12px;padding:8px 13px;font-family:inherit;font-weight:800;font-size:14px;white-space:nowrap;cursor:pointer;box-shadow:0 2px 6px rgba(26,46,53,.10)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3890a4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1.5"/><circle cx="19" cy="21" r="1.5"/><path d="M1 1h3l2.6 13.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 2-1.6L23 6H6"/></svg>Lista de la compra</button>
-      </div>
+      </div>`}
     </div>
-    ${CAL?`<div class="card" style="text-align:center;padding:12px"><div style="font-size:14px;color:var(--muted);font-weight:700">Objetivo del día (${CAL.objLabel})</div><div style="font-size:22px;font-weight:800;color:var(--teal)">${CAL.objetivo} kcal</div><div style="font-size:14px;font-weight:700;color:var(--text);margin-top:2px"><span style="white-space:nowrap">P ${macrosDe(CAL.objetivo).prot}g</span> · <span style="white-space:nowrap">HC ${macrosDe(CAL.objetivo).hc}g</span> · <span style="white-space:nowrap">G ${macrosDe(CAL.objetivo).grasa}g</span></div></div>`:''}
-    <div class="daysel">${dias.map(d=>`<button class="${d[0]===DIA_SEL?'active':''}" onclick="selDia('${d[0]}')">${d[1]}</button>`).join('')}</div>
-    ${tomas.length===0?'<div class="empty">Sin comidas para este día.</div>':tomas.map(t=>{
+    ${(!soloPautas&&CAL)?`<div class="card" style="text-align:center;padding:12px"><div style="font-size:14px;color:var(--muted);font-weight:700">Objetivo del día (${CAL.objLabel})</div><div style="font-size:22px;font-weight:800;color:var(--teal)">${CAL.objetivo} kcal</div><div style="font-size:14px;font-weight:700;color:var(--text);margin-top:2px"><span style="white-space:nowrap">P ${macrosDe(CAL.objetivo).prot}g</span> · <span style="white-space:nowrap">HC ${macrosDe(CAL.objetivo).hc}g</span> · <span style="white-space:nowrap">G ${macrosDe(CAL.objetivo).grasa}g</span></div></div>`:''}
+        ${soloPautas?'':`<div class="daysel">${dias.map(d=>`<button class="${d[0]===DIA_SEL?'active':''}" onclick="selDia('${d[0]}')">${d[1]}</button>`).join('')}</div>`}
+    ${soloPautas?'<div class="card" style="padding:14px 16px"><p style="font-size:18px;font-weight:800;margin:0 0 5px">Sin dieta estas dos semanas</p><p style="font-size:16px;font-weight:600;color:var(--muted);margin:0;line-height:1.45">Trabajas solo con las pautas. Las tienes aquí abajo, en el desplegable.</p></div>':tomas.length===0?'<div class="empty">Sin comidas para este día.</div>':tomas.map(t=>{
       const i=TOMA_INFO[t.toma]||['🍴',t.toma];
       const prods=(t.toma_productos||[]).map(x=>x.productos).filter(p=>p&&p.disponible!==false);
       const recs=(t.toma_recetas||[]).map(x=>x.recetas).filter(Boolean);
