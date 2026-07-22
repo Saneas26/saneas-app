@@ -6,7 +6,7 @@ function mostrarSplash(){
   document.getElementById('splashTxt').innerHTML=`${saludo()},`;
   document.getElementById('splashNom').innerHTML=`${(CLIENTE.nombre||'').split(' ')[0]} 👋`;
   s.classList.remove('hidden'); void s.offsetWidth; s.classList.add('show');
-  return new Promise(r=>setTimeout(r,2300));
+  return new Promise(r=>setTimeout(r,3300));
 }
 async function registrarAcceso(){ try{ if(CLIENTE&&CLIENTE.id) await sb.from('accesos').insert({cliente_id:CLIENTE.id}); }catch(e){console.error('acceso',e);} }
 
