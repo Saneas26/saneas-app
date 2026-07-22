@@ -36,6 +36,11 @@ Supabase → no se cierra la sesión de nadie), misma PWA instalada, mismos dato
 | `js/18-facturas.js` | Facturas de la clienta (desde 01/07, desplegable) y toast |
 | `js/19-arranque.js` | Arranque con sesión persistente |
 | `js/20-miplan.js` | Mi Plan Semanal (generador de la clienta, RPC sin secreto) |
+| `js/21-diario.js` | Diario de comidas: buscador sobre la biblioteca + entrada a mano |
+| `css/diario.css` | Estilos del diario de comidas |
+| `supabase/fase1_diario.sql` | Tablas `alimentos` (capa nutricional del CAT_Tienda) y `diario_comidas` + RLS. Pegar en el SQL Editor |
+| `supabase/alimentos_semilla.sql` | ~85 alimentos genéricos para arrancar (revisables por Oscar) |
+| `herramientas/importar_alimentos_off.py` | Cruza el CAT_Tienda con Open Food Facts España y genera los CSV de carga |
 
 `panel.html` sigue siendo monolítico; su división es el siguiente paso.
 

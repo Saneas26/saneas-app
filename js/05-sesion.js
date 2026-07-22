@@ -141,6 +141,7 @@ async function iniciarSesion(){
   calcularProgreso();
   cargarReporte();
   cargarFase();
+  if(typeof cargarDiario==='function') cargarDiario();   // diario de comidas (fase 1)
   const {data:regs0}=await sb.from('registros').select('*').eq('cliente_id',user.id).order('semana',{ascending:true,nullsFirst:false}).order('fecha',{ascending:true}).limit(1);
   PRIMERO=(regs0&&regs0[0])||null;
   await cargarDieta();
