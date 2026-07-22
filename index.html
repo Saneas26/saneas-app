@@ -2245,10 +2245,16 @@ var __FASE;
 async function cargarFase(){
   try{
     if(typeof CLIENTE==="undefined"||!CLIENTE) return;
-    var s = Number(CLIENTE.semana)||0;
-    if(!s){ __FASE=null; return; }
+    var did = CLIENTE.dieta_actual_id;
+    if(!did){ __FASE=null; return; }
+    var bl = (typeof DIETA!=="undefined" && DIETA && DIETA.id===did) ? DIETA.comentario_bloque : null;
+    if(bl===null||bl===undefined){
+      var rd = await sb.from("dietas").select("comentario_bloque").eq("id",did).maybeSingle();
+      bl = (rd && rd.data) ? rd.data.comentario_bloque : null;
+    }
+    if(bl===null||bl===undefined){ __FASE=null; return; }
     var r = await sb.from("saneas_comentarios_fase").select("*")
-      .lte("semana", s).gte("semana_hasta", s).eq("publicado", true).limit(1);
+      .eq("semana", bl).eq("publicado", true).limit(1);
     __FASE = (r && r.data && r.data[0]) || null;
   }catch(e){ __FASE=null; }
 }
@@ -2271,7 +2277,7 @@ function pintarFase(){
   else if(cont.firstElementChild!==host){ cont.insertBefore(host, cont.firstElementChild); }
   if(host.getAttribute("data-fase")===String(__FASE.semana)) return;
   var abierta = !_faseLeida(__FASE.semana);
-  var sub = "Semanas "+__FASE.semana+"-"+__FASE.semana_hasta+(__FASE.fase?" · "+__FASE.fase:"");
+    var sub = (typeof DIETA!=="undefined" && DIETA && DIETA.nombre_plan) ? fmt(DIETA.nombre_plan) : (__FASE.fase||"");
   host.innerHTML = '<div class="card faCard">'
     + '<button class="faHead" onclick="toggleFase()">'
     + '<span class="faIco">&#128220;</span>'
