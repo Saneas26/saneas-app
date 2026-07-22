@@ -66,7 +66,7 @@ document.body.insertAdjacentHTML('beforeend',`
 <div id="gendieta">
   <div class="gdbox">
     <button class="gd-x" onclick="cerrarGen()">×</button>
-    <h3>🌿 Tu plan semanal</h3>
+    <h3>Tu plan semanal</h3>
     <div class="sub">Dime a qué hora cenas y te coloco el resto de las comidas respetando el ayuno nocturno que le toca a tu plan. Puedes cambiar cualquier hora a mano. Después descargas tu plan en PDF.</div>
     <div class="gd-ctrl">
       <div>
@@ -227,7 +227,7 @@ function genRender(){
   gel('gd_prev').innerHTML=`<div class="gi" id="gd_infografia">
     <div class="gi-head">
       <div class="gi-logo">Saneas<span>·</span></div>
-      <div class="gi-tit"><h1>🌿 Plan Semanal de Alimentación 🌿</h1>
+      <div class="gi-tit"><h1>Plan Semanal de Alimentación</h1>
         <div class="gi-sub">${esc(p.dieta.nombre_plan)} · ${esc(nom)} · ${fecha}</div></div>
       <div class="gi-idbox">ID<br>${uid}</div>
     </div>
