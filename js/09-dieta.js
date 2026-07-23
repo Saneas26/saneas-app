@@ -66,7 +66,7 @@ async function renderCompra(){
   const {data:d}=await sb.from('dietas').select('*').eq('id',id).maybeSingle();
   if(!d){ cont.innerHTML=header+'<div class="empty">No se encontró la dieta.</div>'; return; }
   const {data:items}=await sb.from('lista_compra').select('id,categoria,supermercado,producto').eq('nombre_plan',planBase(d.nombre_plan)).order('categoria').order('id');
-  COMPRA_ITEMS=items||[]; COMPRA_CHECKS=checkMap;
+  COMPRA_ITEMS=items||[]; COMPRA_CHECKS=checkMap; COMPRA_NOMBRE_PLAN=(d&&d.nombre_plan)||'';
   cont.innerHTML=header+_seccionCompra(label,d,COMPRA_ITEMS,checkMap);
 }
 // Cuerpo de la lista, filtrado por supermercado ('' = todos, '__sin__' = sin asignar)
@@ -95,9 +95,9 @@ function filtrarCompra(){
 }
 function _seccionCompra(label,d,items,checkMap){
   const url=d&&d.lista_compra_url;
-  const btn = url
-    ? `<a class="btn" style="display:block;text-align:center;text-decoration:none;margin-top:16px" href="${url}" target="_blank" rel="noopener">⬇️ Descargar la lista</a>`
-    : `<button class="btn" disabled style="margin-top:16px;opacity:.55">⬇️ Descarga próximamente</button>`;
+  // El PDF se genera con lo que hay EN PANTALLA (respeta el supermercado elegido)
+  const btn = `<button class="btn" id="lc-dl" onclick="descargarCompraPDF()" style="margin-top:16px">⬇️ Descargar en PDF</button>`
+    + (url?`<a href="${url}" target="_blank" rel="noopener" style="display:block;text-align:center;margin-top:10px;font-size:14px;font-weight:700;color:var(--teal);text-decoration:none">Ver la lista original de la dieta</a>`:'');
   const head=`<h2 class="sec">${label}</h2>
     <p style="font-size:16px;font-weight:800;color:#d97757;margin:0 6px 10px">${fmt(d&&d.nombre_plan)}</p>`;
   if(!items.length) return head+`<div class="card"><p style="font-size:14px;font-weight:600;color:var(--muted)">Sin artículos para esta dieta todavía.</p>${btn}</div>`;
@@ -118,3 +118,80 @@ async function toggleCompra(id, btn){
   try{ await sb.from('lista_compra_check').upsert({cliente_id:CLIENTE.id,item_id:id,checked:on},{onConflict:'cliente_id,item_id'}); }catch(e){ console.error('check',e); }
 }
 
+// ====== PDF de la lista de la compra ======
+// Descarga EXACTAMENTE lo que el cliente ve: el supermercado elegido en el
+// desplegable y el estado de cada casilla. Usa las mismas librerías que el
+// generador de Mi Plan (genScript vive en js/20-miplan.js).
+let COMPRA_NOMBRE_PLAN='';
+async function descargarCompraPDF(){
+  const btn=document.getElementById('lc-dl');
+  const t0=btn?btn.textContent:''; if(btn){ btn.disabled=true; btn.textContent='Preparando PDF…'; }
+  let node=null;
+  try{
+    if(!window.html2canvas) await genScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
+    if(!window.jspdf) await genScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+    const sup=(document.getElementById('lc_super')||{}).value||'';
+    const norma=it=>String(it.supermercado||'').trim();
+    const items=!sup?COMPRA_ITEMS:(sup==='__sin__'?COMPRA_ITEMS.filter(it=>!norma(it)):COMPRA_ITEMS.filter(it=>norma(it)===sup));
+    if(!items.length){ try{ toast('No hay artículos que descargar'); }catch(e){} if(btn){btn.disabled=false;btn.textContent=t0;} return; }
+    const cats={}; items.forEach(it=>{ const c=it.categoria||'Otros'; (cats[c]=cats[c]||[]).push(it); });
+    const ahora=new Date();
+    const fecha=ahora.toLocaleDateString('es-ES',{day:'numeric',month:'long',year:'numeric'});
+    const supTxt=!sup?'Todos los supermercados':(sup==='__sin__'?'Sin supermercado':sup);
+    const nomCli=((CLIENTE&&CLIENTE.nombre)||'')+' '+((CLIENTE&&CLIENTE.apellido)||'');
+    // ID del documento: cliente + minuto de creación. Único y rastreable sin base de datos.
+    const docId='LC-'+String((CLIENTE&&CLIENTE.id)||'').replace(/-/g,'').slice(0,6).toUpperCase()
+      +'-'+ahora.toISOString().slice(2,16).replace(/[-T:]/g,'');
+    let filas='';
+    Object.keys(cats).forEach(cat=>{
+      filas+='<div style="font-size:15px;font-weight:800;color:#3890a4;text-transform:uppercase;letter-spacing:.5px;margin:18px 0 6px">'+esc(cat)+'</div>';
+      cats[cat].forEach(it=>{
+        const on=COMPRA_CHECKS[it.id]===true;
+        filas+='<div style="display:flex;align-items:center;gap:12px;padding:7px 0;border-bottom:1px dashed #dbe6e9">'
+          +'<span style="flex:none;width:18px;height:18px;border-radius:5px;'+(on
+            ?'background:#2f9e5f;color:#fff;font-weight:900;font-size:13px;text-align:center;line-height:18px">✓'
+            :'border:2px solid #b9cdd3">')+'</span>'
+          +'<span style="font-size:15px;font-weight:600;color:'+(on?'#8aa0a7;text-decoration:line-through':'#1a2e35')+'">'+esc(it.producto)
+          +(!sup&&it.supermercado?' <span style="font-size:12px;color:#8aa0a7">· '+esc(it.supermercado)+'</span>':'')
+          +'</span></div>';
+      });
+    });
+    node=document.createElement('div');
+    node.style.cssText='position:fixed;left:-9999px;top:0;width:800px;background:#fff;padding:44px 48px;font-family:Quicksand,sans-serif';
+    node.innerHTML='<div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #3890a4;padding-bottom:14px;margin-bottom:8px">'
+      +'<div><div style="font-size:30px;font-weight:700;color:#3890a4;letter-spacing:.5px">Saneas<span style="font-size:14px;vertical-align:super">®</span></div>'
+      +'<div style="font-size:16px;font-weight:800;color:#1a2e35;margin-top:2px">Lista de la compra · '+esc(supTxt)+'</div></div>'
+      +'<div style="text-align:right;font-size:12.5px;color:#5f7178;font-weight:600;line-height:1.7">'
+        +'<b style="color:#1a2e35">'+esc(nomCli.trim()||'Cliente Saneas')+'</b><br>'
+        +'Estrategia: <b style="color:#1a2e35">'+esc(COMPRA_NOMBRE_PLAN||'—')+'</b><br>'
+        +fecha+'<br>'
+        +'<span style="font-size:11px;color:#8aa0a7">ID '+docId+'</span></div></div>'
+      +filas
+      +'<div style="margin-top:22px;font-size:12px;color:#8aa0a7;font-weight:600;text-align:center">app.saneas.es · tu lista, tal y como la dejaste</div>';
+    document.body.appendChild(node);
+    const canvas=await html2canvas(node,{scale:2,backgroundColor:'#ffffff',logging:false});
+    node.remove(); node=null;
+    const pdf=new window.jspdf.jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+    const M=10, W=210-2*M, H=297-2*M;
+    const hTotal=W*(canvas.height/canvas.width);
+    if(hTotal<=H){ pdf.addImage(canvas.toDataURL('image/jpeg',0.92),'JPEG',M,M,W,hTotal); }
+    else{
+      // listas largas: trocear el lienzo en páginas A4
+      const pagePx=Math.floor(canvas.width*H/W); let y=0, primera=true;
+      while(y<canvas.height){
+        const h=Math.min(pagePx,canvas.height-y);
+        const c2=document.createElement('canvas'); c2.width=canvas.width; c2.height=h;
+        c2.getContext('2d').drawImage(canvas,0,y,canvas.width,h,0,0,canvas.width,h);
+        if(!primera) pdf.addPage();
+        pdf.addImage(c2.toDataURL('image/jpeg',0.92),'JPEG',M,M,W,W*(h/canvas.width));
+        y+=h; primera=false;
+      }
+    }
+    pdf.save('Lista-compra-Saneas'+(sup&&sup!=='__sin__'?'-'+sup.replace(/\s+/g,''):'')+'.pdf');
+    try{ toast('⬇️ Lista descargada'); }catch(e){}
+  }catch(e){
+    if(node) node.remove();
+    alert('No se pudo crear el PDF, inténtalo de nuevo.');
+  }
+  if(btn){ btn.disabled=false; btn.textContent=t0; }
+}
