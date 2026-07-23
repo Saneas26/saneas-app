@@ -272,3 +272,10 @@
     #rotateGuard{display:flex;position:fixed;inset:0;z-index:99999;background:var(--teal);color:#fff;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px}
     .app{display:none!important}
   }
+
+
+/* Dieta: destacar qué comer + desplegable de artículos */
+.plato p{font-size:17px;font-weight:700;line-height:1.5}
+.chip.mas{display:none}
+.chips.open .chip.mas{display:inline-flex}
+.artmas{display:inline-block;margin:4px 0 2px;padding:5px 12px;border:1px solid var(--teal);background:#fff;color:var(--teal);font-size:13px;font-weight:700;border-radius:20px;cursor:pointer}
