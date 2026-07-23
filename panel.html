@@ -111,7 +111,7 @@
   .alta-btn:hover{background:var(--teal-d)}
   #alta{position:fixed;inset:0;background:rgba(16,50,58,.45);z-index:45;display:none;align-items:center;justify-content:center}
   #alta.show{display:flex}
-  #alta .box{background:#fff;border-radius:16px;padding:24px;width:440px;max-width:94vw;max-height:92vh;overflow-y:auto}
+  #alta .box{background:#fff;border-radius:16px;padding:24px;width:660px;max-width:94vw;max-height:92vh;overflow-y:auto}
   #alta h3{font-size:18px;color:var(--teal-d);margin-bottom:4px}
   #alta .sub{font-size:13px;color:var(--muted);margin-bottom:14px}
   #alta label{display:block;font-size:12px;font-weight:700;color:var(--muted);margin:10px 0 4px}
@@ -223,6 +223,11 @@
   .fe-msg.ok{color:#12a150}.fe-msg.err{color:#e05252}
   .fe-editar{margin-top:10px;background:none;border:2px solid var(--line);color:var(--muted);border-radius:9px;padding:9px 16px;font-size:13px;font-weight:800;font-family:inherit;cursor:pointer}
   .fe-editar:hover{border-color:var(--teal);color:var(--teal)}
+  /* dentro del modal de alta, las reglas genericas de #alta label/input rompen las casillas */
+  #alta .fe-chk{display:flex;align-items:center;gap:8px;margin:0;padding:5px 0;font-size:14px;font-weight:400;color:var(--text);text-transform:none;letter-spacing:0}
+  #alta .fe-chk input{width:17px;height:17px;padding:0;border:none;flex:none}
+  #alta .fe-bloque{margin:14px 0 4px}
+  #alta #fe-med-texto{min-height:52px}
   #renovar .box{background:#fff;border-radius:16px;padding:24px;width:440px;max-width:94vw;max-height:90vh;overflow-y:auto}
   #renovar h3{font-size:18px;color:var(--teal-d);margin-bottom:4px}
   #renovar .sub{font-size:13px;color:var(--muted);margin-bottom:14px}
@@ -338,6 +343,7 @@
       <option>Regular</option>
       <option>Intenso</option>
     </select>
+    <div id="fe-alta"></div>
     <div id="altaMsg"></div>
     <div class="foot">
       <button class="btn-cerrar" onclick="cerrarAlta()">Cancelar</button>
@@ -765,9 +771,8 @@ function _feResumen(id,cli,f,okMsg){
   h+='<button class="fe-editar" onclick="feEditar()">\u270f\ufe0f Editar / validar</button>';
   w.innerHTML=h;
 }
-// ---------- FORMULARIO (solo en el alta / primera consulta, o al editar) ----------
-function _fePinta(id,cli,f){
-  var w=document.getElementById('fe-wrap'); if(!w) return;
+// ---------- FORMULARIO (en el alta / primera consulta, o al editar desde la ficha) ----------
+function _feFormHTML(f){
   f=f||{};
   var chk=function(col,label){
     var sev=FE_ROJO.indexOf(col)>=0?'r':FE_AMBAR.indexOf(col)>=0?'a':'v';
@@ -776,13 +781,8 @@ function _fePinta(id,cli,f){
   var bloques=FE_BLOQUES.map(function(b){
     return '<div class="fe-bloque">'+b[0]+'</div><div class="fe-grid">'+b[1].map(function(c){ return chk(c[0],c[1]); }).join('')+'</div>';
   }).join('');
-  w.innerHTML='<h4>\ud83d\udccb Ficha de entrada \u00b7 primera consulta</h4>'
-   +'<div id="fe-semaforo" class="fe-sem"></div>'
+  return '<div id="fe-semaforo" class="fe-sem"></div>'
    +'<div id="fe-puerta-roja" class="fe-roja" style="display:none">\u26d4 NO PROCEDE el protocolo est\u00e1ndar: situaci\u00f3n de exclusi\u00f3n (embarazo, lactancia, menor o cirug\u00eda). Derivar a valoraci\u00f3n cl\u00ednica.</div>'
-   +'<div class="fe-p1" id="fe-p1"><b>'+esc(((cli.nombre||'')+' '+(cli.apellido||'')).trim())+'</b>'
-     +' \u00b7 DNI '+esc(cli.dni||'\u2014')+' \u00b7 Nac. '+(_feFecha(cli.fecha_nacimiento)||'\u2014')+' \u00b7 '+esc(cli.sexo||cli.genero||'\u2014')
-     +' \u00b7 '+(cli.altura?esc(cli.altura)+' cm':'\u2014')+' \u00b7 peso inicial '+(cli.peso_inicial!=null?esc(cli.peso_inicial)+' kg':'\u2014')
-     +' \u00b7 plan '+esc(cli.plan||'\u2014')+' <span class="vacio">(solo lectura)</span></div>'
    +bloques
    +'<div class="fe-bloque">MEDICACION \u00b7 TEXTO LIBRE</div>'
    +'<textarea id="fe-med-texto" placeholder="Qu\u00e9 toma, dosis, desde cu\u00e1ndo\u2026">'+esc(f.med_texto||'')+'</textarea>'
@@ -798,8 +798,37 @@ function _fePinta(id,cli,f){
      +'<label class="fe-chk"><input type="checkbox" id="fe-clinico-valido"'+(f.clinico_valido?' checked':'')+' onchange="feCambio()"><i class="fe-dot v"></i><span>Validada por cl\u00ednico (autoriza el arranque)</span></label>'
      +'<input id="fe-clinico-nombre" class="fe-txt" placeholder="Nombre del cl\u00ednico que valida" value="'+esc(f.clinico_nombre||'')+'">'
      +(f.clinico_validado_at?'<div class="vacio" style="margin-top:4px">Validada el '+_feFecha(f.clinico_validado_at)+'</div>':'')
-   +'</div>'
-   +'<div style="display:flex;align-items:center;flex-wrap:wrap;gap:10px"><button id="fe-guardar" onclick="guardarFichaEntrada(\''+id+'\')">Guardar ficha de entrada</button>'
+   +'</div>';
+}
+function _fePayload(contId){
+  var cont=document.getElementById(contId); if(!cont) return null;
+  var payload={};
+  cont.querySelectorAll('input[type=checkbox]').forEach(function(e){
+    payload[e.id.replace('fe-','').replace(/-/g,'_')]=e.checked;
+  });
+  var g=function(id){ var e=cont.querySelector('#'+id); return e?e.value:''; };
+  payload.med_texto=g('fe-med-texto')||'';
+  payload.firmado_por=g('fe-firmado-por')||'';
+  payload.clinico_nombre=g('fe-clinico-nombre')||'';
+  return payload;
+}
+function _feFormAlta(){
+  var w=document.getElementById('fe-alta'); if(!w) return;
+  w.innerHTML='<div class="fe-bloque" style="font-size:13px;margin-top:16px">\ud83d\udccb FICHA DE ENTRADA \u00b7 PRIMERA CONSULTA</div>'
+    +'<div class="vacio" style="margin-bottom:6px">El asesor pregunta y marca; el sem\u00e1foro decide. Se guarda sola al crear el alta.</div>'
+    +_feFormHTML(null);
+  feCambio();
+}
+function _fePinta(id,cli,f){
+  var w=document.getElementById('fe-wrap'); if(!w) return;
+  f=f||{};
+  w.innerHTML='<h4>\ud83d\udccb Ficha de entrada \u00b7 primera consulta</h4>'
+   +'<div class="fe-p1" id="fe-p1"><b>'+esc(((cli.nombre||'')+' '+(cli.apellido||'')).trim())+'</b>'
+     +' \u00b7 DNI '+esc(cli.dni||'\u2014')+' \u00b7 Nac. '+(_feFecha(cli.fecha_nacimiento)||'\u2014')+' \u00b7 '+esc(cli.sexo||cli.genero||'\u2014')
+     +' \u00b7 '+(cli.altura?esc(cli.altura)+' cm':'\u2014')+' \u00b7 peso inicial '+(cli.peso_inicial!=null?esc(cli.peso_inicial)+' kg':'\u2014')
+     +' \u00b7 plan '+esc(cli.plan||'\u2014')+' <span class="vacio">(solo lectura)</span></div>'
+   +_feFormHTML(f)
+   +'<div style="display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin-top:4px"><button id="fe-guardar" onclick="guardarFichaEntrada(\''+id+'\')">Guardar ficha de entrada</button>'
    +'<button class="fe-editar" onclick="feVolver()">\u2039 Volver al resumen</button>'
    +'<span id="fe-estado-guardado"></span></div>';
   feCambio();
@@ -830,13 +859,7 @@ function _feSemaforo(est,clinicoOk){
 async function guardarFichaEntrada(id){
   var b=document.getElementById('fe-guardar'); if(!b) return;
   b.disabled=true; b.textContent='Guardando\u2026';
-  var payload={};
-  document.querySelectorAll('#fe-wrap input[type=checkbox]').forEach(function(e){
-    payload[e.id.replace('fe-','').replace(/-/g,'_')]=e.checked;
-  });
-  payload.med_texto=(document.getElementById('fe-med-texto')||{}).value||'';
-  payload.firmado_por=(document.getElementById('fe-firmado-por')||{}).value||'';
-  payload.clinico_nombre=(document.getElementById('fe-clinico-nombre')||{}).value||'';
+  var payload=_fePayload('fe-wrap'); if(!payload){ b.disabled=false; b.textContent='Guardar ficha de entrada'; return; }
   var r=await rpc('panel_ficha_guardar',{p_cliente_id:id,p_datos:payload});
   var fila=Array.isArray(r)?r[0]:r;
   if(!fila||fila.error||fila.message||!fila.estado){
@@ -1234,6 +1257,7 @@ function abrirAlta(){
   el('al_dia').onchange=pintarPlazasAlta;
   pintarPlazasAlta();
   const m=el('altaMsg'); m.textContent='';m.className='';
+  _feFormAlta();
   el('alta').classList.add('show'); el('al_nombre').focus();
 }
 // Opciones de plaza según el día elegido, marcando libres/ocupadas
@@ -1249,7 +1273,7 @@ function pintarPlazasAlta(){
   el('al_plaza').innerHTML=opts;
   el('al_plaza').value='';
 }
-function cerrarAlta(){el('alta').classList.remove('show');}
+function cerrarAlta(){el('alta').classList.remove('show'); var _fa=el('fe-alta'); if(_fa) _fa.innerHTML='';}
 async function crearAlta(){
   const nombre=el('al_nombre').value.trim(), apellido=el('al_apellido').value.trim();
   const email=el('al_email').value.trim(), telefono=el('al_tel').value.trim();
@@ -1260,10 +1284,18 @@ async function crearAlta(){
   const {status,data}=await api('alta',{nombre,apellido,email,telefono,bono,dia,plaza:plaza||null,estilo_vida});
   btn.disabled=false;btn.textContent='Crear alta';
   if(status!==200){m.className='err';m.textContent=data.error||'Error';return;}
+  var _fePay=null; try{ _fePay=_fePayload('fe-alta'); }catch(e){}
   cerrarAlta(); toast(data.fecha_renovacion?('Alta creada · acceso hasta '+data.fecha_renovacion):'Cliente dado de alta'); await cargar();
-  // Primera consulta: se abre la ficha del nuevo cliente con la Ficha de entrada desplegada
-  try{ var _nc=(CLIENTES||[]).find(function(c){ return String(c.email||'').toLowerCase()===email.toLowerCase(); });
-    if(_nc){ FE_ABRIR_FORM=true; abrirFicha(_nc.id); } }catch(e){}
+  // La Ficha de entrada rellenada en el propio alta se guarda para el cliente recien creado
+  try{
+    var _nc=(CLIENTES||[]).find(function(c){ return String(c.email||'').toLowerCase()===email.toLowerCase(); });
+    if(_nc&&_fePay){
+      var _fr=await rpc('panel_ficha_guardar',{p_cliente_id:_nc.id,p_datos:_fePay});
+      var _fi=Array.isArray(_fr)?_fr[0]:_fr;
+      toast((_fi&&_fi.estado)?('Ficha de entrada guardada \u00b7 '+String(_fi.estado).toUpperCase()):'Alta creada, pero la ficha de entrada NO se guard\u00f3: r\u00e9llenala desde su ficha');
+      abrirFicha(_nc.id);
+    } else if(_nc){ abrirFicha(_nc.id); }
+  }catch(e){}
 }
 var REC_m=null, REC_ch=[], REC_blob=null, REC_stream=null, REC_id=null, REC_nombre="", REC_t=null, REC_s=0;
 function grabarReporte(id,nombre){
