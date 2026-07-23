@@ -441,6 +441,18 @@
     <label>Descuento (€)</label>
     <input id="rn_desc" type="number" min="0" step="1" value="0">
     <div id="rn_desc_hint" style="font-size:12px;color:var(--muted);margin-top:4px"></div>
+    <label>Forma de cobro</label>
+    <select id="rn_forma">
+      <option value="" selected>— elegir cómo te ha pagado —</option>
+      <option>Bizum 1</option>
+      <option>Bizum 2</option>
+      <option>PayPal</option>
+      <option>Transferencia</option>
+      <option>Revolut</option>
+      <option>Tarjeta</option>
+      <option>Efectivo</option>
+      <option>Otro</option>
+    </select>
     <label>Pausa por vacaciones</label>
     <select id="rn_pausa">
       <option value="" selected>Sin pausa</option>
@@ -486,7 +498,7 @@ async function api(action,extra={}){
   },body:JSON.stringify({action,password:PASS,...extra})});
   return {status:r.status,data:await r.json().catch(()=>({}))};
 }
-async function rpc(fn,body){ try{ const tok=adminToken()||PUBLISHABLE; const r=await fetch(SUPABASE_URL+'/rest/v1/rpc/'+fn,{method:'POST',headers:{'Content-Type':'application/json','apikey':PUBLISHABLE,'Authorization':'Bearer '+tok},body:JSON.stringify(body)}); return await r.json(); }catch(e){ return null; } }
+async function rpc(fn,body){ try{ if(ADMIN_SESS&&!esAdminActivo()) await adminRefresh(); const tok=adminToken()||PUBLISHABLE; const r=await fetch(SUPABASE_URL+'/rest/v1/rpc/'+fn,{method:'POST',headers:{'Content-Type':'application/json','apikey':PUBLISHABLE,'Authorization':'Bearer '+tok},body:JSON.stringify(body)}); return await r.json(); }catch(e){ return null; } }
 async function enviarAviso(clienteId,nombre){
   const cuerpo=prompt('Mensaje del aviso para '+(nombre||'TODOS los clientes con la app')+':'); if(!cuerpo) return;
   if(!esAdminActivo()){ toast('Activa el modo admin para enviar avisos'); abrirAdmin(); return; }
@@ -1621,7 +1633,7 @@ function abrirRenovar(){
   RENOV_SEL=null; el('rn_buscar').value=''; el('rn_bono').value='completo_mensual';
   RN_DESC_REQ++; el('rn_desc').value=0; el('rn_desc_hint').textContent=''; el('rn_pausa').value='';
   const m=el('renovMsg'); m.textContent='';m.className='';
-  el('renovar').classList.add('show'); pintarRenovList(''); el('rn_buscar').focus();
+  el('rn_forma').value=''; el('renovar').classList.add('show'); pintarRenovList(''); el('rn_buscar').focus();
 }
 // Pre-rellena el descuento Saneamigos (clientes.descuento_invitados) SOLO para
 // mensual Completo/Premium; para el resto, 0. El campo queda siempre editable.
@@ -1650,6 +1662,8 @@ function pintarRenovList(q){
 function selRenovar(id,nombre){RENOV_SEL={id,nombre};el('rn_buscar').value=nombre;pintarRenovList(nombre);actualizarDescuentoRenovar();}
 async function confirmarRenovar(){ const m=el('renovMsg'); if(!esAdminActivo()){ m.className='err'; m.textContent='Activa el modo admin antes de renovar. Si no, la renovacion se aplica pero la factura NO se emite.'; toast('Activa el modo admin'); abrirAdmin(); return; }
   if(!RENOV_SEL){m.className='err';m.textContent='Elige primero un cliente de la lista.';return;}
+  const forma=el('rn_forma').value;
+  if(!forma){m.className='err';m.textContent='Elige la forma de cobro antes de renovar.';return;}
   const bono=el('rn_bono').value;
   const btn=el('btnRenovar');btn.disabled=true;btn.textContent='Renovando...';
   const {status,data}=await api('renovar',{cliente_id:RENOV_SEL.id,bono});
@@ -1664,6 +1678,12 @@ async function confirmarRenovar(){ const m=el('renovMsg'); if(!esAdminActivo()){
   if(fac&&fac.ok){
     m.textContent+=` · Factura ${fac.numero} (${fac.total}€)`+(fac.datos_fiscales_completos?'':' — ⚠️ faltan datos fiscales del cliente');
     toast('Factura '+fac.numero+' emitida');
+    // Anotar la forma de cobro en la factura y en la contabilidad. Si falla, no rompe nada: se avisa.
+    try{
+      const fp=await rpc('panel_forma_pago',{p_numero:fac.numero,p_forma:forma});
+      if(fp&&fp.ok){ m.textContent+=` · pago: ${forma}`+(fp.aviso?' ⚠️ '+fp.aviso:''); }
+      else{ m.className='err'; m.textContent+=` · ⚠️ La forma de cobro (${forma}) NO quedó anotada${fp&&(fp.error||fp.message)?' ('+(fp.error||fp.message)+')':''}: apúntala a mano.`; }
+    }catch(e){ m.className='err'; m.textContent+=` · ⚠️ La forma de cobro (${forma}) NO quedó anotada: apúntala a mano.`; }
     setTimeout(cerrarRenovar, 3000);   // se cierra solo a los 3s, sin esperar a Cancelar
   }else{
     m.className='err';
@@ -2343,16 +2363,32 @@ async function adminVerificar(){
     }else{ admMsg(j.msg||'Código no válido o caducado','err'); }
   }catch(e){ admMsg('Error de red','err'); }
 }
-async function adminRefresh(){
+async function adminRefresh(reintento){
+  // Antes de refrescar, coger SIEMPRE la copia mas nueva guardada: otra pestaña
+  // puede haber refrescado ya y rotado el token (era la causa nº1 de pedir codigo).
+  try{ const g=JSON.parse(localStorage.getItem('panel_admin_sess')||'null');
+    if(g&&g.refresh_token&&(!ADMIN_SESS||g.refresh_token!==ADMIN_SESS.refresh_token)) ADMIN_SESS=g; }catch(e){}
   if(!ADMIN_SESS||!ADMIN_SESS.refresh_token) return false;
   try{
     const r=await fetch(SUPABASE_URL+'/auth/v1/token?grant_type=refresh_token',{method:'POST',
       headers:{'Content-Type':'application/json','apikey':PUBLISHABLE},body:JSON.stringify({refresh_token:ADMIN_SESS.refresh_token})});
     const j=await r.json().catch(()=>({}));
     if(j&&j.access_token){ j._email=ADMIN_SESS._email; ADMIN_SESS=j; localStorage.setItem('panel_admin_sess',JSON.stringify(j)); return true; }
+    // Solo cerrar sesion si el servidor RECHAZA el token expresamente (400/401/403).
+    // Un fallo de red o un 5xx NO cierra nada: se reintenta en el proximo ciclo.
+    if(r.status===400||r.status===401||r.status===403){
+      // ultima oportunidad: quiza otra pestaña guardo el token bueno hace un instante
+      if(!reintento){
+        try{ const g2=JSON.parse(localStorage.getItem('panel_admin_sess')||'null');
+          if(g2&&g2.refresh_token&&g2.refresh_token!==ADMIN_SESS.refresh_token){ ADMIN_SESS=g2; return adminRefresh(true); } }catch(e){}
+      }
+      ADMIN_SESS=null; localStorage.removeItem('panel_admin_sess'); return false;
+    }
   }catch(e){}
-  ADMIN_SESS=null; localStorage.removeItem('panel_admin_sess'); return false;
+  return esAdminActivo();   // fallo transitorio: la sesion sigue viva mientras el token actual aguante
 }
+// Si otra pestaña refresca, esta se entera al momento (evita pisarse los tokens)
+window.addEventListener('storage',e=>{ if(e.key==='panel_admin_sess'){ try{ ADMIN_SESS=JSON.parse(e.newValue||'null'); }catch(_e){} pintarPastillaAdmin(); } });
 // Al arrancar: si había sesión admin guardada, refrescarla y pintar la pastilla.
 (async()=>{ if(ADMIN_SESS) await adminRefresh(); pintarPastillaAdmin(); })(); setInterval(()=>{ if(ADMIN_SESS) adminRefresh().then(pintarPastillaAdmin); }, 1500000); document.addEventListener('visibilitychange',()=>{ if(!document.hidden && ADMIN_SESS) adminRefresh().then(pintarPastillaAdmin); });
 // ================= FIN LOGIN ADMIN =================
