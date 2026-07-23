@@ -135,6 +135,71 @@ function buscarRecetas(){
   const res=PALL.recetas.filter(x=>sinTilde(x.nombre).includes(q)||sinTilde(x.categoria).includes(q)).slice(0,100);
   cont.innerHTML=res.length?res.map(x=>filaCat(x,'verReceta','👩‍🍳')).join(''):'<div class="empty">Sin resultados.</div>';
 }
+// ====== Proponer un artículo nuevo para la tienda ======
+// El cliente propone (nombre + supermercado + precio obligatorios);
+// se guarda en productos_propuestas y el webhook avisa a Oscar por
+// correo. CAT_Tienda no se toca hasta que él lo apruebe.
+const PROP_SUPERS=['Mercadona','Lidl','Carrefour','Aldi','Dia','Hiperdino','Ahorramas','Decathlon','Amazon'];
+function proponerArticulo(){
+  const inp='width:100%;box-sizing:border-box;border:1px solid #d7e2e6;border-radius:12px;padding:11px;font-size:14px;font-family:inherit;color:var(--dark);background:#fff';
+  const lbl='font-size:13px;font-weight:700;color:var(--muted);margin:14px 0 6px';
+  abrirDetalle('Proponer un artículo',`
+    <div style="background:var(--light);border:1px solid #bfe0e8;border-radius:12px;padding:12px;margin-bottom:16px">
+      <div style="font-size:13.5px;font-weight:800;color:var(--dark)">🛒 ¿Has visto un producto que merece la pena?</div>
+      <div style="font-size:13px;color:var(--muted);line-height:1.5;margin-top:5px">Cuéntanoslo aquí. Lo revisamos y, si encaja, lo verás publicado en la tienda.</div>
+    </div>
+    <div style="${lbl};margin-top:0">Nombre del producto <span style="color:var(--red)">*</span></div>
+    <input id="pp_nombre" placeholder="Ej.: Yogur proteico natural" style="${inp}">
+    <div style="${lbl}">Supermercado <span style="color:var(--red)">*</span></div>
+    <select id="pp_super" onchange="ppSuperCambio()" style="${inp}">
+      <option value="">Elige el supermercado…</option>
+      ${PROP_SUPERS.map(s=>`<option>${s}</option>`).join('')}
+      <option value="__otro__">Otro</option>
+    </select>
+    <input id="pp_super_otro" placeholder="¿Cuál?" class="hidden" style="${inp};margin-top:8px">
+    <div style="${lbl}">Precio <span style="color:var(--red)">*</span></div>
+    <input id="pp_precio" type="text" inputmode="decimal" placeholder="Ej.: 2,45" style="${inp}">
+    <div style="${lbl}">Link de la imagen <span style="font-weight:400;color:#9aa9ae">(opcional)</span></div>
+    <input id="pp_imagen" type="url" placeholder="https://…" style="${inp}">
+    <div style="${lbl}">Link de la página de compra <span style="font-weight:400;color:#9aa9ae">(opcional)</span></div>
+    <input id="pp_web" type="url" placeholder="https://…" style="${inp}">
+    <button id="pp_btn" onclick="enviarPropuesta()" style="width:100%;margin-top:18px;background:#d97757;color:#fff;border:0;padding:14px;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer">Enviar propuesta</button>
+    <div id="pp_msg" style="text-align:center;font-size:13.5px;font-weight:700;margin-top:10px;min-height:18px"></div>`);
+}
+function ppSuperCambio(){
+  const otro=document.getElementById('pp_super').value==='__otro__';
+  const i=document.getElementById('pp_super_otro');
+  i.classList.toggle('hidden',!otro); if(!otro) i.value='';
+}
+async function enviarPropuesta(){
+  const msg=document.getElementById('pp_msg'), btn=document.getElementById('pp_btn');
+  const nombre=(document.getElementById('pp_nombre').value||'').trim();
+  let superm=document.getElementById('pp_super').value;
+  if(superm==='__otro__') superm=(document.getElementById('pp_super_otro').value||'').trim();
+  const precio=Number(String(document.getElementById('pp_precio').value||'').replace(',','.').replace(/[^0-9.]/g,''));
+  const imagen=(document.getElementById('pp_imagen').value||'').trim();
+  const web=(document.getElementById('pp_web').value||'').trim();
+  const falta = !nombre ? 'el nombre del producto' : !superm ? 'el supermercado' : !(precio>0) ? 'un precio válido' : '';
+  if(falta){ msg.style.color='var(--red)'; msg.textContent='Falta '+falta+' para poder enviarla.'; return; }
+  btn.disabled=true; btn.style.opacity='.6'; btn.textContent='Enviando…'; msg.textContent='';
+  const {error}=await sb.from('productos_propuestas').insert({
+    cliente_id:CLIENTE.id,
+    cliente_nombre:(((CLIENTE.nombre||'')+' '+(CLIENTE.apellido||'')).trim())||null,
+    nombre, supermercado:superm, precio,
+    imagen_url:imagen||null, url_compra:web||null });
+  if(error){ console.error(error); msg.style.color='var(--red)'; msg.textContent='No se pudo enviar. Inténtalo de nuevo.'; btn.disabled=false; btn.style.opacity='1'; btn.textContent='Enviar propuesta'; return; }
+  document.getElementById('detBody').innerHTML=`
+    <div style="text-align:center;padding:40px 16px">
+      <div style="font-size:46px">✅</div>
+      <div style="font-size:17px;font-weight:800;color:var(--dark);margin-top:10px">¡Propuesta enviada!</div>
+      <div style="font-size:13.5px;color:var(--muted);line-height:1.5;margin-top:8px">Gracias por avisarnos de <b>${esc(nombre)}</b>. La revisamos y, si encaja, la verás en la tienda.</div>
+      <button onclick="cerrarDetalle()" style="margin-top:18px;background:#fff;color:var(--teal);border:2px solid var(--teal);padding:11px 18px;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer">Volver</button>
+    </div>`;
+}
+// Botón reutilizable (Dieta y Tienda lo pintan igual)
+function btnProponerHTML(margen){
+  return `<button onclick="proponerArticulo()" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;box-sizing:border-box;background:#fff;color:var(--teal);border:2px solid var(--teal);border-radius:12px;padding:12px;font-family:inherit;font-weight:800;font-size:15px;cursor:pointer;${margen||''}">🛒 Proponer un artículo nuevo</button>`;
+}
 const PLAN_LIST=[
   {id:'basico',label:'Básico',amount:30,sub:'/mes'},
   {id:'completo_mensual',label:'Completo Mensual',amount:60,sub:'/mes'},
