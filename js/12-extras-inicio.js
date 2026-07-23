@@ -242,6 +242,26 @@ function _repFecha(d){
     return s.charAt(0).toUpperCase()+s.slice(1); }catch(e){ return ""; }
 }
 var __FASE;
+async function _calcCrea(){
+  window.__CREA = null; window.__PESO_HOY = null;
+  try{
+    if(!__FASE || !__FASE.texto || __FASE.texto.indexOf("{{CREA}}") < 0) return;
+    var pesoHoy = null;
+    try{
+      var hoy = new Date().toISOString().slice(0,10);
+      var rp = await sb.from("registros").select("fecha,peso").eq("cliente_id", CLIENTE.id).not("peso","is",null).lte("fecha", hoy).order("fecha",{ascending:false}).limit(1);
+      if(rp && rp.data && rp.data[0] && rp.data[0].peso) pesoHoy = Number(rp.data[0].peso);
+    }catch(e){}
+    if((!pesoHoy || !(pesoHoy > 0)) && CLIENTE && CLIENTE.peso_inicial) pesoHoy = Number(CLIENTE.peso_inicial);
+    window.__PESO_HOY = pesoHoy;
+    if(pesoHoy && pesoHoy > 0) window.__CREA = Math.round(pesoHoy/10) + " g/día";
+  }catch(e){ window.__CREA = null; }
+}
+function _faseHtml(){
+  var t = (__FASE && __FASE.texto) || "";
+  var c = window.__CREA || "1 g por cada 10 kg de tu peso";
+  return t.split("{{CREA}}").join(c);
+}
 async function cargarFase(){
   try{
     if(typeof CLIENTE==="undefined"||!CLIENTE) return;
@@ -256,6 +276,7 @@ async function cargarFase(){
     var r = await sb.from("saneas_comentarios_fase").select("*")
       .eq("semana", bl).eq("publicado", true).limit(1);
     __FASE = (r && r.data && r.data[0]) || null;
+    await _calcCrea();
   }catch(e){ __FASE=null; }
 }
 function _faseLeida(k){ try{ return localStorage.getItem("saneas_fase_"+k)==="1"; }catch(e){ return false; } }
@@ -288,7 +309,7 @@ function pintarFase(){
       + '<span id="faseLbl" style="font-size:14px;font-weight:700;color:var(--muted);margin-right:8px;white-space:nowrap">'+(abierta?"Ocultar":"Desplegar")+'</span>'
     + '<span class="faChev" id="faseChev" style="'+(abierta?"transform:rotate(90deg)":"")+'">&rsaquo;</span></button>'
     + '<div class="faBody" id="faseCuerpo" style="display:'+(abierta?"block":"none")+'">'
-    + (__FASE.texto||"")
+    + _faseHtml()
     + '</div></div>';
   host.setAttribute("data-fase", String(__FASE.semana));
 }
