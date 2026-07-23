@@ -32,7 +32,8 @@ async function renderDieta(){
       return `<div class="card"><div class="plato">
         <h4>${i[0]} ${i[1]}</h4><p>${listar(t.texto)}</p>        ${prods.length?`<div class="relh">🛒 Artículos de tienda</div><div class="chips">${prods.map((p,pi)=>`<span class="chip shop link${pi>=3?' mas':''}" onclick="verProducto('${p.id}')">🛒 ${p.nombre} ›</span>`).join('')}</div>${prods.length>3?`<button class="artmas" onclick="toggleArts(this)">Ver ${prods.length-3} más ▾</button>`:''}`:''}
         ${recs.length?`<div class="relh">👩‍🍳 Recetas relacionadas</div><div class="chips">${recs.map(r=>`<span class="chip rec link" onclick="verReceta('${r.id}')">👩‍🍳 ${r.nombre} ›</span>`).join('')}</div>`:''}
-      </div></div>`;}).join('')}`;
+      </div></div>`;}).join('')}
+    ${btnProponerHTML('margin-top:16px')}`;
 }
 function toggleArts(b){var x=b.previousElementSibling;var o=x.classList.toggle('open');var n=x.querySelectorAll('.mas').length;b.textContent=o?'Ocultar ▴':('Ver '+n+' más ▾');}
 function selDia(d){DIA_SEL=d;renderDieta();}
