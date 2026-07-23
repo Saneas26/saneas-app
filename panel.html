@@ -1310,6 +1310,13 @@ async function crearAlta(){
   }catch(e){}
 }
 var REC_m=null, REC_ch=[], REC_blob=null, REC_stream=null, REC_id=null, REC_nombre="", REC_t=null, REC_s=0;
+// Pantalla encendida mientras se graba (como WhatsApp): Wake Lock de Safari/Chrome.
+// Sin esto, el iPhone apaga la pantalla a los segundos y la grabacion se corta.
+var REC_wake=null;
+async function _repWakeOn(){ try{ if('wakeLock' in navigator){ REC_wake=await navigator.wakeLock.request('screen'); } }catch(e){} }
+function _repWakeOff(){ try{ if(REC_wake) REC_wake.release(); }catch(e){} REC_wake=null; }
+// El sistema suelta el wake lock si cambias de app: al volver, si seguimos grabando, se re-pide solo
+document.addEventListener('visibilitychange',function(){ if(!document.hidden && REC_m && REC_m.state==='recording') _repWakeOn(); });
 function grabarReporte(id,nombre){
   REC_id=id; REC_nombre=nombre||""; REC_blob=null; REC_ch=[]; REC_s=0;
   var ov=document.createElement("div"); ov.id="repOv";
@@ -1319,7 +1326,7 @@ function grabarReporte(id,nombre){
   document.getElementById("repBox")._nombre=nombre;
   repVista("idle");
 }
-function cerrarRep(){ try{ if(REC_stream) REC_stream.getTracks().forEach(function(t){t.stop()}); }catch(e){}
+function cerrarRep(){ _repWakeOff(); try{ if(REC_stream) REC_stream.getTracks().forEach(function(t){t.stop()}); }catch(e){}
   if(REC_t) clearInterval(REC_t); var o=document.getElementById("repOv"); if(o) o.remove(); }
 function _mmss(s){ var m=Math.floor(s/60), r=s%60; return m+":"+(r<10?"0":"")+r; }
 function repVista(estado){
@@ -1351,13 +1358,13 @@ async function repStart(){
     REC_ch=[]; REC_m=new MediaRecorder(REC_stream);
     REC_m.ondataavailable=function(e){ if(e.data && e.data.size>0) REC_ch.push(e.data); };
     REC_m.onstop=function(){ REC_blob=new Blob(REC_ch, {type:(REC_ch[0]&&REC_ch[0].type)||"audio/mp4"}); repVista("preview"); };
-    REC_m.start(); REC_s=0; repVista("rec");
+    REC_m.start(); REC_s=0; _repWakeOn(); repVista("rec");
     REC_t=setInterval(function(){ REC_s++; var e=document.getElementById("repTime"); if(e) e.textContent=_mmss(REC_s); },1000);
   }catch(e){ toast("No puedo acceder al micr&oacute;fono"); }
 }
-function repPause(){ if(REC_m&&REC_m.state==="recording"){ REC_m.pause(); if(REC_t)clearInterval(REC_t); repVista("pause"); } }
-function repResume(){ if(REC_m&&REC_m.state==="paused"){ REC_m.resume(); REC_t=setInterval(function(){ REC_s++; var e=document.getElementById("repTime"); if(e) e.textContent=_mmss(REC_s); },1000); repVista("rec"); } }
-function repStop(){ if(REC_t)clearInterval(REC_t); if(REC_m&&REC_m.state!=="inactive") REC_m.stop(); if(REC_stream) REC_stream.getTracks().forEach(function(t){t.stop()}); }
+function repPause(){ if(REC_m&&REC_m.state==="recording"){ REC_m.pause(); if(REC_t)clearInterval(REC_t); _repWakeOff(); repVista("pause"); } }
+function repResume(){ if(REC_m&&REC_m.state==="paused"){ REC_m.resume(); _repWakeOn(); REC_t=setInterval(function(){ REC_s++; var e=document.getElementById("repTime"); if(e) e.textContent=_mmss(REC_s); },1000); repVista("rec"); } }
+function repStop(){ if(REC_t)clearInterval(REC_t); if(REC_m&&REC_m.state!=="inactive") REC_m.stop(); if(REC_stream) REC_stream.getTracks().forEach(function(t){t.stop()}); _repWakeOff(); }
 function repBorrar(){ REC_blob=null; REC_ch=[]; REC_s=0; repVista("idle"); }
 async function repEnviar(){
   if(!REC_blob) return;
