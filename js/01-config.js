@@ -1,6 +1,6 @@
 // SANEAS · js/01-config.js · Supabase, versión de la app y flags de plan
 // ====== CONFIG ======
-const APP_VERSION = 'Saneas26 v1.3';   // v1.3 = diario de comidas (biblioteca + buscador); v1.2 = inicio narrativo
+const APP_VERSION = 'Saneas26 v1.4';   // v1.4 = PDF de la lista de la compra; v1.3 = diario; v1.2 = inicio narrativo
 const SUPABASE_URL = 'https://uisrxztowgdpkxeuznfh.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_8ybOGHnn9rsMDf57mx-Igw_AVvWK30D';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
