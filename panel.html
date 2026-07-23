@@ -486,7 +486,7 @@ async function api(action,extra={}){
   },body:JSON.stringify({action,password:PASS,...extra})});
   return {status:r.status,data:await r.json().catch(()=>({}))};
 }
-async function rpc(fn,body){ try{ const tok=adminToken()||PUBLISHABLE; const r=await fetch(SUPABASE_URL+'/rest/v1/rpc/'+fn,{method:'POST',headers:{'Content-Type':'application/json','apikey':PUBLISHABLE,'Authorization':'Bearer '+tok},body:JSON.stringify(body)}); return await r.json(); }catch(e){ return null; } }
+async function rpc(fn,body){ try{ if(ADMIN_SESS&&!esAdminActivo()) await adminRefresh(); const tok=adminToken()||PUBLISHABLE; const r=await fetch(SUPABASE_URL+'/rest/v1/rpc/'+fn,{method:'POST',headers:{'Content-Type':'application/json','apikey':PUBLISHABLE,'Authorization':'Bearer '+tok},body:JSON.stringify(body)}); return await r.json(); }catch(e){ return null; } }
 async function enviarAviso(clienteId,nombre){
   const cuerpo=prompt('Mensaje del aviso para '+(nombre||'TODOS los clientes con la app')+':'); if(!cuerpo) return;
   if(!esAdminActivo()){ toast('Activa el modo admin para enviar avisos'); abrirAdmin(); return; }
@@ -2343,16 +2343,32 @@ async function adminVerificar(){
     }else{ admMsg(j.msg||'Código no válido o caducado','err'); }
   }catch(e){ admMsg('Error de red','err'); }
 }
-async function adminRefresh(){
+async function adminRefresh(reintento){
+  // Antes de refrescar, coger SIEMPRE la copia mas nueva guardada: otra pestaña
+  // puede haber refrescado ya y rotado el token (era la causa nº1 de pedir codigo).
+  try{ const g=JSON.parse(localStorage.getItem('panel_admin_sess')||'null');
+    if(g&&g.refresh_token&&(!ADMIN_SESS||g.refresh_token!==ADMIN_SESS.refresh_token)) ADMIN_SESS=g; }catch(e){}
   if(!ADMIN_SESS||!ADMIN_SESS.refresh_token) return false;
   try{
     const r=await fetch(SUPABASE_URL+'/auth/v1/token?grant_type=refresh_token',{method:'POST',
       headers:{'Content-Type':'application/json','apikey':PUBLISHABLE},body:JSON.stringify({refresh_token:ADMIN_SESS.refresh_token})});
     const j=await r.json().catch(()=>({}));
     if(j&&j.access_token){ j._email=ADMIN_SESS._email; ADMIN_SESS=j; localStorage.setItem('panel_admin_sess',JSON.stringify(j)); return true; }
+    // Solo cerrar sesion si el servidor RECHAZA el token expresamente (400/401/403).
+    // Un fallo de red o un 5xx NO cierra nada: se reintenta en el proximo ciclo.
+    if(r.status===400||r.status===401||r.status===403){
+      // ultima oportunidad: quiza otra pestaña guardo el token bueno hace un instante
+      if(!reintento){
+        try{ const g2=JSON.parse(localStorage.getItem('panel_admin_sess')||'null');
+          if(g2&&g2.refresh_token&&g2.refresh_token!==ADMIN_SESS.refresh_token){ ADMIN_SESS=g2; return adminRefresh(true); } }catch(e){}
+      }
+      ADMIN_SESS=null; localStorage.removeItem('panel_admin_sess'); return false;
+    }
   }catch(e){}
-  ADMIN_SESS=null; localStorage.removeItem('panel_admin_sess'); return false;
+  return esAdminActivo();   // fallo transitorio: la sesion sigue viva mientras el token actual aguante
 }
+// Si otra pestaña refresca, esta se entera al momento (evita pisarse los tokens)
+window.addEventListener('storage',e=>{ if(e.key==='panel_admin_sess'){ try{ ADMIN_SESS=JSON.parse(e.newValue||'null'); }catch(_e){} pintarPastillaAdmin(); } });
 // Al arrancar: si había sesión admin guardada, refrescarla y pintar la pastilla.
 (async()=>{ if(ADMIN_SESS) await adminRefresh(); pintarPastillaAdmin(); })(); setInterval(()=>{ if(ADMIN_SESS) adminRefresh().then(pintarPastillaAdmin); }, 1500000); document.addEventListener('visibilitychange',()=>{ if(!document.hidden && ADMIN_SESS) adminRefresh().then(pintarPastillaAdmin); });
 // ================= FIN LOGIN ADMIN =================
