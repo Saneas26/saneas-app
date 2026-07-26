@@ -18,6 +18,9 @@ function _gmCard(a){
     : '<span class="gmCard off">'+ico+tx+'</span>';
 }
 function _gmLista(){ return GRUPO_APPS.map(_gmCard).join(''); }
+// Norma corporativa: «Saneas» siempre con S mayúscula y el resto en
+// minúsculas, Quicksand Bold, en teal o blanco (naranja solo para detalles).
+function _gmTitulo(){ return '<div class="gmTit">Grupo <span class="gmS">Saneas</span></div>'; }
 
 // ---- Desplegable del logo ----
 function _gmMenu(){
@@ -25,7 +28,7 @@ function _gmMenu(){
   if(m) return m;
   var b=document.createElement('div'); b.id='grupoBack'; b.className='gm-back'; b.onclick=cerrarGrupo;
   m=document.createElement('div'); m.id='grupoMenu';
-  m.innerHTML='<div class="gmTit">El grupo Saneas</div>'+_gmLista();
+  m.innerHTML=_gmTitulo()+_gmLista();
   document.body.appendChild(b); document.body.appendChild(m);
   return m;
 }
@@ -46,7 +49,7 @@ function pintarPieGrupo(){
   var pie=document.getElementById('grupoPie');
   if(!pie){
     pie=document.createElement('div'); pie.id='grupoPie';
-    pie.innerHTML='<div class="gmTit">El grupo Saneas</div>'+_gmLista();
+    pie.innerHTML=_gmTitulo()+_gmLista();
     cont.appendChild(pie);
   } else if(cont.lastElementChild!==pie){ cont.appendChild(pie); }
 }

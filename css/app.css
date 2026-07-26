@@ -268,7 +268,8 @@
   @keyframes spin{to{transform:rotate(360deg)}}
   /* Bloqueo de orientación vertical: aviso en horizontal (móvil) */
   #rotateGuard{display:none}
-  @media (max-width:920px) and (orientation:landscape){
+  /* Por altura: cualquier móvil en horizontal (≤520px de alto), sin bloquear escritorio */
+  @media (orientation:landscape) and (max-height:520px){
     #rotateGuard{display:flex;position:fixed;inset:0;z-index:99999;background:var(--teal);color:#fff;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px}
     .app{display:none!important}
   }
@@ -289,7 +290,8 @@
     background:#fff;border-radius:18px;box-shadow:0 18px 50px rgba(26,46,53,.32);z-index:71;
     opacity:0;pointer-events:none;transition:opacity .18s,transform .18s;padding:14px 12px 8px}
   #grupoMenu.open{opacity:1;pointer-events:auto;transform:translate(-50%,0)}
-  .gmTit{font-size:11.5px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--muted);text-align:center;margin:0 0 10px}
+  .gmTit{font-size:13.5px;font-weight:700;color:var(--muted);text-align:center;margin:0 0 10px}
+  .gmTit .gmS{color:var(--teal);font-weight:700}
   .gmCard{display:flex;align-items:center;gap:11px;background:#fff;border:1px solid #dfeaee;border-radius:14px;
     padding:9px 12px;margin-bottom:8px;text-decoration:none;box-shadow:0 2px 8px rgba(26,46,53,.05)}
   .gmCard img,.gmCard .gmIco{width:38px;height:38px;border-radius:10px;object-fit:cover;flex:none}
