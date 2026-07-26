@@ -323,8 +323,11 @@ function pintarReporte(){
   // El reproductor vive abajo del todo de la página (decidido por Oscar el 22/07)
   var pl=document.getElementById("repPlayer");
   if(cont){
-    if(!pl){ pl=document.createElement("div"); pl.id="repPlayer"; cont.appendChild(pl); }
-    else if(cont.lastElementChild!==pl){ cont.appendChild(pl); }
+    // Abajo del todo, pero por encima del pie del grupo si ya está pintado
+    var pieG=document.getElementById("grupoPie");
+    var meter=function(){ if(pieG&&pieG.parentNode===cont){ if(pl.nextElementSibling!==pieG) cont.insertBefore(pl,pieG); } else if(cont.lastElementChild!==pl){ cont.appendChild(pl); } };
+    if(!pl){ pl=document.createElement("div"); pl.id="repPlayer"; }
+    meter();
   }
   if(!__REP.length){
     if(host && host.innerHTML!==""){ host.innerHTML=""; host.removeAttribute("data-rep"); }
