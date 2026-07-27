@@ -1741,7 +1741,9 @@ async function confirmarRenovar(){ const m=el('renovMsg'); if(!esAdminActivo()){
       if(fp&&fp.ok){ m.textContent+=` · pago: ${forma}`+(fp.aviso?' ⚠️ '+fp.aviso:''); }
       else{ m.className='err'; m.textContent+=` · ⚠️ La forma de cobro (${forma}) NO quedó anotada${fp&&(fp.error||fp.message)?' ('+(fp.error||fp.message)+')':''}: apúntala a mano.`; }
     }catch(e){ m.className='err'; m.textContent+=` · ⚠️ La forma de cobro (${forma}) NO quedó anotada: apúntala a mano.`; }
-    setTimeout(cerrarRenovar, 3000);   // se cierra solo a los 3s, sin esperar a Cancelar
+    // Se cierra solo a los 4s SOLO si no hay ningún aviso ⚠️ que leer;
+    // con aviso se queda abierto hasta que Óscar lo cierre él mismo.
+    setTimeout(function(){ var mm=el('renovMsg'); if(mm && mm.textContent.indexOf('\u26a0')===-1) cerrarRenovar(); }, 4000);
   }else{
     m.className='err';
     m.textContent+=` · ⚠️ Renovación aplicada pero la factura NO se emitió${fac&&fac.error?' ('+fac.error+')':''}. Apúntalo para emitirla a mano.`;
