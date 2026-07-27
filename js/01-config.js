@@ -1,6 +1,6 @@
 // SANEAS · js/01-config.js · Supabase, versión de la app y flags de plan
 // ====== CONFIG ======
-const APP_VERSION = 'Saneas26 v1.7';   // v1.7 = el grupo Saneas en la app; v1.6 = recarga automática; v1.5 = proponer artículos
+const APP_VERSION = 'Saneas26 v1.8';   // v1.8 = testigo de avisos y dispositivo; v1.7 = grupo Saneas en la app; v1.6 = recarga automática
 const SUPABASE_URL = 'https://uisrxztowgdpkxeuznfh.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_8ybOGHnn9rsMDf57mx-Igw_AVvWK30D';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);

@@ -8,7 +8,17 @@ function mostrarSplash(){
   s.classList.remove('hidden'); void s.offsetWidth; s.classList.add('show');
   return new Promise(r=>setTimeout(r,3300));
 }
-async function registrarAcceso(){ try{ if(CLIENTE&&CLIENTE.id) await sb.from('accesos').insert({cliente_id:CLIENTE.id}); }catch(e){console.error('acceso',e);} }
+async function registrarAcceso(){ try{
+  if(!(CLIENTE&&CLIENTE.id)) return;
+  // Testigo del dispositivo: plataforma, si va instalada y el permiso de avisos
+  const ua=navigator.userAgent||'';
+  const fila={cliente_id:CLIENTE.id,
+    plataforma:/iphone|ipad|ipod/i.test(ua)?'iPhone':(/android/i.test(ua)?'Android':'Otro'),
+    instalada:((window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches)||navigator.standalone===true)||false,
+    avisos:('Notification' in window)?Notification.permission:'no_soporta'};
+  const r=await sb.from('accesos').insert(fila);
+  if(r&&r.error) await sb.from('accesos').insert({cliente_id:CLIENTE.id});   // BD aún sin las columnas del testigo
+}catch(e){console.error('acceso',e);} }
 
 // ---- Notificaciones push (Web Push) ----
 const VAPID_PUB='BHOoBIztagSU5gGdWI-z76JI40CN1nWbix5rZgh2NQzRL8X7Zp51_UsY9JY69lr9ToBcZyb8QyaEZdCGLBc-aTg';
