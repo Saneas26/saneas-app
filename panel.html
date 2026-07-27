@@ -1349,6 +1349,7 @@ function repVista(estado){
     + '<div style="font-size:15px;color:#666;margin-bottom:16px">'+nom+'</div>';
   if(estado==="idle"){
     h+='<button onclick="repStart()" style="width:100%;padding:16px;border:0;background:#3890A4;color:#fff;border-radius:10px;font-size:17px;font-weight:700;font-family:inherit;cursor:pointer">Empezar a grabar</button>';
+    h+='<div id="repEnviados"></div>';
   } else if(estado==="rec"||estado==="pause"){
     h+='<div style="font-size:34px;font-weight:700;color:#b42318;margin:6px 0 16px" id="repTime">'+_mmss(REC_s)+'</div>';
     h+='<div style="display:flex;gap:8px">';
@@ -1364,6 +1365,39 @@ function repVista(estado){
   }
   h+='<button onclick="cerrarRep()" style="margin-top:14px;background:none;border:0;color:#999;font-size:15px;font-family:inherit;cursor:pointer">Cancelar</button>';
   b.innerHTML=h;
+  if(estado==="idle") repLista();
+}
+// Los reportes ya enviados a este cliente, con su Borrar (para regrabar sin SQL).
+// Necesita las políticas de supabase/reportes_borrar.sql (ver y borrar como admin).
+async function repLista(){
+  var e=document.getElementById("repEnviados"); if(!e||!REC_id) return;
+  try{
+    var r=await fetch(SUPABASE_URL+"/storage/v1/object/list/reportes",{ method:"POST",
+      headers:{ apikey:PUBLISHABLE, Authorization:"Bearer "+adminToken(), "Content-Type":"application/json" },
+      body:JSON.stringify({ prefix:REC_id, limit:5, sortBy:{ column:"created_at", order:"desc" } }) });
+    var files=r.ok?(await r.json()):[];
+    files=(files||[]).filter(function(f){ return f.name && f.name.indexOf(".")>0; });
+    if(!files.length){ e.innerHTML=""; return; }
+    e.innerHTML='<div style="font-size:13px;font-weight:700;color:#666;margin:16px 0 4px;text-align:left">Ya enviados</div>'
+      + files.map(function(f){
+          var ms=parseInt(f.name,10);
+          var d=(ms&&!isNaN(ms))?new Date(ms):(f.created_at?new Date(f.created_at):null);
+          var fx=d?d.toLocaleString("es-ES",{ timeZone:"Europe/Madrid", weekday:"short", day:"2-digit", month:"short", hour:"2-digit", minute:"2-digit" }):f.name;
+          return '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 0;border-top:1px solid #eee;font-size:14px">'
+            +'<span>\ud83c\udf99 '+fx+'</span>'
+            +'<button onclick="repEliminar(\''+f.name+'\',this)" style="border:1px solid #e6b8b2;background:#fff;color:#b42318;border-radius:8px;padding:5px 10px;font-size:13px;font-family:inherit;cursor:pointer">Borrar</button></div>';
+        }).join('');
+  }catch(e2){}
+}
+async function repEliminar(nombre,btn){
+  if(!confirm("\u00bfBorrar este reporte? El cliente dejar\u00e1 de verlo en su app y podr\u00e1s grabarle otro.")) return;
+  if(btn){ btn.disabled=true; btn.textContent="\u2026"; }
+  try{
+    var r=await fetch(SUPABASE_URL+"/storage/v1/object/reportes/"+REC_id+"/"+nombre,{ method:"DELETE",
+      headers:{ apikey:PUBLISHABLE, Authorization:"Bearer "+adminToken() } });
+    if(!r.ok){ toast("No se pudo borrar: pega supabase/reportes_borrar.sql en el SQL Editor"); if(btn){ btn.disabled=false; btn.textContent="Borrar"; } return; }
+    toast("Reporte borrado"); repLista();
+  }catch(e){ toast("No se pudo borrar"); if(btn){ btn.disabled=false; btn.textContent="Borrar"; } }
 }
 async function repStart(){
   try{
