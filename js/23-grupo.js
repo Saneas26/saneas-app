@@ -5,8 +5,8 @@
 var GRUPO_APPS=[
   {n:'Programa de Asesorías', corto:'Asesorías', s:'Monta tu consulta Saneas', url:'https://saneas.es/asesorias', ico:1},
   {n:'APP Pordondevoy', corto:'Pordondevoy', s:'La nueva app del grupo', url:'https://pordondevoy-saneas.vercel.app', img:'img/app-pordondevoy.png'},
-  {n:'Activala', corto:'Activala', s:'El alquiler activo del sur', url:'https://activala.es', img:'img/app-activala.png'},
-  {n:'laOra', corto:'laOra', s:'Relojería al precio honesto', url:'https://laora.es', img:'img/app-laora.png'},
+  {n:'Activala', corto:'Activala', s:'El alquiler activo del sur', url:'https://activala.es', img:'img/app-activala.png?v=2'},
+  {n:'laOra', corto:'laOra', s:'Relojería al precio honesto', url:'https://laora.es', img:'img/app-laora.png?v=2'},
   {n:'APP Acumula', corto:'Acumula', s:'Ya disponible', url:'https://acumula.es', img:'img/app-acumula.png'},
 ];
 function _gmCard(a){
