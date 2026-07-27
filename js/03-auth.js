@@ -187,12 +187,18 @@ async function guardarFicha(){
   if(!datos.nombre||!datos.ap1||!_dni||!datos.calle||!datos.cp||!datos.muni||!datos.prov){
     _fallo('Faltan datos obligatorios: nombre, primer apellido, DNI, calle, municipio, código postal y provincia.');mostrarDatos();return;}
   if(!/[A-Za-z]$/.test(_dni)){_fallo('El DNI debe incluir la letra (por ejemplo 12345678Z).');mostrarDatos();return;}
+  const _an=analizaDni(_dni);
+  if(_an.estado==='mal'){_fallo('Revisa el DNI: el número y la letra no cuadran (ejemplo válido: 12345678Z).');mostrarDatos();return;}
+  const _dniFinal=(_an.estado==='ajeno')?_dni:_an.valor;
+  const _esES=!datos.pais||/espa/i.test(datos.pais);
+  if(_esES&&/^\d{4}$/.test(datos.cp)) datos.cp='0'+datos.cp;
+  if(_esES&&!/^\d{5}$/.test(datos.cp)){_fallo('Revisa el código postal: son 5 cifras (por ejemplo 28922).');mostrarDatos();return;}
   const _malD=revisarDatosBasicos('d_'); if(_malD){_fallo(_malD);mostrarDatos();return;}
   const btn=document.getElementById('btnCrear');btn.disabled=true;btn.textContent='Guardando...';
   try{
     const {data:{user}}=await sb.auth.getUser();
     if(!user) throw new Error('Se ha cerrado la sesión. Vuelve a entrar.');
-    const row={nombre:datos.nombre,apellido:datos.ap1,apellido2:datos.ap2||null,dni:_dni,
+    const row={nombre:datos.nombre,apellido:datos.ap1,apellido2:datos.ap2||null,dni:_dniFinal,
       genero:datos.genero||null,altura:num(datos.altura),fecha_nacimiento:datos.nacimiento||null,
       calle:datos.calle,municipio:datos.muni,codigo_postal:datos.cp,provincia:datos.prov,pais:datos.pais};
     const {error}=await sb.from('clientes').update(row).eq('id',user.id);
@@ -203,12 +209,41 @@ async function guardarFicha(){
   }catch(e){ btn.disabled=false; btn.textContent='Guardar y entrar'; _fallo('Error: '+(e.message||e)); }
 }
 
+// ---- DNI/NIE: no solo que exista, sino que CUADRE ----
+// 'ok' válido · 'corregible' le falta el cero inicial (la letra lo confirma)
+// · 'mal' número y letra no cuadran · 'ajeno' pasaporte u otro documento
+// (los ajenos no se bloquean: no podemos validarlos).
+const _DNI_LETRAS='TRWAGMYFPDXBNJZSQVHLCKE';
+function analizaDni(v){
+  const s=String(v||'').toUpperCase().replace(/[\s.\-]/g,'');
+  let m=s.match(/^(\d{7,8})([A-Z])$/);
+  if(m){
+    const num=m[1].padStart(8,'0');
+    if(_DNI_LETRAS[Number(num)%23]!==m[2]) return {estado:'mal', valor:s};
+    return {estado:(m[1].length===8?'ok':'corregible'), valor:num+m[2]};
+  }
+  m=s.match(/^([XYZ])(\d{7})([A-Z])$/);
+  if(m){
+    const num=Number({X:'0',Y:'1',Z:'2'}[m[1]]+m[2]);
+    return {estado:(_DNI_LETRAS[num%23]===m[3]?'ok':'mal'), valor:s};
+  }
+  return {estado:'ajeno', valor:s};
+}
+// Código postal español: 5 cifras (el cero inicial se pierde al copiar de Excel)
+function cpPendiente(c){
+  const cp=String((c&&c.codigo_postal)||'').trim();
+  const esES=!(c&&c.pais)||/espa/i.test(c.pais);
+  return esES && !!cp && !/^\d{5}$/.test(cp);
+}
 // Que le falta a la ficha para que la app pueda calcularle nada y facturarle.
 function fichaIncompleta(c){
   if(!c) return true;
   const dni=(c.dni||'').trim();
   if(!c.nombre || !c.apellido || !dni || !/[A-Za-z]$/.test(dni)) return true;
+  const _a=analizaDni(dni);
+  if(_a.estado==='corregible' || _a.estado==='mal') return true;   // el aviso le salta al cliente al entrar
   if(!c.calle || !c.codigo_postal || !c.municipio || !c.provincia) return true;
+  if(cpPendiente(c)) return true;
   if(c.altura==null || !c.fecha_nacimiento) return true;
   if(!['Mujer','Hombre'].includes((c.genero||'').trim())) return true;
   return false;
@@ -221,10 +256,20 @@ function pintarFichaPendiente(c){
   set('d_calle',c.calle); set('d_muni',c.municipio); set('d_cp',c.codigo_postal);
   set('d_prov',c.provincia); set('d_pais',c.pais||'España');
   const g=document.getElementById('d_genero'); if(g) g.value=['Mujer','Hombre'].includes((c.genero||'').trim())?c.genero.trim():'';
+  // Datos mal formados: se precarga la corrección y se le explica al cliente
+  const avisos=[];
+  const _a=analizaDni(c.dni);
+  if(_a.estado==='corregible'){ set('d_dni',_a.valor); avisos.push('Tu DNI estaba escrito con 7 cifras; lo hemos completado a '+_a.valor+' — revísalo y guarda.'); }
+  else if(_a.estado==='mal'){ avisos.push('Revisa tu DNI: el número y la letra no cuadran.'); }
+  if(cpPendiente(c)){
+    const cp=String(c.codigo_postal||'').trim();
+    if(/^\d{4}$/.test(cp)){ set('d_cp','0'+cp); avisos.push('Al código postal le faltaba el cero inicial; lo hemos completado a 0'+cp+' — revísalo y guarda.'); }
+    else avisos.push('Revisa el código postal: son 5 cifras.');
+  }
   document.getElementById('auth').classList.remove('hidden');
   document.getElementById('main').classList.add('hidden');
   hideCard('loginCard'); hideCard('codigoCard'); hideCard('nuevoCard'); showCard('datosCard');
-  setMsg('datosMsg','Antes de entrar, completa lo que falta. Todo es obligatorio.','err');
+  setMsg('datosMsg', avisos.length?avisos.join(' '):'Antes de entrar, completa lo que falta. Todo es obligatorio.','err');
 }
 
 async function logout(){await sb.auth.signOut({scope:'local'});location.reload();}
