@@ -5,7 +5,7 @@
 GrupoSaneas.init({
   actual: 'saneas',
   logos : 'img/',
-  extras: [{ id:'asesorias', nombre:'Programa de Asesorías', logo:'app-saneas.png',
+  extras: [{ id:'asesorias', nombre:'Programa de Asesorías',
              url:'https://saneas.es/asesorias',
              texto:'Monta tu propia consulta con el método, las herramientas y el respaldo de Saneas.' }]
 });
