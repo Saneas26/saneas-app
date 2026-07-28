@@ -5,9 +5,9 @@
 GrupoSaneas.init({
   actual: 'saneas',
   logos : 'img/',
-  extras: [{ id:'asesorias', nombre:'Programa de Asesorías',
+  extras: [{ id:'asesorias', nombre:'Asesora Saneas',
              url:'https://saneas.es/asesorias',
-             texto:'Monta tu propia consulta con el método, las herramientas y el respaldo de Saneas.' }]
+             texto:'Si te gusta el mundo de la nutrición, ahora tú también puedes. Más fácil que nunca.' }]
 });
 
 // El logo «Saneas ▾» de la barra abre el desplegable
