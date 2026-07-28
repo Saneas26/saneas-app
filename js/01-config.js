@@ -1,6 +1,6 @@
 // SANEAS · js/01-config.js · Supabase, versión de la app y flags de plan
 // ====== CONFIG ======
-const APP_VERSION = 'Saneas26 v2.0';   // v2.0 = guardián de Saneamigos; v1.9 = aviso de DNI/CP; v1.8 = testigo de avisos
+const APP_VERSION = 'Saneas26 v2.1';   // v2.1 = grupo Saneas unificado; v2.0 = guardián de Saneamigos; v1.9 = aviso de DNI/CP
 const SUPABASE_URL = 'https://uisrxztowgdpkxeuznfh.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_8ybOGHnn9rsMDf57mx-Igw_AVvWK30D';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);

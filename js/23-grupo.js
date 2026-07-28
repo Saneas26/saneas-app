@@ -1,66 +1,27 @@
 // SANEAS · js/23-grupo.js · El grupo Saneas dentro de la app
-// Dos piezas: el desplegable al tocar el logo «Saneas» de la barra, y el
-// pie del grupo en miniatura al final del inicio (debajo del reporte).
-// Mismas fichas que el pie de saneas.es; los logos viven en img/.
-var GRUPO_APPS=[
-  {n:'Programa de Asesorías', corto:'Asesorías', s:'Monta tu consulta Saneas', url:'https://saneas.es/asesorias', ico:1},
-  {n:'APP Pordondevoy', corto:'Pordondevoy', s:'La nueva app del grupo', url:'https://pordondevoy-saneas.vercel.app', img:'img/app-pordondevoy.png'},
-  {n:'Activala', corto:'Activala', s:'El alquiler activo del sur', url:'https://activala.es', img:'img/app-activala.png?v=2'},
-  {n:'laOra', corto:'laOra', s:'Relojería al precio honesto', url:'https://laora.es', img:'img/app-laora.png?v=2'},
-  {n:'APP Acumula', corto:'Acumula', s:'Ya disponible', url:'https://acumula.es', img:'img/app-acumula.png?v=2'},
-];
-function _gmCard(a){
-  var ico=a.img
-    ? '<img src="'+a.img+'" alt="" loading="lazy">'
-    : '<span class="gmIco"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>';
-  var tx='<span class="tx"><b>'+a.n+'</b><small'+(a.soon?' class="soon"':'')+'>'+a.s+'</small></span>';
-  return a.url
-    ? '<a class="gmCard" href="'+a.url+'" target="_blank" rel="noopener">'+ico+tx+'</a>'
-    : '<span class="gmCard off">'+ico+tx+'</span>';
-}
-function _gmLista(){ return GRUPO_APPS.map(_gmCard).join(''); }
-// Norma corporativa: «Saneas» siempre con S mayúscula y el resto en
-// minúsculas, Quicksand Bold, en teal o blanco (naranja solo para detalles).
-function _gmTitulo(){ return '<div class="gmTit">Grupo <span class="gmS">Saneas</span></div>'; }
+// El contenido común vive en js/24-grupo-saneas.js (igual en todo el
+// grupo). Aquí solo se dice quiénes somos, dónde están los logos y en
+// qué dos sitios aparece: el logo de la barra y el pie del inicio.
+GrupoSaneas.init({
+  actual: 'saneas',
+  logos : 'img/',
+  extras: [{ id:'asesorias', nombre:'Programa de Asesorías', logo:'app-saneas.png',
+             url:'https://saneas.es/asesorias',
+             texto:'Monta tu propia consulta con el método, las herramientas y el respaldo de Saneas.' }]
+});
 
-// ---- Desplegable del logo ----
-function _gmMenu(){
-  var m=document.getElementById('grupoMenu');
-  if(m) return m;
-  var b=document.createElement('div'); b.id='grupoBack'; b.className='gm-back'; b.onclick=cerrarGrupo;
-  m=document.createElement('div'); m.id='grupoMenu';
-  m.innerHTML=_gmTitulo()+_gmLista();
-  document.body.appendChild(b); document.body.appendChild(m);
-  return m;
-}
-function toggleGrupo(){
-  var m=_gmMenu(), abre=!m.classList.contains('open');
-  m.classList.toggle('open',abre);
-  document.getElementById('grupoBack').classList.toggle('open',abre);
-}
-function cerrarGrupo(){
-  var m=document.getElementById('grupoMenu'); if(m) m.classList.remove('open');
-  var b=document.getElementById('grupoBack'); if(b) b.classList.remove('open');
-}
+// El logo «Saneas ▾» de la barra abre el desplegable
+function toggleGrupo(){ GrupoSaneas.abrirMenu(); }
+function cerrarGrupo(){ GrupoSaneas.cerrar(); }
 
-// ---- Pie del grupo al final del inicio (debajo del reporte de voz) ----
-// En parrilla: icono grande y el nombre debajo (las filas se leían mal).
-function _gpCelda(a){
-  var ico=a.img
-    ? '<img src="'+a.img+'" alt="" loading="lazy">'
-    : '<span class="gmIco"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>';
-  var nom='<b>'+(a.corto||a.n)+'</b>';
-  return a.url
-    ? '<a class="gpItem" href="'+a.url+'" target="_blank" rel="noopener">'+ico+nom+'</a>'
-    : '<span class="gpItem off">'+ico+nom+'</span>';
-}
+// Y el pie del inicio, debajo del reporte de voz
 function pintarPieGrupo(){
   var cont=document.getElementById('s-inicio'); if(!cont) return;
   if(cont.querySelector('.spinner')) return;                 // aún cargando
   var pie=document.getElementById('grupoPie');
   if(!pie){
     pie=document.createElement('div'); pie.id='grupoPie';
-    pie.innerHTML=_gmTitulo()+'<div class="gpGrid">'+GRUPO_APPS.map(_gpCelda).join('')+'</div>';
+    pie.innerHTML='<div class="gmTit">Grupo <span class="gmS">Saneas</span></div>'+GrupoSaneas.gridHTML();
     cont.appendChild(pie);
   } else if(cont.lastElementChild!==pie){ cont.appendChild(pie); }
 }
