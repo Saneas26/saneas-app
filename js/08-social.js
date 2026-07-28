@@ -25,11 +25,49 @@ function abrirInvitar(){
     <button class="btn" id="btnInvitar" onclick="enviarInvitar()">Añadir invitado</button>
     <div id="invMsg" style="margin-top:10px;font-size:14px;min-height:18px"></div>`);
 }
+// Aviso de advertencia: tarjeta roja que vibra, se centra en pantalla
+// y suena. El sonido se prepara EN el toque del botón (iOS solo deja
+// sonar dentro del gesto del usuario).
+var _INV_AUDIO=null;
+function _invPrepararSonido(){
+  try{ var C=window.AudioContext||window.webkitAudioContext; if(!C) return;
+    if(!_INV_AUDIO) _INV_AUDIO=new C();
+    if(_INV_AUDIO.state==='suspended') _INV_AUDIO.resume();
+  }catch(e){}
+}
+function _invSonar(){
+  try{
+    var ctx=_INV_AUDIO; if(!ctx) return;
+    var t=ctx.currentTime;
+    [[660,0],[440,0.17]].forEach(function(p){          // dos tonos descendentes
+      var o=ctx.createOscillator(), g=ctx.createGain();
+      o.type='triangle'; o.frequency.value=p[0];
+      g.gain.setValueAtTime(0.0001, t+p[1]);
+      g.gain.exponentialRampToValueAtTime(0.22, t+p[1]+0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t+p[1]+0.15);
+      o.connect(g); g.connect(ctx.destination);
+      o.start(t+p[1]); o.stop(t+p[1]+0.17);
+    });
+  }catch(e){}
+}
+function _invAviso(texto){
+  var msg=document.getElementById('invMsg'); if(!msg) return;
+  msg.style.color='';
+  msg.innerHTML='<div class="invAlerta"><span class="ia-ico">⚠️</span><span>'+esc(texto)+'</span></div>';
+  var caja=msg.firstElementChild;
+  if(caja){
+    void caja.offsetWidth; caja.classList.add('sacude');
+    try{ caja.scrollIntoView({block:'center',behavior:'smooth'}); }catch(e){}
+  }
+  _invSonar();
+  try{ if(navigator.vibrate) navigator.vibrate([70,60,70]); }catch(e){}
+}
 async function enviarInvitar(){
   const nombre=(document.getElementById('inv_nombre').value||'').trim();
   const apellido=(document.getElementById('inv_apellido').value||'').trim();
   const msg=document.getElementById('invMsg');
-  if(!nombre||!apellido){ msg.style.color='var(--bad)'; msg.textContent='Escribe nombre y primer apellido.'; return; }
+  _invPrepararSonido();                        // dentro del toque: iOS lo exige
+  if(!nombre||!apellido){ _invAviso('Escribe nombre y primer apellido.'); return; }
   const btn=document.getElementById('btnInvitar'); btn.disabled=true; btn.textContent='Comprobando...';
   try{
     // Preguntamos antes de enviar: así el motivo exacto le llega siempre
@@ -38,7 +76,7 @@ async function enviarInvitar(){
       const {data:chk}=await sb.rpc('saneas_comprobar_invitado',{p_nombre:nombre,p_apellido:apellido});
       if(chk && chk.ok===false && chk.mensaje){
         btn.disabled=false; btn.textContent='Añadir invitado';
-        msg.style.color='var(--bad)'; msg.textContent=chk.mensaje; return;
+        _invAviso(chk.mensaje); return;
       }
     }catch(e){}   // si la comprobación no está disponible, sigue: el guardián de la base de datos lo para igual
     const {data:{session}}=await sb.auth.getSession();
@@ -47,14 +85,14 @@ async function enviarInvitar(){
       body:JSON.stringify({nombre,apellido})});
     const data=await r.json();
     btn.disabled=false; btn.textContent='Añadir invitado';
-    if(!r.ok){ msg.style.color='var(--bad)'; msg.textContent=data.error||'No se pudo añadir.'; return; }
+    if(!r.ok){ _invAviso(data.error||'No se pudo añadir.'); return; }
     CLIENTE.descuento_invitados=data.descuento;
-    msg.style.color='#12a150'; msg.textContent=`✅ ¡${data.invitado} añadido! Ya tienes ${data.invitados} invitado(s) · ${data.descuento}€ de descuento.`;
+    msg.innerHTML=''; msg.style.color='#12a150'; msg.textContent=`✅ ¡${data.invitado} añadido! Ya tienes ${data.invitados} invitado(s) · ${data.descuento}€ de descuento.`;
     const box=document.getElementById('invBox');
     if(box) box.innerHTML=`<div style="font-size:14px;color:var(--muted)">Tus invitados</div><div style="font-size:32px;font-weight:800;color:var(--teal)">${data.invitados}/6</div><div style="font-size:16px;font-weight:700">${data.descuento}€ de descuento</div>`;
     document.getElementById('inv_nombre').value=''; document.getElementById('inv_apellido').value='';
     renderInicio();
-  }catch(e){ btn.disabled=false; btn.textContent='Añadir invitado'; msg.style.color='var(--bad)'; msg.textContent='Error de conexión. Inténtalo de nuevo.'; }
+  }catch(e){ btn.disabled=false; btn.textContent='Añadir invitado'; _invAviso('Error de conexión. Inténtalo de nuevo.'); }
 }
 
 // ====== COMPARTIR EVOLUCIÓN (post para redes) ======

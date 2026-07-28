@@ -309,3 +309,17 @@
   .gpItem .gmIco{display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--orange),#d96b1a)}
   .gpItem .gmIco svg{width:30px;height:30px}
   .gpItem b{font-size:13px;font-weight:700;color:var(--dark);text-align:center;line-height:1.25}
+
+  /* ── Aviso de advertencia en Saneamigos ── */
+  .invAlerta{display:flex;align-items:flex-start;gap:10px;margin-top:12px;padding:13px 15px;
+    background:#fee2e2;border:2px solid var(--red);border-left:6px solid var(--red);border-radius:14px;
+    color:#7f1d1d;font-size:14.5px;font-weight:700;line-height:1.45;text-align:left;
+    box-shadow:0 6px 18px rgba(208,90,74,.22)}
+  .invAlerta .ia-ico{font-size:20px;line-height:1.2;flex:none}
+  .invAlerta.sacude{animation:iaSacude .55s cubic-bezier(.36,.07,.19,.97) both, iaLatido 1.6s ease-in-out .55s 2}
+  @keyframes iaSacude{
+    10%,90%{transform:translateX(-2px)} 20%,80%{transform:translateX(4px)}
+    30%,50%,70%{transform:translateX(-7px)} 40%,60%{transform:translateX(7px)}}
+  @keyframes iaLatido{0%,100%{box-shadow:0 6px 18px rgba(208,90,74,.22)}
+    50%{box-shadow:0 6px 26px rgba(208,90,74,.55)}}
+  @media (prefers-reduced-motion:reduce){.invAlerta.sacude{animation:none}}
