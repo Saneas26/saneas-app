@@ -25,7 +25,12 @@ async function cargarMisFacturas(){
 function pintarMisFacturas(){ const cont=document.getElementById('facturasLista'); if(!cont) return; const aviso='<p class="note" style="margin:10px 0 0;line-height:1.5">A partir del 1 de julio podrás obtener tu factura y descargarla en PDF con total seguridad.</p>'; const vis=(MIS_FACTURAS||[]).map(function(f,i){ return {f:f,i:i}; }).filter(function(o){ return _repep(o.f.fecha_emision); }); if(!vis.length){ cont.innerHTML='<p class="note" style="margin:0">Aún no tienes facturas.</p>'+aviso; return; } const eur=function(n){ return Number(n||0).toLocaleString('es-ES',{minimumFractionDigits:2,maximumFractionDigits:2})+' €'; }; const opts=vis.map(function(o,k){ return '<option value="'+o.i+'">Factura '+(k+1)+' · '+fechaCorta(o.f.fecha_emision)+' · '+eur(o.f.total)+'</option>'; }).join(''); cont.innerHTML='<select id="facturaSel" style="width:100%;border:2px solid var(--light);border-radius:12px;padding:12px;font-family:inherit;font-size:16px;font-weight:600;color:var(--dark);background:#fff">'+opts+'</select><button class="btn" id="facturaBtn" style="margin-top:12px">Descargar factura</button>'+aviso; const s=document.getElementById('facturaSel'); const b=document.getElementById('facturaBtn'); if(s&&b) b.onclick=function(){ descargarFactura(Number(s.value)); }; }
 async function descargarFactura(i){
   const f=MIS_FACTURAS&&MIS_FACTURAS[i]; if(!f) return;
-  if(!EMISOR){ try{ const {data}=await sb.from('config').select('*').limit(1).maybeSingle(); EMISOR=data||{}; }catch(e){ EMISOR={}; } }
+  // Los datos fiscales del emisor salen de un RPC que solo devuelve los
+  // campos 'emisor*': la tabla config sigue cerrada (ver supabase/emisor_facturas.sql).
+  if(!EMISOR){
+    try{ const {data}=await sb.rpc('saneas_emisor'); if(data && Object.keys(data).length) EMISOR=data; }catch(e){}
+    if(!EMISOR){ try{ const {data}=await sb.from('config').select('*').limit(1).maybeSingle(); EMISOR=data||{}; }catch(e){ EMISOR={}; } }
+  }
   const e=EMISOR||{};
   const cli=CLIENTE||{};
   const nom=[cli.nombre,cli.apellido,cli.apellido2].filter(Boolean).join(' ');
