@@ -36,7 +36,8 @@ begin
        and i.id is distinct from new.id
      limit 1;
     if otro is not null then
-      raise exception 'Este invitado ya ha sido utilizado por otra persona en Saneas.';
+      raise exception '% ya es invitado de otra persona en Saneas y no puede ser utilizado dos veces.',
+        coalesce(nullif(trim(new.invitado_nombre),''), 'Esa persona');
     end if;
 
     -- 3. Antigüedad: el invitado no puede llevar más tiempo
@@ -61,6 +62,72 @@ drop trigger if exists invitados_guardian on public.invitados;
 create trigger invitados_guardian
   before insert or update on public.invitados
   for each row execute function public.invitados_guardian();
+
+-- ============================================================
+-- 2. AVISO INSTANTÁNEO EN LA APP
+-- La app pregunta ANTES de enviar, para dar el motivo exacto sin
+-- depender de cómo la Edge Function traduzca el error.
+-- Solo responde sobre el nombre que el cliente acaba de escribir.
+-- ============================================================
+create or replace function public._norm_nom(t text) returns text
+language sql immutable as $$
+  select regexp_replace(
+    lower(translate(coalesce(t,''),
+      'áàäâéèëêíìïîóòöôúùüûñçÁÀÄÂÉÈËÊÍÌÏÎÓÒÖÔÚÙÜÛÑÇ',
+      'aaaaeeeeiiiioooouuuuncAAAAEEEEIIIIOOOOUUUUNC')),
+    '[^a-z0-9]', '', 'g')
+$$;
+
+create or replace function public.saneas_comprobar_invitado(p_nombre text, p_apellido text)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  yo uuid := auth.uid();
+  c public.clientes%rowtype;
+  mis_semanas int;
+begin
+  if yo is null then
+    return jsonb_build_object('ok', false, 'mensaje', 'Vuelve a entrar en tu app e inténtalo otra vez.');
+  end if;
+
+  select * into c from public.clientes
+   where _norm_nom(nombre) = _norm_nom(p_nombre)
+     and _norm_nom(coalesce(apellido,'')) = _norm_nom(p_apellido)
+   limit 1;
+
+  if not found then
+    return jsonb_build_object('ok', false, 'mensaje',
+      'No encontramos a ' || trim(p_nombre || ' ' || p_apellido) ||
+      ' entre los clientes de Saneas. Revisa el nombre y el primer apellido.');
+  end if;
+
+  if c.id = yo then
+    return jsonb_build_object('ok', false, 'mensaje', 'No puedes añadirte a ti mismo como invitado.');
+  end if;
+
+  if exists (select 1 from public.invitados i where i.invitado_id = c.id) then
+    return jsonb_build_object('ok', false, 'mensaje',
+      c.nombre || ' ya es invitado de otra persona en Saneas y no puede ser utilizado dos veces.');
+  end if;
+
+  select semana into mis_semanas from public.clientes where id = yo;
+  if mis_semanas is not null and c.semana is not null and c.semana > mis_semanas then
+    return jsonb_build_object('ok', false, 'mensaje',
+      c.nombre || ' lleva más tiempo en Saneas que tú, así que no puede contar como invitado tuyo.');
+  end if;
+
+  if exists (select 1 from public.invitados i where i.embajador_id = c.id and i.invitado_id = yo) then
+    return jsonb_build_object('ok', false, 'mensaje', c.nombre || ' ya te añadió a ti como invitado.');
+  end if;
+
+  return jsonb_build_object('ok', true, 'mensaje', '');
+end $$;
+
+revoke all on function public.saneas_comprobar_invitado(text, text) from public, anon;
+grant execute on function public.saneas_comprobar_invitado(text, text) to authenticated;
 
 -- ============================================================
 -- COMPROBACIÓN · el guardián en acción
