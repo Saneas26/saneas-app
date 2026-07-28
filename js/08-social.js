@@ -11,6 +11,8 @@ function abrirInvitar(){
         <li>Solo puedes añadir a personas que <b>ya están pasando consulta con Óscar y pagando su cuota</b>.</li>
         <li>No añadas a alguien con quien solo has hablado y todavía no es cliente.</li>
         <li>No puedes añadirte a ti mismo/a.</li>
+        <li>Tiene que ser alguien que <b>llegó a Saneas después que tú</b>: si ya estaba aquí antes, no cuenta.</li>
+        <li>Cada persona solo puede figurar como invitada de <b>alguien</b>: si ya la añadió otro cliente, no se puede repetir.</li>
       </ul>
     </div>
     <div id="invBox" style="background:var(--light);border-radius:16px;padding:16px;text-align:center;margin-bottom:14px">
