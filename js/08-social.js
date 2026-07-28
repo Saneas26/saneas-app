@@ -32,6 +32,15 @@ async function enviarInvitar(){
   if(!nombre||!apellido){ msg.style.color='var(--bad)'; msg.textContent='Escribe nombre y primer apellido.'; return; }
   const btn=document.getElementById('btnInvitar'); btn.disabled=true; btn.textContent='Comprobando...';
   try{
+    // Preguntamos antes de enviar: así el motivo exacto le llega siempre
+    // («ya es invitado de otra persona», «lleva más tiempo que tú»…).
+    try{
+      const {data:chk}=await sb.rpc('saneas_comprobar_invitado',{p_nombre:nombre,p_apellido:apellido});
+      if(chk && chk.ok===false && chk.mensaje){
+        btn.disabled=false; btn.textContent='Añadir invitado';
+        msg.style.color='var(--bad)'; msg.textContent=chk.mensaje; return;
+      }
+    }catch(e){}   // si la comprobación no está disponible, sigue: el guardián de la base de datos lo para igual
     const {data:{session}}=await sb.auth.getSession();
     const r=await fetch(SUPABASE_URL+'/functions/v1/invitar',{method:'POST',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.access_token},
