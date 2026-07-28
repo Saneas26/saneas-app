@@ -53,7 +53,7 @@ security definer
 set search_path = public
 as $$
 begin
-  if p_app is null or p_app not in ('pordondevoy','saneas','activala','laora','acumula') then
+  if p_app is null or p_app not in ('pordondevoy','saneas','saneas_web','activala','laora','acumula') then
     raise exception 'app no válida';
   end if;
   if p_dispositivo is null then
