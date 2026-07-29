@@ -82,7 +82,7 @@ var GrupoSaneas = (function(){
         'box-shadow:0 3px 10px rgba(16,40,48,.12)}',
       '.gs-tx{min-width:0;text-align:left}',
       '.gs-tx b{display:block;font-size:15.5px;font-weight:800;color:#1a2e35;line-height:1.2}',
-      '.gs-tx span{display:block;font-size:12.5px;color:#000 !important;line-height:1.45;margin-top:3px}',
+      '.gs-tx span{display:block;font-size:14px;color:#000 !important;line-height:1.45;margin-top:3px}',
       '.gs-aqui{display:inline-block;font-size:10.5px;font-weight:800;color:#F5862E;',
         'background:#fff1e4;border-radius:8px;padding:1px 7px;margin-left:6px;vertical-align:2px}',
       '.gs-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px 6px;margin-top:12px}',
