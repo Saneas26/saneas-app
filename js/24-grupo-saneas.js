@@ -71,9 +71,10 @@ var GrupoSaneas = (function(){
         'max-height:78vh;overflow-y:auto;-webkit-overflow-scrolling:touch;background:#fff;border-radius:20px;',
         'box-shadow:0 22px 60px rgba(16,40,48,.35);z-index:9999;opacity:0;pointer-events:none;',
         'transition:opacity .18s,transform .18s;padding:16px 14px 10px;',
-        'font-family:inherit;-webkit-text-size-adjust:100%}',
+        'font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;',
+        '-webkit-text-size-adjust:100%}',
       '.gs-panel.abierto{opacity:1;pointer-events:auto;transform:translate(-50%,0)}',
-      '.gs-tit{font-size:13.5px;font-weight:700;color:#000 !important;text-align:center;margin:0 0 12px}',
+      '.gs-tit{font-size:15px;font-weight:700;color:#22313a;text-align:center;margin:0 0 12px}',
       '.gs-tit b{color:#3890a4;font-weight:800}',
       '.gs-fila{display:flex;align-items:flex-start;gap:12px;padding:11px;border-radius:16px;',
         'border:1px solid #e3edef;margin-bottom:9px;text-decoration:none;background:#fff}',
@@ -81,8 +82,8 @@ var GrupoSaneas = (function(){
       '.gs-fila img{width:52px;height:52px;border-radius:14px;object-fit:cover;flex:none;background:#fff;',
         'box-shadow:0 3px 10px rgba(16,40,48,.12)}',
       '.gs-tx{min-width:0;text-align:left}',
-      '.gs-tx b{display:block;font-size:15.5px;font-weight:800;color:#1a2e35;line-height:1.2}',
-      '.gs-tx span{display:block;font-size:14px;color:#000 !important;line-height:1.45;margin-top:3px}',
+      '.gs-tx b{display:block;font-size:17px;font-weight:800;color:#22313a;line-height:1.25}',
+      '.gs-tx span{display:block;font-size:16px;color:#3d4f59;line-height:1.55;margin-top:5px}',
       '.gs-aqui{display:inline-block;font-size:10.5px;font-weight:800;color:#F5862E;',
         'background:#fff1e4;border-radius:8px;padding:1px 7px;margin-left:6px;vertical-align:2px}',
       '.gs-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px 6px;margin-top:12px}',
@@ -90,12 +91,12 @@ var GrupoSaneas = (function(){
         'padding:0;cursor:pointer;font-family:inherit}',
       '.gs-item img{width:60px;height:60px;border-radius:16px;object-fit:cover;background:#fff;',
         'box-shadow:0 4px 12px rgba(16,40,48,.16)}',
-      '.gs-item b{font-size:12.5px;font-weight:700;color:#1a2e35;line-height:1.2;text-align:center}',
+      '.gs-item b{font-size:14px;font-weight:700;color:#22313a;line-height:1.25;text-align:center}',
       '.gs-ficha{text-align:center;padding:6px 4px 2px}',
       '.gs-ficha img{width:96px;height:96px;border-radius:24px;object-fit:cover;background:#fff;',
         'box-shadow:0 8px 22px rgba(16,40,48,.2)}',
-      '.gs-ficha h3{font-size:22px;font-weight:800;color:#1a2e35;margin:14px 0 8px}',
-      '.gs-ficha p{font-size:15px;color:#000 !important;line-height:1.6;margin:0 6px 18px}',
+      '.gs-ficha h3{font-size:24px;font-weight:800;color:#22313a;margin:14px 0 8px}',
+      '.gs-ficha p{font-size:17px;color:#3d4f59;line-height:1.55;margin:0 6px 18px}',
       '.gs-ir{display:block;background:#3890a4;color:#fff;border:0;border-radius:14px;padding:14px;',
         'font-size:15.5px;font-weight:800;text-decoration:none;font-family:inherit;cursor:pointer;margin-bottom:9px}',
       '.gs-ok{display:block;width:100%;background:#fff;color:#3890a4;border:2px solid #3890a4;border-radius:14px;',
@@ -135,6 +136,11 @@ var GrupoSaneas = (function(){
   }
   function mostrar(html){
     var p=panel();
+    // Debajo de la barra de la casa, sea la que sea: en Saneas son dos filas
+    // y con el top fijo el panel tapaba el propio botón.
+    var barra=document.querySelector('.appbar,header');
+    if(barra){ var abajo=barra.getBoundingClientRect().bottom;
+      if(abajo>0) p.style.top=Math.round(abajo+8)+'px'; }
     p.innerHTML=html; p.scrollTop=0;
     p.classList.add('abierto');
     document.getElementById('gs-fondo').classList.add('abierto');
