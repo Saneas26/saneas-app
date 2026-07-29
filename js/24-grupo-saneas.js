@@ -19,12 +19,12 @@ var GrupoSaneas = (function(){
       texto:'Comida para resolver tus problemas de alimentación. Nutrición para todos los bolsillos.' },
     { id:'pordondevoy', nombre:'Pordondevoy', logo:'app-pordondevoy.png', url:'https://pordondevoy-saneas.vercel.app',
       texto:'En un avión no hay datos ni wifi. Ahora puedes entretenerte y saber por dónde vas, de manera gratuita. Las 20 noticias más importantes del día te acompañan, junto a los principales podcast en español. Con itinerarios a las principales ciudades europeas.' },
-    { id:'acumula', nombre:'Acumula', logo:'app-acumula.png', url:'https://acumula.es',
-      texto:'Una ayuda para controlar tu economía casera, totalmente gratuita. Todas tus cuentas en un solo sitio.' },
     { id:'activala', nombre:'Activala', logo:'app-activala.png', url:'https://activala.es',
       texto:'Alquileres de casas en el sur de Gran Canaria, sin intermediarios.' },
     { id:'laora', nombre:'laOra', logo:'app-laora.png', url:'https://laora.es',
-      texto:'La relojería de lujo al precio honesto, sin peajes de marca.' }
+      texto:'La relojería de lujo al precio honesto, sin peajes de marca.' },
+    { id:'acumula', nombre:'Acumula', logo:'app-acumula.png', url:'https://acumula.es',
+      texto:'Una ayuda para controlar tu economía casera, totalmente gratuita. Todas tus cuentas en un solo sitio.' }
   ];
   var CFG = { actual:'', logos:'img/', extras:[] };
   var CSS_PUESTO = false;
@@ -85,7 +85,7 @@ var GrupoSaneas = (function(){
       '.gs-tx span{display:block;font-size:12.5px;color:#5f7178;line-height:1.45;margin-top:3px}',
       '.gs-aqui{display:inline-block;font-size:10.5px;font-weight:800;color:#F5862E;',
         'background:#fff1e4;border-radius:8px;padding:1px 7px;margin-left:6px;vertical-align:2px}',
-      '.gs-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px 6px;margin-top:12px}',
+      '.gs-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px 6px;margin-top:12px}',
       '.gs-item{display:flex;flex-direction:column;align-items:center;gap:7px;background:none;border:0;',
         'padding:0;cursor:pointer;font-family:inherit}',
       '.gs-item img{width:60px;height:60px;border-radius:16px;object-fit:cover;background:#fff;',
