@@ -16,7 +16,7 @@
 var GrupoSaneas = (function(){
   var MARCAS = [
     { id:'saneas', nombre:'Saneas', logo:'app-saneas-web.png', url:'https://saneas.es',
-      texto:'Comida para resolver tus problemas de alimentación. Nutrición para todos los bolsillos.' },
+      texto:'Nutrición cómoda, sencilla y económica desde la web.' },
     { id:'pordondevoy', nombre:'Pordondevoy', logo:'app-pordondevoy.png', url:'https://pordondevoy-saneas.vercel.app',
       texto:'En un avión no hay datos ni wifi. Ahora puedes entretenerte y saber por dónde vas, de manera gratuita. Las 20 noticias más importantes del día te acompañan, junto a los principales podcast en español. Con itinerarios a las principales ciudades europeas.' },
     { id:'activala', nombre:'Activala', logo:'app-activala.png', url:'https://activala.es',
