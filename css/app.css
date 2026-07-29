@@ -282,10 +282,10 @@
 .artmas{display:inline-block;margin:4px 0 2px;padding:5px 12px;border:1px solid var(--teal);background:#fff;color:var(--teal);font-size:13px;font-weight:700;border-radius:20px;cursor:pointer}
 
   /* ── El grupo Saneas ── el resto lo pone js/24-grupo-saneas.js ── */
-  .brand{user-select:none;display:flex;flex-direction:column;gap:2px}
-  .brand-titulo{font-weight:700;font-size:18px;letter-spacing:.5px;white-space:nowrap}
-  .brand-arrow{margin:0 4px;font-size:16px}
-  .brand-accion{font-weight:300;font-size:11px;opacity:.85;letter-spacing:1.5px;cursor:pointer;padding:2px 0}
+  .brand{font-weight:700;font-size:22px;letter-spacing:.5px;user-select:none;display:flex;align-items:center;gap:8px}
+  .brand-grupo{font-weight:400;font-size:14px;letter-spacing:0}
+  .brand-arrow{font-size:14px;margin:0 2px}
+  .brand-despliega{font-weight:300;font-size:11px;opacity:.85;letter-spacing:1.5px;cursor:pointer}
   #grupoPie{margin:26px 2px 8px}
   .gmTit{font-size:13.5px;font-weight:700;color:var(--muted);text-align:center;margin:0 0 10px}
   .gmTit .gmS{color:var(--teal);font-weight:700}
