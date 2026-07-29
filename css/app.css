@@ -100,7 +100,7 @@
   .glasses{display:flex;gap:4px;margin-top:6px;flex-wrap:wrap}
   .glasses span{width:16px;height:20px;border-radius:0 0 5px 5px;border:2px solid var(--teal)}
   .glasses span.full{background:var(--teal)}
-  .video{position:relative;border-radius:14px;overflow:hidden;height:170px;background:linear-gradient(135deg,#1a2e35,#3890a4);display:flex;align-items:center;justify-content:center}
+  .video{position:relative;border-radius:14px;overflow:hidden;height:200px;background:linear-gradient(135deg,#1a2e35,#3890a4);display:flex;align-items:center;justify-content:center}
   .video .play{width:56px;height:56px;border-radius:50%;background:rgba(255,255,255,.92);display:flex;align-items:center;justify-content:center;font-size:22px;color:var(--teal);text-decoration:none}
   .video .cap{position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.4);color:#fff;padding:8px 12px;font-size:14px}
   .video .thumb{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
