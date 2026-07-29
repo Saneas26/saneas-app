@@ -15,14 +15,14 @@
 // ============================================================
 var GrupoSaneas = (function(){
   var MARCAS = [
-    { id:'saneas', nombre:'Saneas', logo:'app-saneas.png', url:'https://saneas.es',
+    { id:'saneas', nombre:'Saneas', logo:'app-saneas-web.png', url:'https://saneas.es',
       texto:'Comida para resolver tus problemas de alimentación. Nutrición para todos los bolsillos.' },
-    { id:'laora', nombre:'laOra', logo:'app-laora.png', url:'https://laora.es',
-      texto:'La relojería de lujo al precio honesto, sin peajes de marca.' },
     { id:'pordondevoy', nombre:'Pordondevoy', logo:'app-pordondevoy.png', url:'https://pordondevoy-saneas.vercel.app',
       texto:'En un avión no hay datos ni wifi. Ahora puedes entretenerte y saber por dónde vas, de manera gratuita. Las 20 noticias más importantes del día te acompañan, junto a los principales podcast en español. Con itinerarios a las principales ciudades europeas.' },
     { id:'activala', nombre:'Activala', logo:'app-activala.png', url:'https://activala.es',
       texto:'Alquileres de casas en el sur de Gran Canaria, sin intermediarios.' },
+    { id:'laora', nombre:'laOra', logo:'app-laora.png', url:'https://laora.es',
+      texto:'La relojería de lujo al precio honesto, sin peajes de marca.' },
     { id:'acumula', nombre:'Acumula', logo:'app-acumula.png', url:'https://acumula.es',
       texto:'Una ayuda para controlar tu economía casera, totalmente gratuita. Todas tus cuentas en un solo sitio.' }
   ];
@@ -31,7 +31,13 @@ var GrupoSaneas = (function(){
 
   function esc(s){ return String(s==null?'':s)
     .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-  function todas(){ return MARCAS.concat(CFG.extras||[]); }
+  function todas(){
+    var result = MARCAS.slice();
+    if(CFG.extras && CFG.extras.length > 0){
+      result.splice(1, 0, CFG.extras[0]);
+    }
+    return result;
+  }
   function porId(id){ var l=todas(); for(var i=0;i<l.length;i++) if(l[i].id===id) return l[i]; return null; }
   function src(m){ return m.logo ? (CFG.logos+m.logo) : ''; }
   // Marcas sin PNG (los sub-productos): baldosa naranja con dos figuras,
@@ -40,7 +46,15 @@ var GrupoSaneas = (function(){
     + 'stroke-linecap="round" stroke-linejoin="round">'
     + '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>'
     + '<path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>';
+  // Saneas no lleva foto: lleva su logotipo corporativo, el nombre entero
+  // en QuickSand Bold («Saneas®»), blanco sobre el teal de la marca — para
+  // que se reconozca igual aquí que en la cabecera de la web y de la app.
   function icono(m, clase){
+    if(m.wordmark){
+      var tam = clase.indexOf('ficha')>-1 ? 'gs-word-ficha'
+              : clase.indexOf('item')>-1  ? 'gs-word-item' : 'gs-word-fila';
+      return '<span class="gs-word '+tam+'">Saneas<sup>&reg;</sup></span>';
+    }
     return m.logo
       ? '<img src="'+esc(src(m))+'" alt="" loading="lazy">'
       : '<span class="'+clase+'">'+SVG_PERSONAS+'</span>';
@@ -71,7 +85,7 @@ var GrupoSaneas = (function(){
       '.gs-tx span{display:block;font-size:12.5px;color:#5f7178;line-height:1.45;margin-top:3px}',
       '.gs-aqui{display:inline-block;font-size:10.5px;font-weight:800;color:#F5862E;',
         'background:#fff1e4;border-radius:8px;padding:1px 7px;margin-left:6px;vertical-align:2px}',
-      '.gs-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(74px,1fr));gap:18px 6px;margin-top:12px}',
+      '.gs-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px 6px;margin-top:12px}',
       '.gs-item{display:flex;flex-direction:column;align-items:center;gap:7px;background:none;border:0;',
         'padding:0;cursor:pointer;font-family:inherit}',
       '.gs-item img{width:60px;height:60px;border-radius:16px;object-fit:cover;background:#fff;',
@@ -94,6 +108,17 @@ var GrupoSaneas = (function(){
       '.gs-svg-item svg{width:30px;height:30px}',
       '.gs-svg-ficha{width:96px;height:96px;border-radius:24px;box-shadow:0 8px 22px rgba(16,40,48,.2)}',
       '.gs-svg-ficha svg{width:46px;height:46px}',
+      '.gs-word{display:inline-flex;align-items:center;justify-content:center;flex:none;',
+        'background:linear-gradient(135deg,#1a2e35,#3890a4);color:#fff;',
+        'font-family:\'Quicksand\',sans-serif;font-weight:700;letter-spacing:-.2px;',
+        'white-space:nowrap;line-height:1}',
+      '.gs-word sup{font-size:.5em;font-weight:700;color:#F5862E;margin-left:1px}',
+      '.gs-word-fila{width:52px;height:52px;border-radius:14px;font-size:11.5px;',
+        'box-shadow:0 3px 10px rgba(16,40,48,.12)}',
+      '.gs-word-item{width:60px;height:60px;border-radius:16px;font-size:13px;',
+        'box-shadow:0 4px 12px rgba(16,40,48,.16)}',
+      '.gs-word-ficha{width:96px;height:96px;border-radius:24px;font-size:19px;',
+        'box-shadow:0 8px 22px rgba(16,40,48,.2)}',
       '@media (prefers-reduced-motion:reduce){.gs-panel,.gs-fondo{transition:none}}'
     ].join('');
     document.head.appendChild(c);

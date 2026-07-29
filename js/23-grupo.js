@@ -5,7 +5,7 @@
 GrupoSaneas.init({
   actual: 'saneas',
   logos : 'img/',
-  extras: [{ id:'asesorias', nombre:'Asesora Saneas',
+  extras: [{ id:'asesorias', nombre:'Asesorías Saneas', logo:'app-asesorias.png',
              url:'https://saneas.es/asesorias',
              texto:'Si te gusta el mundo de la nutrición, ahora tú también puedes. Más fácil que nunca.' }]
 });
