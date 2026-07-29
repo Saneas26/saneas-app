@@ -723,21 +723,34 @@ async function cargarDietas(){
 }
 var REP_ULT=null;
 function _pausaPinta(id){
-  // Etiqueta informativa de pausa por vacaciones. Se pinta aparte, no frena la ficha.
+  // Ficha: distintivo de vacaciones + boton para ponerlas o cambiarlas.
+  // El distintivo NARANJA solo sale si el cliente esta de vacaciones de
+  // verdad: manda la misma lista que pinta el grid (VAC_SET), asi que la
+  // ficha y la parrilla nunca se contradicen. El boton es gris y dice un
+  // verbo, para que no se lea como un estado. Se pinta aparte, no frena la ficha.
   (async function(){
     try{
       await new Promise(function(r){ setTimeout(r,0); });
       var e0 = document.getElementById('pauseLn'); if(!e0) await new Promise(function(r){ setTimeout(r,120); });
-      var pz = await rpc('panel_pausa_estado',{p_cliente_id:id});
-      var e = document.getElementById('pauseLn'); if(!e) return;
-      var vh = (pz && pz.vacaciones_hasta) ? pz.vacaciones_hasta : null;
       var hoy = new Date().toLocaleDateString('en-CA',{timeZone:'Europe/Madrid'});
-      if(vh && vh < hoy) vh = null;                       // pausa ya vencida
-      var btn = '<button onclick="pausaFecha(\''+id+'\')" style="margin-left:8px;background:#fff;border:1px solid #d9c3a1;color:#b06a00;border-radius:8px;padding:4px 10px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">'
-        + (vh ? 'Cambiar' : '\u23f8\ufe0f Pausa por vacaciones') + '</button>';
-      if(!vh){ e.innerHTML = btn; return; }
-      var f = new Date(vh+'T00:00:00').toLocaleDateString('es-ES',{timeZone:'Europe/Madrid',day:'2-digit',month:'2-digit',year:'numeric'});
-      e.innerHTML = '<div style="display:inline-block;margin:0 0 6px;padding:5px 11px;border-radius:8px;font-size:14px;font-weight:700;background:#fff4e6;color:#b06a00">\u23f8\ufe0f En pausa por vacaciones \u00b7 hasta '+f+'</div>'+btn;
+      var pz = await rpc('panel_pausa_estado',{p_cliente_id:id});
+      var vh = (pz && typeof pz.vacaciones_hasta === 'string'
+                && /^\d{4}-\d{2}-\d{2}$/.test(pz.vacaciones_hasta)
+                && pz.vacaciones_hasta >= hoy) ? pz.vacaciones_hasta : null;
+      var e = document.getElementById('pauseLn'); if(!e) return;
+      // VAC_SET null = la lista aun no ha cargado; entonces vale lo que diga el RPC.
+      var enLista = VAC_SET ? VAC_SET.has(id) : null;
+      var pausado = (enLista === null) ? !!vh : enLista;
+      if(!pausado) vh = null;
+      var bs = 'background:#fff;border:1px solid #ddd;color:#555;border-radius:8px;padding:4px 10px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer';
+      if(!pausado){
+        e.innerHTML = '<button onclick="pausaFecha(\''+id+'\')" style="'+bs+'">\ud83d\uddd3\ufe0f Poner de vacaciones</button>';
+        return;
+      }
+      var f = vh ? new Date(vh+'T00:00:00').toLocaleDateString('es-ES',{timeZone:'Europe/Madrid',day:'2-digit',month:'2-digit',year:'numeric'}) : '';
+      e.innerHTML = '<div style="display:inline-block;margin:0 0 6px;padding:5px 11px;border-radius:8px;font-size:14px;font-weight:700;background:#fff4e6;color:#b06a00">\u23f8\ufe0f En pausa por vacaciones'
+        + (f ? ' \u00b7 hasta '+f : '') + '</div>'
+        + '<button onclick="pausaFecha(\''+id+'\')" style="margin-left:8px;'+bs+'">Cambiar fecha</button>';
     }catch(e){}
   })();
 }
@@ -754,8 +767,11 @@ async function pausaFecha(id){
     if(!r || !r.ok){ toast('No se pudo aplicar la pausa'); return; }
     if(r.quitada){ toast('Pausa quitada'); }
     else{ toast('En pausa hasta '+r.vacaciones_hasta+' \u00b7 renovaci\u00f3n al '+r.fecha_renovacion); }
-    VAC_SET = null;                       // que se repinte el distintivo de la plaza
-    _pausaPinta(id); cargar();
+    // Se recarga la lista de pausas ANTES de repintar: es la que manda
+    // tanto en la parrilla como en la ficha.
+    VAC_SET = null;
+    cargarVacaciones(function(){ _pausaPinta(id); });
+    cargar();
   }catch(e){ toast('Falta pegar supabase/pausa_fecha.sql en el SQL Editor'); }
 }
 function _repPinta(id){
