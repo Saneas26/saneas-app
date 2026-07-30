@@ -180,7 +180,7 @@
   .chip.link:active{transform:scale(.96)}
   .detail{position:fixed;inset:0;max-width:480px;margin:0 auto;background:var(--bg);z-index:50;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .25s ease}
   .detail.open{transform:none}
-  .detail .dbar{background:var(--teal);color:#fff;padding:calc(14px + env(safe-area-inset-top,0px)) 16px 14px;display:flex;align-items:center;gap:12px;font-weight:700;font-size:16px}
+  .detail .dbar{background:var(--teal);color:#fff;padding:14px 16px;display:flex;align-items:center;gap:12px;font-weight:700;font-size:16px}
   .detail .dbar .back{font-size:24px;cursor:pointer;background:none;border:none;color:#fff;line-height:1}
   .qdCard{display:flex;align-items:center;gap:14px;cursor:pointer;border-left:5px solid var(--orange)}
 .qdIco{width:52px;height:52px;border-radius:14px;background:#fff2e6;display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0}
@@ -285,11 +285,7 @@
   /* La barra va a dos filas, como la cabecera de Acumula: la marca arriba y la
      pastilla del grupo debajo, donde se ve nada más abrir la app. En una sola
      fila no cabe: la pastilla mide 222px y el móvil tiene 375px. */
-  /* La app declara viewport-fit=cover, asi que dibuja por debajo de la barra
-     de estado del iPhone. Sin esto, esa franja la pinta el gris del body y se
-     ve un corte encima de la cabecera. env() vale 0 donde no hay notch. */
-  .appbar{flex-wrap:wrap;row-gap:10px;padding-bottom:12px;
-    padding-top:calc(14px + env(safe-area-inset-top,0px))}
+  .appbar{flex-wrap:wrap;row-gap:10px;padding-bottom:12px}
   .brand{font-weight:700;font-size:22px;letter-spacing:.5px;user-select:none}
   /* Dos lineas, como en Acumula: el nombre del grupo con su flecha y debajo,
      mas pequena pero legible, la palabra que dice lo que hace. */
