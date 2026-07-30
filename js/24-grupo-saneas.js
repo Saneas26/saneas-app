@@ -7,6 +7,10 @@
 //   GrupoSaneas.init({ actual:'saneas', logos:'img/' });
 //   · actual → cuál de las marcas es esta (se marca «Estás aquí»)
 //   · logos  → carpeta donde viven los app-<marca>.png (192px)
+//   · barra  → selector de la barra de arriba de esa casa, para que el
+//     desplegable no la tape. Por defecto '.appbar,header' (las apps); la
+//     web de marketing pasa 'nav'. Ojo: en las apps 'nav' es la barra de
+//     pestañas de ABAJO, así que no vale como valor por defecto.
 //
 // Dos superficies:
 //   · GrupoSaneas.abrirMenu()  → desplegable del logo: logotipo + explicación
@@ -26,7 +30,7 @@ var GrupoSaneas = (function(){
     { id:'acumula', nombre:'Acumula', logo:'app-acumula.png', url:'https://acumula.es',
       texto:'Una ayuda para controlar tu economía casera, totalmente gratuita. Todas tus cuentas en un solo sitio.' }
   ];
-  var CFG = { actual:'', logos:'img/', extras:[] };
+  var CFG = { actual:'', logos:'img/', extras:[], barra:'.appbar,header' };
   var CSS_PUESTO = false;
 
   function esc(s){ return String(s==null?'':s)
@@ -138,7 +142,7 @@ var GrupoSaneas = (function(){
     var p=panel();
     // Debajo de la barra de la casa, sea la que sea: en Saneas son dos filas
     // y con el top fijo el panel tapaba el propio botón.
-    var barra=document.querySelector('.appbar,header');
+    var barra=document.querySelector(CFG.barra);
     if(barra){ var abajo=barra.getBoundingClientRect().bottom;
       if(abajo>0) p.style.top=Math.round(abajo+8)+'px'; }
     p.innerHTML=html; p.scrollTop=0;
@@ -192,6 +196,7 @@ var GrupoSaneas = (function(){
     if(o.actual!=null) CFG.actual=o.actual;
     if(o.logos!=null)  CFG.logos=o.logos;
     if(o.extras!=null) CFG.extras=o.extras;
+    if(o.barra!=null)  CFG.barra=o.barra;
     ponerCSS();
   }
   return { init:init, abrirMenu:abrirMenu, cerrar:cerrar, ficha:ficha,

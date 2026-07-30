@@ -1,214 +1,178 @@
-# Formato Grupo Saneas - Guía de Aplicación a Todas las Apps
+# Formato del Grupo Saneas · cómo se pone en cada propiedad
 
-## Resumen de Cambios Realizados en Saneas
+**Formato cerrado el 30/07/2026 por Oscar.** Este documento manda: si una web o
+una app del grupo no se parece a lo que hay aquí, la que está mal es ella.
 
-Se ha implementado un nuevo formato unificado para el **Grupo Saneas** en:
-1. **Desplegable de cabecera** (arriba a la izquierda)
-2. **Grid de pie final** (abajo con iconos)
+Dos superficies, siempre las mismas:
 
-## CAMBIOS EN LOS ARCHIVOS
+1. **La pastilla de la cabecera** — un botón, arriba del todo, visible nada más
+   abrir. Al pulsarlo se despliega el grupo entero.
+2. **La parrilla del pie** — los iconos de las marcas donde el visitante ya ha
+   llegado abajo. Al tocar un icono se abre su ficha con el botón «Ir a».
 
-### 1. **index.html** - Estructura del Header
+---
 
-**Ubicación:** `index.html` línea ~108
+## 1. La pastilla
 
-**Cambio:** Reemplaza:
 ```html
-<div class="brand" onclick="toggleGrupo()">Saneas<span class="bChev">&#9662;</span></div>
+<button class="gs-btn" onclick="GrupoSaneas.abrirMenu()">
+  <span class="gs-btn-l1">Grupo Saneas <span class="gs-btn-fle">&#9662;</span></span>
+  <span class="gs-btn-mas">despliega</span></button>
 ```
 
-**Por:**
+Reglas del botón, sin excepciones:
+
+- **Dos líneas.** Arriba «Grupo Saneas» con su flecha `▾`; debajo, más pequeña
+  pero perfectamente legible, la palabra **despliega**. Nunca en una sola línea
+  y **nunca con emoji**.
+- «Grupo Saneas» en el color de la marca, la flecha en el mismo color al 70 % y
+  **«despliega» en naranja** (`--orange`, #F5862E).
+- Forma de pastilla: `border-radius:99px` y **la fuente del sistema** (nunca la
+  tipográfica de la casa: es un elemento del grupo, no de la marca).
+- **Sobre barra de color, la pastilla es blanca; sobre barra blanca, en teal
+  claro** (`#e8f4f7`). Lo que no cambia nunca es la forma ni el texto.
+
+```css
+.gs-btn{display:inline-flex;flex-direction:column;align-items:center;gap:2px;
+  padding:7px 18px;border-radius:99px;background:#fff;color:var(--teal);border:0;
+  cursor:pointer;white-space:nowrap;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  box-shadow:0 2px 8px rgba(16,40,48,.18)}
+.gs-btn .gs-btn-l1{font-size:16px;font-weight:600;line-height:1.15}
+.gs-btn .gs-btn-fle{font-size:14px;opacity:.7;margin-left:2px}
+.gs-btn .gs-btn-mas{font-size:12.5px;font-weight:800;letter-spacing:.4px;
+  color:var(--orange);line-height:1.15}
+```
+
+### Dónde va, según el tipo de propiedad
+
+**En una app** (barra de color con la marca y el avatar): la pastilla va **entre
+la marca y el avatar**, como hijo directo de la barra y **fuera** de `.brand`.
+A dos líneas mide unos 155 px y cabe de sobra en 375 px; se deja `flex-wrap`
+por si alguna casa tiene la barra más cargada.
+
+```css
+.appbar{flex-wrap:wrap;row-gap:10px;padding-bottom:12px;
+  padding-top:calc(14px + env(safe-area-inset-top,0px))}
+.brand{font-weight:700;font-size:22px;letter-spacing:.5px;user-select:none}
+```
+
+**Ese `env(safe-area-inset-top)` no es opcional.** Las apps declaran
+`viewport-fit=cover`, así que dibujan por debajo de la barra de estado del
+iPhone. Sin ese relleno, la franja de arriba la pinta el fondo del `body` y se
+ve un corte de otro color encima de la cabecera. `env()` vale 0 donde no hay
+notch, así que no estorba en ningún sitio.
+
+**En una web de marketing** (barra blanca fija con logo a un lado y CTA al
+otro): la pastilla va **junto al logo**, los dos dentro de `.nav-izq`, y el
+logo sigue abriendo el desplegable además del botón.
+
 ```html
-<div class="brand"><span>NOMBRE_APP</span> <span class="brand-grupo">Grupo Saneas <span class="brand-arrow">→</span> <span class="brand-despliega" onclick="toggleGrupo()">despliega</span></span></div>
+<div class="nav-izq"><div class="nav-logo saneas">Saneas®</div><button class="gs-btn" …></button></div>
 ```
 
-*Reemplaza `NOMBRE_APP` con: Saneas, laOra, Pordondevoy, Acumula, Activala según la aplicación*
+Como ahí compite con el CTA, se aprieta por escalones (probado a 1280, 860, 560,
+430, 375, 360 y 320 px; a 320 quedan 7 px de aire):
+
+| Ancho | Qué pasa |
+|---|---|
+| ≤ 560 px | barra a 16 px de margen, logo a 18 px, pastilla a 13,5 px |
+| ≤ 430 px | logo 17 px, pastilla a 12 px, el CTA se aprieta un punto |
+| ≤ 345 px | margen a 10 px, logo 15 px, pastilla a 11 px |
+
+Las dos líneas nunca se rompen: la coletilla no se esconde en ningún ancho.
+
+**Cuidado con la especificidad:** si el bloque nuevo se inserta antes que la
+regla base del CTA, hay que escribir `nav .nav-wa{…}` para que gane la del móvil.
 
 ---
 
-### 2. **css/app.css** - Estilos del Header
+## 2. El componente compartido
 
-**Ubicación:** `css/app.css` línea ~284-286
+**Un solo archivo, idéntico byte a byte en todas las propiedades**:
+`js/24-grupo-saneas.js` en las apps, `assets/js/grupo-saneas.js` en las webs.
+Trae los datos de las cinco marcas, se pinta sus propios estilos y no depende
+del CSS de la casa. Si se toca en un sitio, se copia tal cual en los demás — el
+blob de GitHub debe coincidir.
 
-**Busca:** (comentario) `/* ── El grupo Saneas ── el resto lo pone js/24-grupo-saneas.js ── */`
-
-**Reemplaza:**
-```css
-.brand{cursor:pointer;user-select:none}
-.brand .bChev{font-size:12px;opacity:.85;margin-left:3px;vertical-align:2px}
-```
-
-**Por:**
-```css
-.brand{font-weight:700;font-size:22px;letter-spacing:.5px;user-select:none;display:flex;align-items:flex-end;gap:24px}
-.brand-grupo{font-weight:700;font-size:16px;letter-spacing:.3px}
-.brand-arrow{font-size:16px;margin:0 2px;font-weight:700}
-.brand-despliega{font-weight:800;font-size:15px;letter-spacing:1px;cursor:pointer;opacity:1}
-```
-
----
-
-### 3. **js/24-grupo-saneas.js** (Componente Compartido)
-
-**IMPORTANTE:** Este archivo es el componente compartido. Los cambios aquí DEBEN ser copiados a TODAS las apps.
-
-#### 3.1 MARCAS Array - Reordenamiento y Logos
-
-**Ubicación:** Líneas 17-28
-
-**Cambio:** El array debe tener este orden exacto:
-```javascript
-var MARCAS = [
-  { id:'saneas', nombre:'Saneas', logo:'app-saneas-web.png', url:'https://saneas.es',
-    texto:'El método de nutrición con 87% de éxito que ha ayudado a más de 1700 personas, sin pastillas, sin batidos y sin inyecciones. Solo cambiando tus hábitos poco a poco. El GPS de la nutrición que te muestra el camino.' },
-  { id:'pordondevoy', nombre:'Pordondevoy', logo:'app-pordondevoy.png', url:'https://pordondevoy-saneas.vercel.app',
-    texto:'...' },
-  { id:'activala', nombre:'Activala', logo:'app-activala.png', url:'https://activala.es',
-    texto:'...' },
-  { id:'laora', nombre:'laOra', logo:'app-laora.png', url:'https://laora.es',
-    texto:'...' },
-  { id:'acumula', nombre:'Acumula', logo:'app-acumula.png', url:'https://acumula.es',
-    texto:'...' }
-];
-```
-
-**Notas:**
-- Saneas usa `logo:'app-saneas-web.png'` (NO wordmark)
-- Todos deben tener logos en formato PNG
-- El orden en MARCAS es: Saneas, Pordondevoy, Activala, laOra, Acumula
-
-#### 3.2 Función todas() - Insertar Extras en Posición Correcta
-
-**Ubicación:** Líneas 34-40
-
-**Cambio:**
-```javascript
-function todas(){
-  var result = MARCAS.slice();
-  if(CFG.extras && CFG.extras.length > 0){
-    result.splice(1, 0, CFG.extras[0]);
-  }
-  return result;
-}
-```
-
-**Propósito:** Inserta el primer extra (asesorías) en posición 1 para orden correcto.
-
-#### 3.3 Grid CSS - 3 Columnas
-
-**Ubicación:** Línea 88
-
-**Cambio de:**
-```css
-'.gs-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(74px,1fr));gap:18px 6px;margin-top:12px}',
-```
-
-**A:**
-```css
-'.gs-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px 6px;margin-top:12px}',
-```
-
-#### 3.4 Colores de Explicaciones - Negro Puro
-
-**Ubicaciones:**
-- Línea 76: `.gs-tit` - cambiar `color:#5f7178` a `color:#000 !important`
-- Línea 85: `.gs-tx span` - cambiar `color:#5f7178` a `color:#000 !important` Y cambiar `font-size:12.5px` a `font-size:14px`
-- Línea 98: `.gs-ficha p` - cambiar `color:#41585f` a `color:#000 !important`
-
----
-
-### 4. **js/23-grupo.js** - Configuración App-Específica
-
-**Ubicación:** `js/23-grupo.js` líneas 5-11
-
-**Cambio:** Adapter la configuración de la app:
-
-```javascript
+```js
 GrupoSaneas.init({
-  actual: 'saneas',  // Cambiar a 'laora', 'pordondevoy', 'acumula', 'activala' según app
-  logos : 'img/',
-  extras: [{ id:'asesorias', nombre:'Asesorías Saneas',
-             url:'https://saneas.es/asesorias',
-             texto:'Si te gusta el mundo de la nutrición, ahora tú también puedes. Más fácil que nunca.' }]
+  actual : 'saneas',            // cuál es esta casa → sale con «estás aquí» y sin enlace
+  logos  : 'img/',              // carpeta de los app-<marca>.png
+  barra  : '.appbar,header',    // la barra de arriba de esta casa (ver abajo)
+  extras : [ … ]                // sub-productos propios; solo Saneas lleva Asesorías
 });
 ```
 
-**Cambios por App:**
-- **Saneas**: `actual: 'saneas'` (mantener extras con asesorías)
-- **laOra**: `actual: 'laora'` (remover extras o deixar vacío: `extras:[]`)
-- **Pordondevoy**: `actual: 'pordondevoy'` (remover extras)
-- **Acumula**: `actual: 'acumula'` (remover extras)
-- **Activala**: `actual: 'activala'` (remover extras)
+- **`barra`** dice dónde termina la barra superior, para que el desplegable se
+  abra justo debajo y no la tape. Por defecto `.appbar,header`; **las webs de
+  marketing pasan `'nav'`**. Ojo: `nav` NO vale como valor por defecto porque en
+  las apps el `<nav>` es la barra de pestañas **de abajo**.
+- **Los textos de venta son de Oscar y son los mismos en todas partes.** No se
+  reescriben por cuenta propia.
+- El orden de las marcas es el del array `MARCAS`: Saneas · Pordondevoy ·
+  Activala · laOra · Acumula, con el extra insertado en la posición 1.
+
+### La letra del desplegable
+
+Es lo que más se lee, así que va en **la fuente del sistema**, no en la de la
+casa (Quicksand a 14 px no se lee en un párrafo largo):
+
+| Elemento | Tamaño | Color |
+|---|---|---|
+| Título «Grupo Saneas» | 15 px / 700 | `#22313a` |
+| Nombre de la marca | 17 px / 800 | `#22313a` |
+| Explicación | 16 px · interlineado 1,55 | `#3d4f59` |
+| Ficha: título | 24 px | `#22313a` |
+| Ficha: texto | 17 px · 1,55 | `#3d4f59` |
+| Nombre bajo el icono | 14 px / 700 | `#22313a` |
+
+Nada de `color:#000 !important`: se quitaron los tres que había.
 
 ---
 
-### 5. **Archivos de Imágenes - Logos**
+## 3. Los logotipos
 
-**Ubicación:** Carpeta `img/`
+Cinco PNG cuadrados de 192 px en la carpeta de `logos`:
 
-**Archivos necesarios:**
-- `app-saneas-web.png` - Logo web de Saneas (texto "Saneas" en teal)
-- `app-pordondevoy.png` - Logo Pordondevoy
-- `app-activala.png` - Logo Activala
-- `app-laora.png` - Logo laOra
-- `app-acumula.png` - Logo Acumula
+| Fichero | Marca |
+|---|---|
+| `app-saneas-web.png` | Saneas (el logotipo completo sobre teal, no la «S» suelta) |
+| `app-pordondevoy.png` | Pordondevoy |
+| `app-activala.png` | Activala |
+| `app-laora.png` | laOra |
+| `app-acumula.png` | Acumula |
 
-**Todos deben ser 192px × 192px aproximadamente**
-
----
-
-## ORDEN DE APLICACIÓN PARA CADA APP
-
-### Para LaOra, Pordondevoy, Acumula, Activala:
-
-1. ✅ Copiar `js/24-grupo-saneas.js` desde Saneas (idéntico)
-2. ✅ Actualizar `index.html` header con el nuevo formato (cambiar nombre de app)
-3. ✅ Actualizar `css/app.css` con nuevos estilos .brand-*
-4. ✅ Actualizar `js/23-grupo.js`:
-   - Cambiar `actual:` al id de la app correspondiente
-   - Cambiar `extras:[]` (vacío, sin asesorías)
-5. ✅ Copiar archivos PNG de logos a carpeta `img/`
-
-### Para Web (saneas.es):
-
-1. ✅ Copiar `js/24-grupo-saneas.js` (idéntico al de app)
-2. ✅ Igual proceso que las apps, pero sin `js/23-grupo.js` si la web tiene estructura diferente
-3. ✅ Adaptar HTML según estructura web
+Si a una propiedad le falta alguno, esa fila del desplegable sale rota. Los
+binarios se suben por la API de GitHub (`gh api …/git/blobs` en base64), que
+funciona en todos los repos.
 
 ---
 
-## RESULTADO FINAL EN CADA APP
+## 4. Poner el formato en una propiedad nueva
 
-### Header:
-```
-[Logo App]  Grupo Saneas →  DESPLIEGA
-```
-- Logo grande (22px, bold)
-- "Grupo Saneas" (16px, bold) con flecha
-- "DESPLIEGA" (15px, ultra-bold, clickeable)
+1. Copiar el componente **sin tocar una coma** y comprobar que el hash coincide
+   con el de la app.
+2. Copiar los cinco PNG a la carpeta de logos.
+3. Añadir la pastilla a la cabecera con la variante que toque (app o web).
+4. Llamar a `init` con su `actual`, sus `logos` y su `barra`.
+5. Pintar la parrilla del pie con `GrupoSaneas.gridHTML()`.
+6. Medir en el navegador a 1280, 375 y 320 px que nada se pisa.
+7. Rama → preview → «fusiona» de Oscar. Nunca directo a `main`.
 
-### Footer Grid:
-```
-Row 1: [Saneas] [Asesorías*] [Pordondevoy]
-Row 2: [Activala] [laOra] [Acumula]
-```
-*Solo en Saneas app
-
-- 3 columnas
-- Iconos 60×60px en grid
-- Click abre ficha con explicación en negro puro (15px)
+**Acumula no lleva telemetría.** El componente del grupo sí; `24-telemetria.js`
+NO se copia a Acumula bajo ningún concepto: su promesa pública es cero analítica,
+ni siquiera anónima.
 
 ---
 
-## CHECKLIST POR APLICACIÓN
+## 5. Cómo está cada propiedad (30/07/2026)
 
-- [ ] Copiar `js/24-grupo-saneas.js` (compartido, idéntico)
-- [ ] Actualizar `index.html` header
-- [ ] Actualizar `css/app.css` estilos .brand-*
-- [ ] Actualizar `js/23-grupo.js` (actual, extras)
-- [ ] Verificar logos PNG en `img/`
-- [ ] Probar desplegable de cabecera
-- [ ] Probar grid de pie final
-- [ ] Verificar colores (negro puro en explicaciones)
-- [ ] Verificar tamaños de letra
-- [ ] Probar responsividad en móvil
+| Propiedad | Pastilla | Componente | Pendiente |
+|---|---|---|---|
+| App Saneas | ✅ | ✅ al día | — |
+| saneas.es | ✅ index y asesorias | ✅ al día | `instala-app.html` no tiene cabecera ni pie del grupo |
+| Pordondevoy | ❌ | ❌ (solo «Grupo Saneas» a mano en el splash) | todo |
+| laOra | ❌ | ❌ | todo, en sus 7 páginas |
+| Activala | ❌ | ❌ | todo, en sus 3 páginas |
+| Acumula | ❌ | ❌ (tiene su página «El grupo», con laOra aún como «Muy pronto») | adaptar a Flask + Jinja |
