@@ -3,7 +3,7 @@
 // grupo). Aquí solo se dice quiénes somos, dónde están los logos y en
 // qué dos sitios aparece: el logo de la barra y el pie del inicio.
 GrupoSaneas.init({
-  actual: 'saneas',
+  actual: 'saneas-app',   // esta casa es la APP; la web es otra ficha
   logos : 'img/',
   extras: [{ id:'asesorias', nombre:'Asesorías Saneas',
              url:'https://saneas.es/asesorias',

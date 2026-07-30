@@ -12,49 +12,56 @@ Dos superficies, siempre las mismas:
 
 ---
 
-## 1. La pastilla
+## 1. El botón del grupo
+
+**El original vive en Acumula** (`acumula/web/templates/base.html`, clase
+`.gs-boton`) y es el que manda. No es una pastilla: es un **botón de texto en dos
+filas, sin fondo ni sombra**, discreto pero perfectamente legible, pegado al
+logotipo de la casa.
 
 ```html
-<button class="gs-btn" onclick="GrupoSaneas.abrirMenu()">
-  <span class="gs-btn-l1">Grupo Saneas <span class="gs-btn-fle">&#9662;</span></span>
-  <span class="gs-btn-mas">despliega</span></button>
+<button type="button" class="gs-boton" onclick="GrupoSaneas.abrirMenu()"
+        aria-label="Ver las apps del Grupo Saneas">
+  <span class="gs-b-marca">Grupo <b>Saneas</b> &#9656;</span>
+  <span class="gs-b-accion">despliega</span>
+</button>
 ```
 
-Reglas del botón, sin excepciones:
-
-- **Dos líneas.** Arriba «Grupo Saneas» con su flecha `▾`; debajo, más pequeña
-  pero perfectamente legible, la palabra **despliega**. Nunca en una sola línea
-  y **nunca con emoji**.
-- «Grupo Saneas» en el color de la marca, la flecha en el mismo color al 70 % y
-  **«despliega» en naranja** (`--orange`, #F5862E).
-- Forma de pastilla: `border-radius:99px` y **la fuente del sistema** (nunca la
-  tipográfica de la casa: es un elemento del grupo, no de la marca).
-- **Sobre barra de color, la pastilla es blanca; sobre barra blanca, en teal
-  claro** (`#e8f4f7`). Lo que no cambia nunca es la forma ni el texto.
-
 ```css
-.gs-btn{display:inline-flex;flex-direction:column;align-items:center;gap:2px;
-  padding:7px 18px;border-radius:99px;background:#fff;color:var(--teal);border:0;
-  cursor:pointer;white-space:nowrap;
-  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
-  box-shadow:0 2px 8px rgba(16,40,48,.18)}
-.gs-btn .gs-btn-l1{font-size:16px;font-weight:600;line-height:1.15}
-.gs-btn .gs-btn-fle{font-size:14px;opacity:.7;margin-left:2px}
-.gs-btn .gs-btn-mas{font-size:12.5px;font-weight:800;letter-spacing:.4px;
-  color:var(--orange);line-height:1.15}
+.gs-boton{background:none;border:0;padding:2px 6px;margin:0;cursor:pointer;
+  text-align:left;line-height:1.15;min-height:0;border-radius:8px;
+  font-family:"Quicksand",-apple-system,"Segoe UI",sans-serif}
+.gs-boton:hover{background:#eef6f8}
+.gs-b-marca{display:block;font-size:14px;font-weight:700;color:var(--teal)}
+.gs-b-marca b{font-weight:700}
+.gs-b-accion{display:block;font-size:11px;font-weight:700;color:#8aa3ab;letter-spacing:.04em}
 ```
 
-### Dónde va, según el tipo de propiedad
+Lo que no se toca en ninguna propiedad:
 
-**En una app** (barra de color con la marca y el avatar): la pastilla va **entre
-la marca y el avatar**, como hijo directo de la barra y **fuera** de `.brand`.
-A dos líneas mide unos 155 px y cabe de sobra en 375 px; se deja `flex-wrap`
-por si alguna casa tiene la barra más cargada.
+- **Dos filas alineadas a la izquierda**: arriba `Grupo Saneas ▸` a **14 px/700**;
+  debajo `despliega` a **11 px/700** con `letter-spacing:.04em`.
+- **Sin fondo, sin borde y sin sombra.** Solo un fondo suave al pasar por encima.
+- La flecha es **▸** (`&#9656;`), al final de la primera fila.
+- **Quicksand**, que es la letra del grupo, no la de la casa. Servida en local:
+  nada de CDN, que la promesa de privacidad de Acumula prohíbe pedir a terceros.
+- Va **al lado del logotipo**, dentro del mismo bloque (`.marca` en Acumula,
+  `.brand` en la app de Saneas, `.nav-izq` en las webs).
+
+**Lo único que cambia por casa es el color**, según el fondo de su barra:
+
+| Barra | Marca | Acción | Hover |
+|---|---|---|---|
+| Blanca (Acumula, saneas.es) | `var(--teal)` | `#8aa3ab` | `#eef6f8` |
+| De color (app de Saneas, teal) | `#fff` | `rgba(255,255,255,.78)` | `rgba(255,255,255,.14)` |
+
+### En una app con la barra de color
+
+Además de los colores, la barra tiene que cubrir la franja de la barra de estado:
 
 ```css
-.appbar{flex-wrap:wrap;row-gap:10px;padding-bottom:12px;
-  padding-top:calc(14px + env(safe-area-inset-top,0px))}
-.brand{font-weight:700;font-size:22px;letter-spacing:.5px;user-select:none}
+.appbar{padding-top:calc(14px + env(safe-area-inset-top,0px))}
+.brand{display:flex;align-items:center;gap:14px}
 ```
 
 **Ese `env(safe-area-inset-top)` no es opcional.** Las apps declaran
@@ -63,27 +70,13 @@ iPhone. Sin ese relleno, la franja de arriba la pinta el fondo del `body` y se
 ve un corte de otro color encima de la cabecera. `env()` vale 0 donde no hay
 notch, así que no estorba en ningún sitio.
 
-**En una web de marketing** (barra blanca fija con logo a un lado y CTA al
-otro): la pastilla va **junto al logo**, los dos dentro de `.nav-izq`, y el
-logo sigue abriendo el desplegable además del botón.
+### En una web de marketing
 
-```html
-<div class="nav-izq"><div class="nav-logo saneas">Saneas®</div><button class="gs-btn" …></button></div>
-```
-
-Como ahí compite con el CTA, se aprieta por escalones (probado a 1280, 860, 560,
-430, 375, 360 y 320 px; a 320 quedan 7 px de aire):
-
-| Ancho | Qué pasa |
-|---|---|
-| ≤ 560 px | barra a 16 px de margen, logo a 18 px, pastilla a 13,5 px |
-| ≤ 430 px | logo 17 px, pastilla a 12 px, el CTA se aprieta un punto |
-| ≤ 345 px | margen a 10 px, logo 15 px, pastilla a 11 px |
-
-Las dos líneas nunca se rompen: la coletilla no se esconde en ningún ancho.
-
-**Cuidado con la especificidad:** si el bloque nuevo se inserta antes que la
-regla base del CTA, hay que escribir `nav .nav-wa{…}` para que gane la del móvil.
+El botón va junto al logo, los dos dentro de `.nav-izq`, y el logo sigue
+abriendo el desplegable además del botón. Mide unos 100 px, así que convive con
+el CTA sin apretar nada: solo se reduce el margen de la barra por debajo de
+560 px y de 390 px. **Cuidado con la especificidad**: si el bloque nuevo se
+inserta antes que la regla base del CTA, hay que escribir `nav .nav-wa{…}`.
 
 ---
 
@@ -133,15 +126,21 @@ Nada de `color:#000 !important`: se quitaron los tres que había.
 
 ## 3. Los logotipos
 
-Cinco PNG cuadrados de 192 px en la carpeta de `logos`:
+Seis PNG cuadrados de 192 px en la carpeta de `logos`. **Saneas son dos fichas
+distintas** y cada una lleva su icono y su enlace:
 
-| Fichero | Marca |
-|---|---|
-| `app-saneas-web.png` | Saneas (el logotipo completo sobre teal, no la «S» suelta) |
-| `app-pordondevoy.png` | Pordondevoy |
-| `app-activala.png` | Activala |
-| `app-laora.png` | laOra |
-| `app-acumula.png` | Acumula |
+| Fichero | Ficha | Enlace |
+|---|---|---|
+| `app-saneas-web.png` | **Saneas** — teal con todas las letras | `https://saneas.es` |
+| `app-saneas-s.png` | **APP Saneas** — teal con la S sola | `https://saneas.es/instala-app` |
+| `app-pordondevoy.png` | Pordondevoy | su app |
+| `app-activala.png` | Activala | `https://activala.es` |
+| `app-laora.png` | laOra | `https://laora.es` |
+| `app-acumula.png` | Acumula | `https://acumula.es` |
+
+Ojo con una trampa ya pisada: `app-saneas.png` **no significa lo mismo en los dos
+repos** (en el de la web es el teal con las letras y en el de la app es la S), así
+que el componente no lo usa. La S se llama `app-saneas-s.png` en todas partes.
 
 Si a una propiedad le falta alguno, esa fila del desplegable sale rota. Los
 binarios se suben por la API de GitHub (`gh api …/git/blobs` en base64), que
@@ -168,11 +167,11 @@ ni siquiera anónima.
 
 ## 5. Cómo está cada propiedad (30/07/2026)
 
-| Propiedad | Pastilla | Componente | Pendiente |
+| Propiedad | Botón | Componente | Pendiente |
 |---|---|---|---|
+| **Acumula** | ✅ es el original | ⚠️ versión vieja (9,8 kB) | ponerle el componente al día |
 | App Saneas | ✅ | ✅ al día | — |
 | saneas.es | ✅ index y asesorias | ✅ al día | `instala-app.html` no tiene cabecera ni pie del grupo |
-| Pordondevoy | ❌ | ❌ (solo «Grupo Saneas» a mano en el splash) | todo |
+| Pordondevoy | ❌ (parrilla del pie a mano + carrusel) | ❌ | todo |
 | laOra | ❌ | ❌ | todo, en sus 7 páginas |
 | Activala | ❌ | ❌ | todo, en sus 3 páginas |
-| Acumula | ❌ | ❌ (tiene su página «El grupo», con laOra aún como «Muy pronto») | adaptar a Flask + Jinja |
