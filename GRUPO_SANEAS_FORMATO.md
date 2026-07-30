@@ -122,6 +122,24 @@ casa (Quicksand a 14 px no se lee en un párrafo largo):
 
 Nada de `color:#000 !important`: se quitaron los tres que había.
 
+### Compartir: QR y WhatsApp
+
+Cada ficha del desplegable lleva un botón **Compartir** que abre el código QR de
+esa casa —para que la otra persona lo escanee delante— y un botón **Enviar por
+WhatsApp** (`api.whatsapp.com/send?text=…`).
+
+**Los QR no se calculan en la app.** Son siete direcciones fijas, así que se
+generan con `herramientas/qr_grupo.py` (usa `segno`) y se pegan como datos en el
+componente: la matriz en binario, empaquetada en base64. Menos de 1 kB en total,
+sin codificador ni dependencias en el cliente, y correctos por construcción.
+
+- Si cambia una dirección del grupo, se vuelve a ejecutar el script y se pega el
+  bloque `var QRS = {…}` — recordando que el componente es el mismo fichero en
+  todas las casas.
+- Se pintan con `qrSVG(id, lado)`, que devuelve un `<svg>` de un solo `path`.
+  El lado va a **6 px por módulo** a propósito: en escala no entera el navegador
+  difumina los bordes y hay lectores que entonces no lo cogen.
+
 ---
 
 ## 3. Los logotipos
