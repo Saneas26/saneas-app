@@ -180,6 +180,14 @@
   #cambiar button{padding:11px 18px;border-radius:9px;border:0;font-weight:700}
   #cbMsg{font-size:13px;margin-top:8px;min-height:16px}
   #cbMsg.err{color:var(--bad)} #cbMsg.ok{color:var(--good)}
+  #btaviso{position:fixed;inset:0;background:rgba(16,50,58,.45);z-index:60;display:none;align-items:center;justify-content:center}
+  #btaviso.show{display:flex}
+  #btaviso .box{background:#fff;border-radius:16px;padding:24px;width:360px;max-width:94vw;text-align:center}
+  #btaviso h3{font-size:19px;color:var(--teal-d);margin-bottom:6px}
+  #btaviso .sub{font-size:13px;color:var(--muted);margin-bottom:18px}
+  #btaviso .foot{display:flex;justify-content:center}
+  #btaviso .foot button{min-width:150px;padding:13px 20px;border:0;border-radius:10px;
+    font-size:15px;font-weight:800;cursor:pointer}
   #fixrenov{position:fixed;inset:0;background:rgba(16,50,58,.45);z-index:46;display:none;align-items:center;justify-content:center}
   #fixrenov.show{display:flex}
   #fixrenov .box{background:#fff;border-radius:16px;padding:24px;width:400px;max-width:94vw}
@@ -456,6 +464,17 @@
   </div>
 </div>
 
+<!-- Recordatorio diario: apagar el Bluetooth -->
+<div id="btaviso">
+  <div class="box">
+    <h3>Recuerda apagar el Bluetooth</h3>
+    <div class="sub">Primera vez que abres el panel hoy.</div>
+    <div class="foot">
+      <button class="btn-renovar" onclick="cerrarAvisoBluetooth()">Vale</button>
+    </div>
+  </div>
+</div>
+
 <!-- Corregir fecha de renovación -->
 <div id="fixrenov">
   <div class="box">
@@ -570,10 +589,33 @@ async function entrar(silent){
   if(status!==200){el('loginErr').textContent=data.error||'Error';PASS='';return;}
   localStorage.setItem('panel_pw',PASS);
   el('login').style.display='none';el('top').style.display='flex';el('app').style.display='block';
+  // Si hay sesion admin guardada pero el token ha caducado, se refresca AQUI y
+  // se espera. Antes se comprobaba sin esperar y, como el refresco de arranque
+  // aun no habia terminado, saltaba el dialogo del codigo sin hacer falta.
+  if(!esAdminActivo() && ADMIN_SESS) await adminRefresh();
   if(!esAdminActivo()){ setTimeout(abrirAdmin, 300); }  // el panel necesita identidad admin para ingresos/generador/etc.
-  initDias(); cargar();
+  pintarPastillaAdmin();
+  initDias(); cargar(); avisoBluetooth();
 }
 function salir(){localStorage.removeItem('panel_pw');location.reload();}
+
+// Recordatorio de Oscar: la primera vez que abre el panel cada dia, acordarse de
+// apagar el Bluetooth del telefono. Una web no puede apagarlo (no existe API para
+// eso en ningun navegador), asi que lo que si se puede es avisar. El dia se mide
+// en horario de Canarias y se guarda en localStorage: uno al dia y ya.
+function avisoBluetooth(intentos){
+  var hoy=new Date().toLocaleDateString('es-ES',{timeZone:'Atlantic/Canary'});
+  if(localStorage.getItem('panel_bt_aviso')===hoy) return;
+  // Si esta abierto el dialogo del codigo admin, esperamos a que lo cierre.
+  var adm=el('adminlogin');
+  if(adm&&adm.classList.contains('show')){
+    if((intentos||0)<20) setTimeout(function(){ avisoBluetooth((intentos||0)+1); }, 2000);
+    return;
+  }
+  localStorage.setItem('panel_bt_aviso',hoy);
+  el('btaviso').classList.add('show');
+}
+function cerrarAvisoBluetooth(){ el('btaviso').classList.remove('show'); }
 
 function initDias(){
   const hoy=new Date().getDay(); // 0 dom..6 sab
@@ -2668,7 +2710,16 @@ async function adminVerificar(){
     }else{ admMsg(j.msg||'Código no válido o caducado','err'); }
   }catch(e){ admMsg('Error de red','err'); }
 }
-async function adminRefresh(reintento){
+let ADM_REFRESCO=null;
+function adminRefresh(){
+  // Un solo refresco a la vez. Si ya hay uno en vuelo, esperamos a ese: dos
+  // peticiones simultaneas rotan el refresh_token y una se queda con uno
+  // invalido, que es lo que acababa pidiendo el codigo.
+  if(ADM_REFRESCO) return ADM_REFRESCO;
+  ADM_REFRESCO=_adminRefresh().finally(()=>{ ADM_REFRESCO=null; });
+  return ADM_REFRESCO;
+}
+async function _adminRefresh(reintento){
   // Antes de refrescar, coger SIEMPRE la copia mas nueva guardada: otra pestaña
   // puede haber refrescado ya y rotado el token (era la causa nº1 de pedir codigo).
   try{ const g=JSON.parse(localStorage.getItem('panel_admin_sess')||'null');
@@ -2685,7 +2736,7 @@ async function adminRefresh(reintento){
       // ultima oportunidad: quiza otra pestaña guardo el token bueno hace un instante
       if(!reintento){
         try{ const g2=JSON.parse(localStorage.getItem('panel_admin_sess')||'null');
-          if(g2&&g2.refresh_token&&g2.refresh_token!==ADMIN_SESS.refresh_token){ ADMIN_SESS=g2; return adminRefresh(true); } }catch(e){}
+          if(g2&&g2.refresh_token&&g2.refresh_token!==ADMIN_SESS.refresh_token){ ADMIN_SESS=g2; return _adminRefresh(true); } }catch(e){}
       }
       ADMIN_SESS=null; localStorage.removeItem('panel_admin_sess'); return false;
     }
