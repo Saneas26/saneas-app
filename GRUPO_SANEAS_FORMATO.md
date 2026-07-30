@@ -128,6 +128,19 @@ Cada ficha del desplegable lleva un botón **Compartir** que abre el código QR 
 esa casa —para que la otra persona lo escanee delante— y un botón **Enviar por
 WhatsApp** (`api.whatsapp.com/send?text=…`).
 
+**El mensaje de WhatsApp lo arma el propio componente** con los textos que ya se
+ven en el desplegable, para no tener dos redacciones que mantener:
+
+> Hola, hoy quiero compartir contigo **una aplicación** que me parece increíble,
+> **APP Saneas**: Probablemente la mejor APP de nutrición del mercado.
+>
+> https://saneas.es/instala-app
+
+Cada casa lleva un campo `tipo` («una aplicación», «una página web», «un
+programa») para que la frase suene bien en todas: Saneas, Activala y laOra son
+webs; APP Saneas, Pordondevoy y Acumula son aplicaciones; Asesorías es un
+programa, y como es un `extra`, su `tipo` va en el `init` de cada casa.
+
 **Los QR no se calculan en la app.** Son siete direcciones fijas, así que se
 generan con `herramientas/qr_grupo.py` (usa `segno`) y se pegan como datos en el
 componente: la matriz en binario, empaquetada en base64. Menos de 1 kB en total,
