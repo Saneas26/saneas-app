@@ -178,9 +178,10 @@ var GrupoSaneas = (function(){
   }
 
   // ---- parrilla del pie: iconos; al tocar, la ficha con su OK ----
+  // No incluye la propia casa (ya estás en ella): el desplegable sí la lleva.
   function gridHTML(){
     ponerCSS();
-    return '<div class="gs-grid">' + todas().map(function(m){
+    return '<div class="gs-grid">' + todas().filter(function(m){ return m.id!==CFG.actual; }).map(function(m){
       var ico = icono(m,'gs-svg gs-svg-item');
       return '<button type="button" class="gs-item" onclick="GrupoSaneas.ficha(\''+esc(m.id)+'\')">'
            + ico + '<b>'+esc(m.nombre)+'</b></button>';
