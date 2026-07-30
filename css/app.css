@@ -291,7 +291,7 @@
     background:#fff;color:var(--teal);border:0;cursor:pointer;white-space:nowrap;
     font:600 16px/1 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
     box-shadow:0 2px 8px rgba(16,40,48,.18)}
-  .gs-btn .gs-btn-ico{font-size:17px;line-height:1}
+  .gs-btn .gs-btn-fle{font-size:15px;line-height:1;opacity:.7}
   .gs-btn .gs-btn-mas{font-weight:800;letter-spacing:.2px;color:var(--orange)}
   #grupoPie{margin:26px 2px 8px}
   .gmTit{font-size:13.5px;font-weight:700;color:var(--muted);text-align:center;margin:0 0 10px}
