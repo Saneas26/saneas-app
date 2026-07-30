@@ -3,6 +3,10 @@
     --white:#fff;--green:#2f9e5f;--red:#d05a4a;--orange:#F5862E;--shadow:0 6px 20px rgba(26,46,53,.08)}
   *{box-sizing:border-box;margin:0;padding:0}
   body{font-family:'Quicksand',sans-serif;background:var(--bg);color:var(--dark)}
+  /* La franja de la barra de estado, del mismo teal que la cabecera. Es fija y
+     va por encima de todas las pantallas; donde no hay notch mide cero. */
+  body::before{content:'';position:fixed;top:0;left:0;right:0;
+    height:env(safe-area-inset-top,0px);background:var(--teal);z-index:90;pointer-events:none}
   .app{max-width:480px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;position:relative}
   .hidden{display:none!important}
   #splash{position:fixed;inset:0;z-index:80;background:linear-gradient(160deg,#3890a4,#1a2e35);color:#fff;
@@ -22,7 +26,7 @@
   #splash #splashFrase{animation:spEntra .75s .55s cubic-bezier(.22,.61,.36,1) both}
   @media (prefers-reduced-motion:reduce){#splash .sp-logo,#splash #splashTxt,#splash #splashNom,#splash #splashFrase{animation:none}}
   /* ---------- AUTH ---------- */
-  #auth{flex:1;display:flex;flex-direction:column;justify-content:center;padding:40px 24px;
+  #auth{flex:1;display:flex;flex-direction:column;justify-content:center;padding:calc(40px + env(safe-area-inset-top,0px)) 24px 40px;
     background:linear-gradient(160deg,#3890a4,#1a2e35);color:#fff;min-height:100vh;overflow-y:auto}
   #auth .auth-card{margin-top:20px}
   .logo{font-weight:700;font-size:40px;text-align:center;letter-spacing:1px}
