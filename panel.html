@@ -1095,9 +1095,11 @@ function graficoPeso(reales, o){
   area = 'M'+x(0).toFixed(1)+' '+(ar+alto)+' L'+linea.slice(1)+' L'+x(pts.length-1).toFixed(1)+' '+(ar+alto)+' Z';
 
   // el cambio del periodo, en verde si va hacia su objetivo
-  var dif = pesos[pesos.length-1]-pesos[0];
+  // Se redondea ANTES de decidir el color, para que la cifra y el color digan lo
+  // mismo: 70,1 - 70,0 da 0,0999... y se pintaba gris mostrando «+0,1».
+  var dif = Math.round((pesos[pesos.length-1]-pesos[0])*10)/10;
   var col = '#6b878f';
-  if(Math.abs(dif) >= 0.3){          // menos de 300 g es ruido de bascula, no tendencia
+  if(dif !== 0){
     var objetivo = o && o.promedio ? o.promedio : null;
     var haciaAbajo = dif < 0;
     var bueno = objetivo==null ? haciaAbajo : (pesos[0] > objetivo ? haciaAbajo : !haciaAbajo);
