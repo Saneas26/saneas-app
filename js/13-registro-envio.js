@@ -86,7 +86,12 @@ async function guardarSeccion(sec){
       // SOLO la impedancia decide la consulta. Mandar perimetros a las 15:00 no puede
       // marcar Sin Consulta: lo que se consulta es el peso.
       row.hora_envio=new Date().toISOString();
-      row.enviado_tarde=(esDiaConsultaHoy() && deadlinePasado());
+      // La primera vez no se llega tarde: una clienta recien dada de alta sube sus
+      // datos el dia que se registra, que puede caer en su dia de consulta y pasadas
+      // las 9:00, y no tiene sentido marcarla. PRIMERO es su registro mas antiguo:
+      // si no hay ninguno, o el de esta semana ES el primero, es su estreno.
+      var esSuPrimeraVez = !PRIMERO || (REG_SEM && PRIMERO.id===REG_SEM.id);
+      row.enviado_tarde=(esDiaConsultaHoy() && deadlinePasado() && !esSuPrimeraVez);
     }
     row[SECCIONES[sec].col]=Math.min(estado+1,2);
 
