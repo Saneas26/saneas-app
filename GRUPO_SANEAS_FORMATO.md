@@ -15,42 +15,53 @@ Dos superficies, siempre las mismas:
 ## 1. La pastilla
 
 ```html
-<button class="gs-btn" onclick="GrupoSaneas.abrirMenu()">Grupo Saneas
-  <span class="gs-btn-fle">&#9662;</span>
+<button class="gs-btn" onclick="GrupoSaneas.abrirMenu()">
+  <span class="gs-btn-l1">Grupo Saneas <span class="gs-btn-fle">&#9662;</span></span>
   <span class="gs-btn-mas">despliega</span></button>
 ```
 
 Reglas del botón, sin excepciones:
 
-- **Sin emoji.** Solo el texto, la flecha `▾` y la coletilla.
+- **Dos líneas.** Arriba «Grupo Saneas» con su flecha `▾`; debajo, más pequeña
+  pero perfectamente legible, la palabra **despliega**. Nunca en una sola línea
+  y **nunca con emoji**.
 - «Grupo Saneas» en el color de la marca, la flecha en el mismo color al 70 % y
   **«despliega» en naranja** (`--orange`, #F5862E).
-- Forma de pastilla: `border-radius:99px`, relleno `9px 16px`, **16 px semibold**
-  y **la fuente del sistema** (nunca la tipográfica de la casa: es un elemento
-  del grupo, no de la marca).
+- Forma de pastilla: `border-radius:99px` y **la fuente del sistema** (nunca la
+  tipográfica de la casa: es un elemento del grupo, no de la marca).
 - **Sobre barra de color, la pastilla es blanca; sobre barra blanca, en teal
   claro** (`#e8f4f7`). Lo que no cambia nunca es la forma ni el texto.
 
 ```css
-.gs-btn{display:inline-flex;align-items:center;gap:7px;padding:9px 16px;border-radius:99px;
-  background:#fff;color:var(--teal);border:0;cursor:pointer;white-space:nowrap;
-  font:600 16px/1 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+.gs-btn{display:inline-flex;flex-direction:column;align-items:center;gap:2px;
+  padding:7px 18px;border-radius:99px;background:#fff;color:var(--teal);border:0;
+  cursor:pointer;white-space:nowrap;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
   box-shadow:0 2px 8px rgba(16,40,48,.18)}
-.gs-btn .gs-btn-fle{font-size:15px;line-height:1;opacity:.7}
-.gs-btn .gs-btn-mas{font-weight:800;letter-spacing:.2px;color:var(--orange)}
+.gs-btn .gs-btn-l1{font-size:16px;font-weight:600;line-height:1.15}
+.gs-btn .gs-btn-fle{font-size:14px;opacity:.7;margin-left:2px}
+.gs-btn .gs-btn-mas{font-size:12.5px;font-weight:800;letter-spacing:.4px;
+  color:var(--orange);line-height:1.15}
 ```
 
 ### Dónde va, según el tipo de propiedad
 
-**En una app** (barra de color con la marca y el avatar): la barra pasa a **dos
-filas** — marca y avatar arriba, pastilla debajo. En una sola fila no cabe: la
-pastilla mide 222 px y el móvil tiene 375. El botón va **fuera** de `.brand`,
-como hijo directo de la barra.
+**En una app** (barra de color con la marca y el avatar): la pastilla va **entre
+la marca y el avatar**, como hijo directo de la barra y **fuera** de `.brand`.
+A dos líneas mide unos 155 px y cabe de sobra en 375 px; se deja `flex-wrap`
+por si alguna casa tiene la barra más cargada.
 
 ```css
-.appbar{flex-wrap:wrap;row-gap:10px;padding-bottom:12px}
+.appbar{flex-wrap:wrap;row-gap:10px;padding-bottom:12px;
+  padding-top:calc(14px + env(safe-area-inset-top,0px))}
 .brand{font-weight:700;font-size:22px;letter-spacing:.5px;user-select:none}
 ```
+
+**Ese `env(safe-area-inset-top)` no es opcional.** Las apps declaran
+`viewport-fit=cover`, así que dibujan por debajo de la barra de estado del
+iPhone. Sin ese relleno, la franja de arriba la pinta el fondo del `body` y se
+ve un corte de otro color encima de la cabecera. `env()` vale 0 donde no hay
+notch, así que no estorba en ningún sitio.
 
 **En una web de marketing** (barra blanca fija con logo a un lado y CTA al
 otro): la pastilla va **junto al logo**, los dos dentro de `.nav-izq`, y el
@@ -65,10 +76,11 @@ Como ahí compite con el CTA, se aprieta por escalones (probado a 1280, 860, 560
 
 | Ancho | Qué pasa |
 |---|---|
-| ≤ 860 px | desaparece «despliega»; quedan «Grupo Saneas ▾» |
-| ≤ 560 px | barra a 16 px de margen, logo a 18 px, pastilla a 13 px |
-| ≤ 430 px | logo 17 px, pastilla 12 px, el CTA se aprieta un punto |
-| ≤ 345 px | margen a 12 px, logo 15 px, pastilla 11 px |
+| ≤ 560 px | barra a 16 px de margen, logo a 18 px, pastilla a 13,5 px |
+| ≤ 430 px | logo 17 px, pastilla a 12 px, el CTA se aprieta un punto |
+| ≤ 345 px | margen a 10 px, logo 15 px, pastilla a 11 px |
+
+Las dos líneas nunca se rompen: la coletilla no se esconde en ningún ancho.
 
 **Cuidado con la especificidad:** si el bloque nuevo se inserta antes que la
 regla base del CTA, hay que escribir `nav .nav-wa{…}` para que gane la del móvil.
