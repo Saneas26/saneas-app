@@ -6,7 +6,7 @@ GrupoSaneas.init({
   actual: 'saneas-app',   // esta casa es la APP; la web es otra ficha
   logos : 'img/',
   extras: [{ id:'asesorias', nombre:'Asesorías Saneas',
-             url:'https://saneas.es/asesorias',
+             url:'https://saneas.es/asesorias', tipo:'un programa',
              texto:'Si te gusta el mundo de la nutrición, ahora tú también puedes. Más fácil que nunca.' }]
 });
 
