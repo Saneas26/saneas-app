@@ -1052,6 +1052,75 @@ async function guardarActividad(id,val){
 }
 
 let FICHA_CLI=null, FICHA_REGS=[], FICHA_INVS=[];
+// ── Gráfico de peso de las últimas 10 semanas ──────────────────────────────
+// SVG a mano, sin librerías: el panel no carga nada de fuera. Recibe los
+// registros REALES (con peso), que vienen del más reciente al más antiguo.
+function graficoPeso(reales, o){
+  var pts = (reales||[]).filter(function(r){ return r.peso!=null; }).slice(0,10).reverse();
+  if(pts.length < 2){
+    return '<div class="sec"><h4>📉 Peso · últimas 10 semanas</h4>'
+         + '<p class="empty-msg">Hacen falta al menos dos pesos registrados para dibujar la evolución.</p></div>';
+  }
+  var n1 = function(x){ return String(Math.round(x*10)/10).replace('.',','); };
+  var fdm = function(f){ var p=String(f||'').slice(0,10).split('-'); return p.length===3?(p[2]+'/'+p[1]):''; };
+
+  var pesos = pts.map(function(r){ return Number(r.peso); });
+  var min = Math.min.apply(null,pesos), max = Math.max.apply(null,pesos);
+  if(max-min < 1){ var c=(max+min)/2; min=c-0.8; max=c+0.8; }   // linea plana: que no salga pegada al borde
+  var margen=(max-min)*0.18; min-=margen; max+=margen;
+
+  var W=660, H=250, iz=48, de=16, ar=30, ab=34;
+  var ancho=W-iz-de, alto=H-ar-ab;
+  var x = function(i){ return iz + (pts.length===1?ancho/2:(ancho*i/(pts.length-1))); };
+  var y = function(v){ return ar + alto - ((v-min)/(max-min))*alto; };
+
+  // rejilla y escala en kg
+  var rejilla='', pasos=4;
+  for(var g=0; g<=pasos; g++){
+    var v=min+(max-min)*g/pasos, yy=y(v);
+    rejilla += '<line x1="'+iz+'" y1="'+yy.toFixed(1)+'" x2="'+(W-de)+'" y2="'+yy.toFixed(1)+'" stroke="#dceaee" stroke-width="1"/>'
+             + '<text x="'+(iz-8)+'" y="'+(yy+4).toFixed(1)+'" text-anchor="end" font-size="11" fill="#6b878f">'+n1(v)+'</text>';
+  }
+
+  // la línea, el área bajo ella y cada punto con su valor y su fecha
+  var linea='', area='', puntos='';
+  for(var i=0;i<pts.length;i++){
+    var px=x(i), py=y(pesos[i]);
+    linea += (i?' L':'M') + px.toFixed(1) + ' ' + py.toFixed(1);
+    var ultimo = (i===pts.length-1);
+    puntos += '<circle cx="'+px.toFixed(1)+'" cy="'+py.toFixed(1)+'" r="'+(ultimo?5.5:4)+'" fill="'+(ultimo?'#F5862E':'#fff')+'" stroke="'+(ultimo?'#F5862E':'#0f8a9c')+'" stroke-width="2.5"/>'
+            + '<text x="'+px.toFixed(1)+'" y="'+(py-12).toFixed(1)+'" text-anchor="middle" font-size="11.5" font-weight="700" fill="'+(ultimo?'#F5862E':'#16323a')+'">'+n1(pesos[i])+'</text>'
+            + '<text x="'+px.toFixed(1)+'" y="'+(H-12)+'" text-anchor="middle" font-size="10.5" fill="#6b878f">'+fdm(pts[i].fecha)+'</text>';
+  }
+  area = 'M'+x(0).toFixed(1)+' '+(ar+alto)+' L'+linea.slice(1)+' L'+x(pts.length-1).toFixed(1)+' '+(ar+alto)+' Z';
+
+  // el cambio del periodo, en verde si va hacia su objetivo
+  var dif = pesos[pesos.length-1]-pesos[0];
+  var col = '#6b878f';
+  if(Math.abs(dif) >= 0.3){          // menos de 300 g es ruido de bascula, no tendencia
+    var objetivo = o && o.promedio ? o.promedio : null;
+    var haciaAbajo = dif < 0;
+    var bueno = objetivo==null ? haciaAbajo : (pesos[0] > objetivo ? haciaAbajo : !haciaAbajo);
+    col = bueno ? '#12a150' : '#e0533d';
+  }
+  var signo = dif>0?'+':'';
+
+  return '<div class="sec">'
+    + '<h4 style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">'
+    + '<span>📉 Peso · últimas ' + pts.length + ' semanas</span>'
+    + '<span style="text-transform:none;letter-spacing:0;font-size:15px;font-weight:800;color:'+col+'">'
+    + signo + n1(dif) + ' kg</span></h4>'
+    + '<svg viewBox="0 0 '+W+' '+H+'" width="100%" style="display:block;height:auto" role="img" '
+    + 'aria-label="Evolución del peso en las últimas ' + pts.length + ' semanas">'
+    + rejilla
+    + '<path d="'+area+'" fill="#0f8a9c" opacity=".10"/>'
+    + '<path d="'+linea+'" fill="none" stroke="#0f8a9c" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>'
+    + puntos + '</svg>'
+    + '<p class="mini" style="margin-top:8px">Del ' + fdm(pts[0].fecha) + ' al ' + fdm(pts[pts.length-1].fecha)
+    + ' · el punto naranja es el último dato'
+    + (o && o.promedio ? ' · objetivo <b>'+n1(o.promedio)+' kg</b>' : '') + '</p>'
+    + '</div>';
+}
 function pintarFicha(cli,regs){
   FICHA_CLI=cli; FICHA_REGS=regs;
   const o=calcObjetivos(cli);
@@ -1207,6 +1276,7 @@ function pintarFicha(cli,regs){
     <div style="padding:12px 22px 0"><div class="cp-row"><button class="cp-btn" onclick="consultaPasadaFicha('${cli.id}', '${(nom||'este cliente').replace(/'/g,'')}')">✅ Consulta pasada (+7 días)</button><button class="cp-btn" style="background:var(--orange)" onclick="abrirCambiarPlaza('${cli.id}')">🔄 Cambiar día / plaza</button></div><div id="fCita" style="margin-top:8px;font-size:14px;font-weight:700"></div></div>
     <div class="fbody">
       <div class="sec" id="fe-wrap"><h4>\ud83d\udccb Ficha de entrada</h4><p class="vacio">Cargando\u2026</p></div>
+      ${graficoPeso(reales, o)}
       <div class="kpis">${kpis}</div>
       ${calSec}
       <div class="sec">
