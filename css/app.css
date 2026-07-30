@@ -293,15 +293,19 @@
   .brand{font-weight:700;font-size:22px;letter-spacing:.5px;user-select:none}
   /* Dos lineas, como en Acumula: el nombre del grupo con su flecha y debajo,
      mas pequena pero legible, la palabra que dice lo que hace. */
-  .gs-btn{display:inline-flex;flex-direction:column;align-items:center;gap:2px;
-    padding:7px 18px;border-radius:99px;background:#fff;color:var(--teal);border:0;
-    cursor:pointer;white-space:nowrap;
-    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
-    box-shadow:0 2px 8px rgba(16,40,48,.18)}
-  .gs-btn .gs-btn-l1{font-size:16px;font-weight:600;line-height:1.15}
-  .gs-btn .gs-btn-fle{font-size:14px;opacity:.7;margin-left:2px}
-  .gs-btn .gs-btn-mas{font-size:12.5px;font-weight:800;letter-spacing:.4px;
-    color:var(--orange);line-height:1.15}
+  /* Boton del grupo: es EL de Acumula, copiado tal cual — mismos tamanos (14px
+     la marca, 11px la accion), misma estructura de dos filas a la izquierda,
+     sin fondo ni sombra, y en Quicksand, que es la letra del grupo. Lo unico
+     que cambia aqui es el color: esta barra es teal, asi que va en blanco. */
+  .brand{display:flex;align-items:center;gap:14px}
+  .gs-boton{background:none;border:0;padding:2px 6px;margin:0;cursor:pointer;
+    text-align:left;line-height:1.15;min-height:0;border-radius:8px;
+    font-family:'Quicksand',-apple-system,"Segoe UI",sans-serif}
+  .gs-boton:hover{background:rgba(255,255,255,.14)}
+  .gs-b-marca{display:block;font-size:14px;font-weight:700;color:#fff}
+  .gs-b-marca b{font-weight:700}
+  .gs-b-accion{display:block;font-size:11px;font-weight:700;letter-spacing:.04em;
+    color:rgba(255,255,255,.78)}
   #grupoPie{margin:26px 2px 8px}
   .gmTit{font-size:13.5px;font-weight:700;color:var(--muted);text-align:center;margin:0 0 10px}
   .gmTit .gmS{color:var(--teal);font-weight:700}
