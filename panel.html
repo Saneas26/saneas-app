@@ -385,6 +385,21 @@
     <select id="al_dia"></select>
     <label>Plaza</label>
     <select id="al_plaza"></select>
+    <label>Primer día (cuando empieza a contarle la suscripción)</label>
+    <input id="al_inicio" type="date" onchange="_altaInicioHint()">
+    <div id="al_inicio_hint" style="font-size:12px;color:var(--muted);margin-top:4px"></div>
+    <label>Forma de cobro</label>
+    <select id="al_forma">
+      <option value="" selected>— elegir cómo te ha pagado —</option>
+      <option>Bizum 1</option>
+      <option>Bizum 2</option>
+      <option>PayPal</option>
+      <option>Transferencia</option>
+      <option>Revolut</option>
+      <option>Tarjeta</option>
+      <option>Efectivo</option>
+      <option>Otro</option>
+    </select>
     <label>Actividad (estilo de vida)</label>
     <select id="al_actividad">
       <option>Sedentario</option>
@@ -1523,11 +1538,44 @@ function abrirAlta(){
   el('al_actividad').value='Sedentario';
   el('al_dia').innerHTML=DIAS.map(([k,l])=>`<option value="${k}">${l}</option>`).join('');
   el('al_dia').value=diaSugeridoPC();
-  el('al_dia').onchange=pintarPlazasAlta;
+  el('al_dia').onchange=function(){ pintarPlazasAlta(); _altaInicioHint(); };
   pintarPlazasAlta();
+  // Primer día: por defecto hoy. Si el cliente empieza más adelante (lo normal
+  // cuando lo das de alta un viernes y entra el lunes), se elige aquí y toda su
+  // suscripción cuenta desde ese día, no desde hoy.
+  el('al_inicio').value=_hoyCanarias();
+  el('al_inicio').min=_hoyCanarias();
+  el('al_forma').value='';
+  _altaInicioHint();
   const m=el('altaMsg'); m.textContent='';m.className='';
   _feFormAlta();
   el('alta').classList.add('show'); el('al_nombre').focus();
+}
+function _hoyCanarias(){ return new Date().toLocaleDateString('en-CA',{timeZone:'Atlantic/Canary'}); }
+// Sumar días sobre una fecha ISO sin que el cambio de hora la mueva: se opera a
+// mediodía UTC, que nunca cae en el salto de las 2 de la madrugada.
+function _masDias(iso,n){
+  const d=new Date(String(iso).slice(0,10)+'T12:00:00Z');
+  d.setUTCDate(d.getUTCDate()+n);
+  return d.toISOString().slice(0,10);
+}
+function _difDias(desde,hasta){
+  return Math.round((Date.parse(String(hasta).slice(0,10)+'T12:00:00Z')
+                    -Date.parse(String(desde).slice(0,10)+'T12:00:00Z'))/86400000);
+}
+const _DIASEM=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+function _altaInicioHint(){
+  const h=el('al_inicio_hint'); if(!h) return;
+  const v=el('al_inicio').value, dia=el('al_dia').value;
+  if(!v){ h.textContent=''; h.style.color='var(--muted)'; return; }
+  const nd=_DIASEM[new Date(v+'T12:00:00Z').getUTCDay()];
+  let t = (v===_hoyCanarias()) ? 'Empieza hoy.' : ('Empieza el '+_fmtCita(v)+'.');
+  // Avisar, sin bloquear: el primer día debería caer en su día de consulta
+  if(dia && norm(nd)!==norm(dia)){
+    t += ' ⚠️ Ese día es '+nd+' y su consulta es en '+dia+'.';
+    h.style.color='var(--bad)';
+  } else { h.style.color='var(--muted)'; }
+  h.textContent=t;
 }
 // Opciones de plaza según el día elegido, marcando libres/ocupadas
 function pintarPlazasAlta(){
@@ -1547,24 +1595,72 @@ async function crearAlta(){
   const nombre=el('al_nombre').value.trim(), apellido=el('al_apellido').value.trim();
   const email=el('al_email').value.trim(), telefono=el('al_tel').value.trim();
   const bono=el('al_bono').value, dia=el('al_dia').value, plaza=el('al_plaza').value, estilo_vida=el('al_actividad').value;
+  const inicio=el('al_inicio').value||_hoyCanarias(), forma=el('al_forma').value;
   const m=el('altaMsg');
   if(!nombre||!email||telefono.replace(/\D/g,'').length<9){m.className='err';m.textContent='Rellena nombre, email y un teléfono válido (9 dígitos).';return;}
+  if(!forma){m.className='err';m.textContent='Elige la forma de cobro: el alta emite ya su factura.';return;}
+  if(!esAdminActivo()){ m.className='err'; m.textContent='Activa el modo admin antes de dar de alta. Si no, el cliente se crea pero la factura NO se emite.'; toast('Activa el modo admin'); abrirAdmin(); return; }
   const btn=el('btnAlta');btn.disabled=true;btn.textContent='Creando...';
   const {status,data}=await api('alta',{nombre,apellido,email,telefono,bono,dia,plaza:plaza||null,estilo_vida});
   btn.disabled=false;btn.textContent='Crear alta';
   if(status!==200){m.className='err';m.textContent=data.error||'Error';return;}
   var _fePay=null; try{ _fePay=_fePayload('fe-alta'); }catch(e){}
-  cerrarAlta(); toast(data.fecha_renovacion?('Alta creada · acceso hasta '+data.fecha_renovacion):'Cliente dado de alta'); await cargar();
+  await cargar();
+  var _nc=(CLIENTES||[]).find(function(c){ return String(c.email||'').toLowerCase()===email.toLowerCase(); });
+  if(!_nc){
+    cerrarAlta();
+    toast('\u26a0\ufe0f Alta creada, pero no encuentro al cliente: emítele la factura desde Renovar');
+    return;
+  }
+  m.className='ok'; m.textContent='\u2705 Alta creada \u00b7 '+nombre+' '+apellido;
+  await _altaArranqueYFactura(_nc.id, bono, inicio, forma, data.fecha_renovacion, m);
   // La Ficha de entrada rellenada en el propio alta se guarda para el cliente recien creado
   try{
-    var _nc=(CLIENTES||[]).find(function(c){ return String(c.email||'').toLowerCase()===email.toLowerCase(); });
-    if(_nc&&_fePay){
+    if(_fePay){
       var _fr=await rpc('panel_ficha_guardar',{p_cliente_id:_nc.id,p_datos:_fePay});
       var _fi=Array.isArray(_fr)?_fr[0]:_fr;
-      toast((_fi&&_fi.estado)?('Ficha de entrada guardada \u00b7 '+String(_fi.estado).toUpperCase()):'Alta creada, pero la ficha de entrada NO se guard\u00f3: r\u00e9llenala desde su ficha');
-      abrirFicha(_nc.id);
-    } else if(_nc){ abrirFicha(_nc.id); }
+      if(_fi&&_fi.estado){ toast('Ficha de entrada guardada \u00b7 '+String(_fi.estado).toUpperCase()); }
+      else { m.className='err'; m.textContent+=' \u00b7 \u26a0\ufe0f La ficha de entrada NO se guard\u00f3: r\u00e9llenala desde su ficha.'; }
+    }
   }catch(e){}
+  // Se cierra sola a los 4s SOLO si no hay ningun aviso que leer
+  if(m.textContent.indexOf('\u26a0')!==-1){ toast('Lee el aviso antes de cerrar'); }
+  else { setTimeout(function(){ cerrarAlta(); abrirFicha(_nc.id); }, 4000); }
+}
+// El alta deja al cliente arrancando el dia que Oscar ha elegido y le emite su
+// factura, igual que hace "Confirmar renovacion". El orden importa: crear_factura
+// saca el periodo de clientes.fecha_renovacion (si es futura) y le resta los meses
+// del bono, asi que la fecha tiene que estar puesta ANTES de emitirla.
+// No se llama a la accion "renovar" del edge function: el alta ya dejo la
+// renovacion en hoy+bono, y renovar encima sumaria un segundo mes.
+async function _altaArranqueYFactura(id, bono, inicio, forma, renovAlta, m){
+  const hoy=_hoyCanarias();
+  const dias=_difDias(hoy, inicio);
+  // 1) Si empieza mas adelante, su suscripcion entera se corre esos mismos dias
+  if(dias>0 && renovAlta){
+    const nueva=_masDias(renovAlta, dias);
+    const rr=await rpc('panel_fijar_renovacion',{p_cliente_id:id,p_fecha:nueva});
+    if(rr && rr.ok!==false){ m.textContent+=' \u00b7 empieza el '+_fmtCita(inicio)+' y renueva el '+_fmtCita(nueva); }
+    else { m.className='err'; m.textContent+=' \u00b7 \u26a0\ufe0f No pude mover la renovaci\u00f3n a '+_fmtCita(nueva)+': corr\u00edgela a mano en su ficha.'; }
+  }
+  // 2) Su primera consulta es ese dia (el alta la deja sin fijar)
+  try{ await rpc('panel_fijar_cita',{p_cliente_id:id,p_fecha:inicio}); }catch(e){}
+  // 3) La factura: emitida y cobrada HOY, que es cuando ha pagado, pero con el
+  //    periodo arrancando su primer dia. Si falla, el alta NO se rompe.
+  let fac=null; try{ fac=await rpc('crear_factura',{p_cliente_id:id,p_bono:bono,p_fecha:hoy,p_descuento:0}); }catch(e){}
+  if(fac && fac.ok){
+    m.textContent+=' \u00b7 Factura '+fac.numero+' ('+fac.total+'\u20ac)'+(fac.datos_fiscales_completos?'':' \u2014 \u26a0\ufe0f faltan datos fiscales del cliente');
+    toast('Factura '+fac.numero+' emitida');
+    try{
+      const fp=await rpc('panel_forma_pago',{p_numero:fac.numero,p_forma:forma});
+      if(fp && fp.ok){ m.textContent+=' \u00b7 pago: '+forma+(fp.aviso?' \u26a0\ufe0f '+fp.aviso:''); }
+      else { m.className='err'; m.textContent+=' \u00b7 \u26a0\ufe0f La forma de cobro ('+forma+') NO qued\u00f3 anotada'+(fp&&(fp.error||fp.message)?' ('+(fp.error||fp.message)+')':'')+': ap\u00fantala a mano.'; }
+    }catch(e){ m.className='err'; m.textContent+=' \u00b7 \u26a0\ufe0f La forma de cobro ('+forma+') NO qued\u00f3 anotada: ap\u00fantala a mano.'; }
+  } else {
+    m.className='err';
+    m.textContent+=' \u00b7 \u26a0\ufe0f Alta creada pero la factura NO se emiti\u00f3'+(fac&&fac.error?' ('+fac.error+')':'')+'. Em\u00edtela a mano desde Renovar.';
+    toast('\u26a0\ufe0f Factura NO emitida');
+  }
 }
 var REC_m=null, REC_ch=[], REC_blob=null, REC_stream=null, REC_id=null, REC_nombre="", REC_t=null, REC_s=0;
 // Pantalla encendida mientras se graba (como WhatsApp): Wake Lock de Safari/Chrome.
