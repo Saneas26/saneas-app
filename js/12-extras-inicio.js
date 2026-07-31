@@ -354,6 +354,66 @@ function _faseHtml(){
   var c = window.__CREA || "1 g por cada 10 kg de tu peso";
   return t.split("{{CREA}}").join(c);
 }
+// ── La misma tarjeta de fase, reutilizable en otra pantalla ────────────────
+// La explicación de la dieta vivía solo en "Tu dieta" (#s-dieta). Estas tres
+// funciones la sacan de ahí para poder pintarla también en la próxima dieta,
+// sin tocar pintarFase() ni toggleFase(), que siguen mandando en la de hoy.
+// El "{{CREA}}" se calcula igual que en _calcCrea, pero bajo demanda: la fase
+// de hoy puede no llevarlo y la próxima sí.
+async function _creaAsegurada(){
+  if(window.__CREA) return window.__CREA;
+  try{
+    if(typeof CLIENTE==="undefined"||!CLIENTE||!CLIENTE.id) return null;
+    var pesoHoy=null, hoy=new Date().toISOString().slice(0,10);
+    var rp=await sb.from("registros").select("fecha,peso").eq("cliente_id",CLIENTE.id)
+             .not("peso","is",null).lte("fecha",hoy).order("fecha",{ascending:false}).limit(1);
+    if(rp&&rp.data&&rp.data[0]&&rp.data[0].peso) pesoHoy=Number(rp.data[0].peso);
+    if((!pesoHoy||!(pesoHoy>0))&&CLIENTE.peso_inicial) pesoHoy=Number(CLIENTE.peso_inicial);
+    if(pesoHoy&&pesoHoy>0){ window.__PESO_HOY=pesoHoy; window.__CREA=Math.round(pesoHoy/10)+" g/día"; }
+  }catch(e){}
+  return window.__CREA;
+}
+// Devuelve el comentario de fase de CUALQUIER dieta (no solo la de hoy)
+async function faseDeDieta(dietaId){
+  try{
+    if(!dietaId) return null;
+    var bl=null;
+    if(typeof DIETA!=="undefined" && DIETA && DIETA.id===dietaId) bl=DIETA.comentario_bloque;
+    if(bl===null||bl===undefined){
+      var rd=await sb.from("dietas").select("comentario_bloque").eq("id",dietaId).maybeSingle();
+      bl=(rd&&rd.data)?rd.data.comentario_bloque:null;
+    }
+    if(bl===null||bl===undefined) return null;
+    var r=await sb.from("saneas_comentarios_fase").select("*")
+            .eq("semana",bl).eq("publicado",true).limit(1);
+    var f=(r&&r.data&&r.data[0])||null;
+    if(f && String(f.texto||"").indexOf("{{CREA}}")>=0) await _creaAsegurada();
+    return f;
+  }catch(e){ return null; }
+}
+// Ojo: los ids se derivan de "id" para que puedan convivir dos tarjetas a la vez
+function faseTarjetaHTML(f, sub, id, abierta){
+  if(!f) return "";
+  var txt=String(f.texto||"").split("{{CREA}}").join(window.__CREA||"1 g por cada 10 kg de tu peso");
+  return '<div class="card faCard">'
+    + '<button class="faHead" onclick="toggleFaseTarjeta(\''+id+'\')">'
+    + '<span class="faIco">&#128220;</span>'
+    + '<span class="faTxt"><span class="faTit">'+esc(f.titulo||"Tu fase")+'</span>'
+    + '<span class="faSub">'+esc(sub||f.fase||"")+'</span></span>'
+    + '<span id="'+id+'Lbl" style="font-size:14px;font-weight:700;color:var(--muted);margin-right:8px;white-space:nowrap">'+(abierta?"Ocultar":"Desplegar")+'</span>'
+    + '<span class="faChev" id="'+id+'Chev" style="'+(abierta?"transform:rotate(90deg)":"")+'">&rsaquo;</span></button>'
+    + '<div class="faBody" id="'+id+'Cuerpo" style="display:'+(abierta?"block":"none")+'">'+txt+'</div></div>';
+}
+function toggleFaseTarjeta(id){
+  var c=document.getElementById(id+"Cuerpo"), ch=document.getElementById(id+"Chev"), lb=document.getElementById(id+"Lbl");
+  if(!c) return;
+  var abierto=c.style.display!=="none";
+  c.style.display=abierto?"none":"block";
+  if(ch) ch.style.transform=abierto?"":"rotate(90deg)";
+  if(lb) lb.textContent=abierto?"Desplegar":"Ocultar";
+}
+// El nombre del plan sin el sufijo _sN, como lo enseña la tarjeta de hoy
+function _planLimpio(n){ return String(n||"").replace(/_S\d+$/i,"").replace(/_/g," ").trim(); }
 async function cargarFase(){
   try{
     if(typeof CLIENTE==="undefined"||!CLIENTE) return;
