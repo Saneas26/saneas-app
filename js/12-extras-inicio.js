@@ -55,6 +55,10 @@ async function calcularProgreso(){
       .select("fecha,peso,per_cintura,grasa_corporal,agua,masa_muscular,proteina,sin_consulta")
       .eq("cliente_id", CLIENTE.id)
       .order("fecha", { ascending: true });
+    // Los pesos reales, para el grafico de las 10 semanas. Se guardan ANTES de
+    // cualquier "return" de abajo: el grafico no depende de que haya progreso.
+    window.__PESOS = ((r && r.data) || []).filter(function(x){ return x.peso != null; });
+    pintarPesoCliente();
     var regs = ((r && r.data) || []).filter(function(x){
       return x.peso != null || x.per_cintura != null || x.grasa_corporal != null;
     });
@@ -190,6 +194,94 @@ function pintar100(){
     mete(e);
   }
 }
+// ── Grafico de peso de las ultimas 10 semanas ──────────────────────────────
+// Es el MISMO grafico que Oscar tiene en su panel (SVG a mano, sin librerias),
+// con los colores de la app. NO se le ensena a nadie por su cuenta: solo si
+// Oscar ha encendido el interruptor de la ficha (clientes.grafico_peso_visible).
+function pintarPesoCliente(){
+  var host = document.getElementById("pesoCard");
+  if(!host) return;
+  var visible = !!(typeof CLIENTE !== "undefined" && CLIENTE && CLIENTE.grafico_peso_visible);
+  var pts = visible ? (window.__PESOS || []).slice(-10) : [];
+  if(pts.length < 2){
+    if(host.innerHTML) { host.innerHTML = ""; host.removeAttribute("data-peso"); }
+    return;
+  }
+  var sig = pts.length + "|" + pts[0].fecha + "|" + pts[pts.length-1].fecha + "|" + pts[pts.length-1].peso;
+  if(host.getAttribute("data-peso") === sig) return;   // el interval repinta: no tocar el DOM si nada cambio
+
+  var n1  = function(x){ return String(Math.round(x*10)/10).replace(".", ","); };
+  var fdm = function(f){ var p = String(f||"").slice(0,10).split("-"); return p.length===3 ? (p[2]+"/"+p[1]) : ""; };
+
+  var pesos = pts.map(function(r){ return Number(r.peso); });
+  var min = Math.min.apply(null, pesos), max = Math.max.apply(null, pesos);
+  if(max-min < 1){ var c = (max+min)/2; min = c-0.8; max = c+0.8; }   // linea plana: que no salga pegada al borde
+  var margen = (max-min)*0.18; min -= margen; max += margen;
+
+  // MISMA geometria que el panel, pero las letras van al DOBLE: aqui el SVG se
+  // ve en un movil (~347 px de ancho para un viewBox de 660), o sea a la mitad
+  // de escala. Con los tamanos del panel las cifras saldrian a 5 px.
+  var W=660, H=284, iz=58, de=16, ar=46, ab=48;
+  var ancho = W-iz-de, alto = H-ar-ab;
+  var x = function(i){ return iz + (pts.length===1 ? ancho/2 : (ancho*i/(pts.length-1))); };
+  var y = function(v){ return ar + alto - ((v-min)/(max-min))*alto; };
+
+  var rejilla = "", pasos = 4;
+  for(var g=0; g<=pasos; g++){
+    var v = min+(max-min)*g/pasos, yy = y(v);
+    rejilla += '<line x1="'+iz+'" y1="'+yy.toFixed(1)+'" x2="'+(W-de)+'" y2="'+yy.toFixed(1)+'" stroke="#dbe8ec" stroke-width="1.6"/>'
+             + '<text x="'+(iz-10)+'" y="'+(yy+7).toFixed(1)+'" text-anchor="end" font-size="20" fill="#3a5a64">'+n1(v)+'</text>';
+  }
+
+  // Con 10 semanas las fechas se tocarían: se pintan una sí y una no, contando
+  // desde la última hacia atrás para que la de hoy salga siempre.
+  var saltaFechas = pts.length > 6;
+  var linea = "", puntos = "";
+  for(var i=0; i<pts.length; i++){
+    var px = x(i), py = y(pesos[i]);
+    linea += (i ? " L" : "M") + px.toFixed(1) + " " + py.toFixed(1);
+    var ultimo = (i === pts.length-1);
+    // Las etiquetas de los extremos se anclan hacia dentro: centradas se salían
+    // del SVG por la derecha y pisaban la escala de kg por la izquierda.
+    var anc = (i===0) ? "start" : (ultimo ? "end" : "middle");
+    var tx  = (i===0) ? (px-6) : (ultimo ? (px+6) : px);
+    puntos += '<circle cx="'+px.toFixed(1)+'" cy="'+py.toFixed(1)+'" r="'+(ultimo?10:7.5)+'" fill="'+(ultimo?"#F5862E":"#fff")+'" stroke="'+(ultimo?"#F5862E":"#3890a4")+'" stroke-width="4"/>'
+            + '<text x="'+tx.toFixed(1)+'" y="'+(py-20).toFixed(1)+'" text-anchor="'+anc+'" font-size="21" font-weight="700" fill="'+(ultimo?"#F5862E":"#1a2e35")+'">'+n1(pesos[i])+'</text>'
+    if(!saltaFechas || ((pts.length-1-i) % 2 === 0)){
+      puntos += '<text x="'+tx.toFixed(1)+'" y="'+(H-14)+'" text-anchor="'+anc+'" font-size="19" fill="#3a5a64">'+fdm(pts[i].fecha)+'</text>';
+    }
+  }
+  var area = "M"+x(0).toFixed(1)+" "+(ar+alto)+" L"+linea.slice(1)+" L"+x(pts.length-1).toFixed(1)+" "+(ar+alto)+" Z";
+
+  // El cambio del periodo, en verde si va hacia su objetivo. Se redondea ANTES
+  // de decidir el color para que la cifra y el color digan lo mismo.
+  var o = (typeof calcObjetivos === "function") ? calcObjetivos() : null;
+  var objetivo = (o && o.promedio) ? o.promedio : null;
+  var dif = Math.round((pesos[pesos.length-1] - pesos[0])*10)/10;
+  var col = "#3a5a64";
+  if(dif !== 0){
+    var haciaAbajo = dif < 0;
+    var bueno = (objetivo == null) ? haciaAbajo : (pesos[0] > objetivo ? haciaAbajo : !haciaAbajo);
+    col = bueno ? "#2f9e5f" : "#d05a4a";
+  }
+  var signo = dif > 0 ? "+" : "";
+
+  host.innerHTML = '<div class="card pesoCard">'
+    + '<div class="pesoTit"><span>📉 Tu peso · últimas ' + pts.length + ' semanas</span>'
+    +   '<span class="pesoDif" style="color:'+col+'">' + signo + n1(dif) + ' kg</span></div>'
+    + '<svg viewBox="0 0 '+W+' '+H+'" width="100%" style="display:block;height:auto" role="img" '
+    +   'aria-label="Evolución de tu peso en las últimas ' + pts.length + ' semanas">'
+    +   rejilla
+    +   '<path d="'+area+'" fill="#3890a4" opacity=".10"/>'
+    +   '<path d="'+linea+'" fill="none" stroke="#3890a4" stroke-width="4.5" stroke-linejoin="round" stroke-linecap="round"/>'
+    +   puntos
+    + '</svg>'
+    + '<div class="pesoPie">Del ' + fdm(pts[0].fecha) + ' al ' + fdm(pts[pts.length-1].fecha)
+    +   ' · el punto naranja es tu último dato'
+    +   (objetivo ? ' · objetivo <b>'+n1(objetivo)+' kg</b>' : '') + '</div>'
+    + '</div>';
+  host.setAttribute("data-peso", sig);
+}
 function pintarProgreso(){
   var el = document.getElementById("progCard");
   if(!el || !window.__PROG) return;
@@ -215,7 +307,7 @@ function pintarProgreso(){
     + '</div>';
   el.setAttribute("data-prog", sig);
 }
-setInterval(function(){ pintarReporte(); pintarFase(); pintarCapitulo(); pintarMision(); if(typeof pintarDiario==='function') pintarDiario(); if(window.__PROG){ pintarProgreso(); pintarPedir(); pintar100(); } }, 800);
+setInterval(function(){ pintarReporte(); pintarFase(); pintarCapitulo(); pintarMision(); if(typeof pintarDiario==='function') pintarDiario(); pintarPesoCliente(); if(window.__PROG){ pintarProgreso(); pintarPedir(); pintar100(); } }, 800);
 var __REP;
 async function cargarReporte(){
   try{

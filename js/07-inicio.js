@@ -190,6 +190,8 @@ function renderInicio(){
 
     <div class="card msnCard" id="msnCard"></div>
 
+    <div id="pesoCard"></div>
+
     <div id="progCard"></div>
 
     <div class="card agenda">

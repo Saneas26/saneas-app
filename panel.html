@@ -126,6 +126,14 @@
   .baja-btn,.sc-btn{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.55);color:#fff;padding:7px 14px;border-radius:999px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap}
   .baja-btn:hover{background:var(--bad);border-color:var(--bad)}
   .sc-btn:hover{background:var(--orange);border-color:var(--orange)}
+  /* Interruptor "lo ve el cliente" del grafico de peso: va dentro de una .sec (fondo blanco) */
+  .gp-btn{background:#fff;border:1.5px solid var(--teal);color:var(--teal);padding:6px 13px;border-radius:999px;
+    font-family:inherit;font-size:12.5px;font-weight:800;line-height:1.2;cursor:pointer;white-space:nowrap;
+    text-transform:none;letter-spacing:0}
+  .gp-btn:hover{background:var(--soft)}
+  .gp-btn.on{background:var(--teal);border-color:var(--teal);color:#fff}
+  .gp-btn.on:hover{background:var(--teal-d);border-color:var(--teal-d)}
+  .gp-btn:disabled{opacity:.5;cursor:default}
   .cp-btn{width:100%;background:var(--teal);color:#fff;border:0;border-radius:10px;padding:11px;font-weight:800;font-size:14px;cursor:pointer}
   .cp-btn:hover{background:var(--teal-d)}
   .cp-row{display:flex;gap:8px}
@@ -1057,8 +1065,15 @@ let FICHA_CLI=null, FICHA_REGS=[], FICHA_INVS=[];
 // registros REALES (con peso), que vienen del más reciente al más antiguo.
 function graficoPeso(reales, o){
   var pts = (reales||[]).filter(function(r){ return r.peso!=null; }).slice(0,10).reverse();
+  // El boton de "lo ve el cliente" va SIEMPRE, aunque aun no haya grafico que
+  // dibujar: asi Oscar puede dejarlo abierto de antemano y aparece solo cuando
+  // la clienta tenga dos pesos. Su texto lo pone pintarGpBtn() con lo que
+  // devuelve la RPC, no se adivina aqui.
+  var boton = '<button class="gp-btn" id="gpBtn" disabled onclick="toggleGraficoCliente()">Cargando…</button>';
   if(pts.length < 2){
-    return '<div class="sec"><h4>📉 Peso · últimas 10 semanas</h4>'
+    return '<div class="sec">'
+         + '<h4 style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">'
+         + '<span>📉 Peso · últimas 10 semanas</span>' + boton + '</h4>'
          + '<p class="empty-msg">Hacen falta al menos dos pesos registrados para dibujar la evolución.</p></div>';
   }
   var n1 = function(x){ return String(Math.round(x*10)/10).replace('.',','); };
@@ -1110,8 +1125,9 @@ function graficoPeso(reales, o){
   return '<div class="sec">'
     + '<h4 style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">'
     + '<span>📉 Peso · últimas ' + pts.length + ' semanas</span>'
+    + '<span style="display:flex;align-items:center;gap:10px">'
     + '<span style="text-transform:none;letter-spacing:0;font-size:15px;font-weight:800;color:'+col+'">'
-    + signo + n1(dif) + ' kg</span></h4>'
+    + signo + n1(dif) + ' kg</span>' + boton + '</span></h4>'
     + '<svg viewBox="0 0 '+W+' '+H+'" width="100%" style="display:block;height:auto" role="img" '
     + 'aria-label="Evolución del peso en las últimas ' + pts.length + ' semanas">'
     + rejilla
@@ -1122,6 +1138,41 @@ function graficoPeso(reales, o){
     + ' · el punto naranja es el último dato'
     + (o && o.promedio ? ' · objetivo <b>'+n1(o.promedio)+' kg</b>' : '') + '</p>'
     + '</div>';
+}
+// ── "Visualizar por el cliente": el mismo gráfico, en su app ────────────────
+// Nadie lo ve por defecto. Con el botón encendido, la app del cliente lo pinta
+// encima de "El mapa de tu viaje". Se guarda en clientes.grafico_peso_visible.
+var GRAF_VIS = null;   // null = todavía no sabemos qué dice la base
+function pintarGpBtn(){
+  var b = document.getElementById('gpBtn'); if(!b) return;
+  if(GRAF_VIS === null){ b.disabled = true; b.className = 'gp-btn'; b.textContent = 'Cargando…'; return; }
+  b.disabled = false;
+  b.className = 'gp-btn' + (GRAF_VIS ? ' on' : '');
+  b.innerHTML = '👁&nbsp;&nbsp;' + (GRAF_VIS ? 'Lo ve el cliente' : 'Visualizar por el cliente');
+  b.title = GRAF_VIS ? 'Pulsa para dejar de mostrárselo' : 'Pulsa para que lo vea en su app';
+}
+async function cargarGrafVis(id){
+  GRAF_VIS = null; pintarGpBtn();
+  var r = await rpc('panel_grafico_peso', {p_cliente_id: id});
+  if(!FICHA_CLI || FICHA_CLI.id !== id) return;   // la ficha cambió mientras cargaba
+  if(!r || r.ok !== true){
+    // Mejor decir que no se sabe que enseñar un interruptor que miente.
+    var b = document.getElementById('gpBtn');
+    if(b){ b.disabled = true; b.className = 'gp-btn'; b.textContent = 'Sin datos del interruptor';
+           b.title = (r && (r.error || r.message)) || 'No se pudo leer clientes.grafico_peso_visible'; }
+    return;
+  }
+  GRAF_VIS = !!r.visible;
+  pintarGpBtn();
+}
+async function toggleGraficoCliente(){
+  if(!FICHA_CLI || GRAF_VIS === null) return;
+  var b = document.getElementById('gpBtn'); if(b) b.disabled = true;
+  var quiero = !GRAF_VIS;
+  var r = await rpc('panel_grafico_peso', {p_cliente_id: FICHA_CLI.id, p_visible: quiero});
+  if(!r || r.ok !== true){ toast((r && r.error) || 'No se pudo cambiar'); pintarGpBtn(); return; }
+  GRAF_VIS = !!r.visible; pintarGpBtn();
+  toast(GRAF_VIS ? 'El cliente ya ve su gráfico de peso' : 'El cliente ya no ve su gráfico de peso');
 }
 function pintarFicha(cli,regs){
   FICHA_CLI=cli; FICHA_REGS=regs;
@@ -1298,6 +1349,7 @@ function pintarFicha(cli,regs){
       </div>
     </div>`;
   cargarMedidasCita(cli.id);
+  cargarGrafVis(cli.id);
 }
 const PER_DEF=[['per_cintura','Cintura'],['per_cadera','Cadera'],['per_hombro','Hombros']];
 const PLI_DEF=[['pli_tricipital','Tríceps'],['pli_bicipital','Bíceps'],['pli_subescapular','Subescapular'],['pli_suprailiaco','Suprailíaco'],['pli_abdominal','Abdominal'],['pli_cuadricipital','Cuádriceps']];
