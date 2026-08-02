@@ -2979,7 +2979,7 @@ async function abrirEstadisticas(){
   const r=await api('estadisticas');
   const data=r&&r.data;
   const body=document.getElementById('statsBody');
-  if(!data||data.ok===false){ body.textContent='No se pudo cargar: '+((data&&data.error)||'error desconocido'); return; }
+  if(!data||!data.ok){ body.textContent='No se pudo cargar: '+((data&&data.error)||'error desconocido'); return; }
   const filasEvento=(data.por_evento||[]).map(function(e){
     const det=(data.detalle_por_evento||[]).filter(function(d){return d.evento===e.evento;});
     let detHtml='';
