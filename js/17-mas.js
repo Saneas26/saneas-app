@@ -54,6 +54,7 @@ function setOpTema(el,t){
   if(on){ el.style.background='var(--teal)'; el.style.color='#fff'; el.style.border='1px solid var(--teal)'; }
 }
 async function enviarOpinion(){
+  trackEvento('opinion_envio');
   const texto=(document.getElementById('op_texto').value||'').trim();
   const nombre=(document.getElementById('op_nombre').value||'').trim();
   const msg=document.getElementById('op_msg'), btn=document.getElementById('op_btn');
