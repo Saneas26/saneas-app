@@ -178,6 +178,7 @@ async function _insertarDiario(row){
       cliente_id:CLIENTE.id, fecha:_hoyMadrid(), toma:toma },row));
     if(error) throw error;
     cerrarDetalle();
+    trackEvento('diario_apunte');
     try{ toast('Apuntado en tu diario 🥗'); }catch(e){}
     await cargarDiario();
   }catch(e){ alert('No se pudo guardar, inténtalo de nuevo.'); }
