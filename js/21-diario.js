@@ -61,7 +61,8 @@ function pintarDiario(){
   }
 
   host.innerHTML=`<div class="card diaCard">
-    <div class="diaTit">📒 Tu diario de hoy</div>
+    <div class="diaTit">No subestimes tus calorías</div>
+    <div class="diaSub">Prueba añadir tus comidas durante dos días, sé sincer@ contigo mism@</div>
     ${obj?`<div class="diaTotal"><span class="n">${_r0(kcal)}</span><span class="de"> / ${obj} kcal</span></div>
     <div class="diaBar"><i style="width:${pct}%;${kcal>obj?'background:var(--orange)':''}"></i></div>
     <div class="diaMacros">
