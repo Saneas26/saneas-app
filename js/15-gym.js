@@ -32,7 +32,7 @@ async function renderGym(){
     <p style="font-size:14px;color:var(--muted);margin:0 6px 10px">Todos los ejercicios clasificados por día (programa de 6 días).</p>
     ${segOrigen}${body}`;
 }
-function setGymFull(o){GYMFULL.origen=o;renderGym();}
+function setGymFull(o){trackEvento('gym_modo',{modo:o});GYMFULL.origen=o;renderGym();}
 function exCard(e){
   const vis=e.img1?`<img src="${e.img1}" loading="lazy" alt="">`:'<div class="ph">🏋️</div>';
   return `<div class="exitem" onclick="verEjercicio('${e.id}')">
