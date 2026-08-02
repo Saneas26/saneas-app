@@ -193,6 +193,7 @@ async function descargarPost(){ trackEvento('compartir_progreso_accion',{accion:
 function descargarBlob(b){ const u=URL.createObjectURL(b); const a=document.createElement('a'); a.href=u; a.download='mi-evolucion-saneas.png'; a.click(); setTimeout(()=>URL.revokeObjectURL(u),2000); }
 
 function pizarra(k,el){
+  trackEvento('pizarra_click',{opcion:k});
   document.querySelectorAll('#s-inicio .choice').forEach(c=>c.classList.remove('active'));
   if(el)el.classList.add('active');
   const cont=document.getElementById('pizarra');
