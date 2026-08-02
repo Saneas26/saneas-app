@@ -143,6 +143,7 @@ function buscarRecetas(){
 // correo. CAT_Tienda no se toca hasta que él lo apruebe.
 const PROP_SUPERS=['Mercadona','Lidl','Carrefour','Aldi','Dia','Hiperdino','Ahorramas','Decathlon','Amazon'];
 function proponerArticulo(){
+  trackEvento('proponer_articulo_abrir');
   const inp='width:100%;box-sizing:border-box;border:1px solid #d7e2e6;border-radius:12px;padding:11px;font-size:14px;font-family:inherit;color:var(--dark);background:#fff';
   const lbl='font-size:13px;font-weight:700;color:var(--muted);margin:14px 0 6px';
   abrirDetalle('Proponer un artículo',`
@@ -174,6 +175,7 @@ function ppSuperCambio(){
   i.classList.toggle('hidden',!otro); if(!otro) i.value='';
 }
 async function enviarPropuesta(){
+  trackEvento('proponer_articulo_envio');
   const msg=document.getElementById('pp_msg'), btn=document.getElementById('pp_btn');
   const nombre=(document.getElementById('pp_nombre').value||'').trim();
   let superm=document.getElementById('pp_super').value;
