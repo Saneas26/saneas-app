@@ -1,6 +1,7 @@
 // SANEAS · js/08-social.js · Saneamigos (invitar) y compartir evolución
 // ====== SANEAMIGOS (invitar) ======
 function abrirInvitar(){
+  trackEvento('saneamigo_card_click');
   if(!esPlanPC()){ abrirDetalle('Saneamigos','<div class="empty">El programa Saneamigos es solo para el plan Completo o Premium 🙂</div>'); return; }
   const d=Number(CLIENTE.descuento_invitados||0); const n=Math.round(d/10);
   abrirDetalle('Saneamigos', `
