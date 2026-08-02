@@ -196,6 +196,7 @@ function lineaKcal(toma,pctMap,objetivo){
 }
 
 async function verHistorial(){
+  trackEvento('evolucion_click');
   const {data}=await sb.from('registros').select('*').eq('cliente_id',CLIENTE.id).order('semana',{ascending:false,nullsFirst:false}).order('fecha',{ascending:false});
   if(!data||!data.length){abrirDetalle('Tu evolución','<div class="empty">Aún no tienes registros.</div>');return;}
   const m=(l,v,u)=> v==null?'' : `<div class="hm"><span>${l}</span><b>${r1(v)}${u||''}</b></div>`;
