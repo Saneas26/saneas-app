@@ -247,6 +247,7 @@ var GrupoSaneas = (function(){
   }
 
   function ficha(id){
+    trackEvento('grupo_icono_click',{marca:id});
     var m=porId(id); if(!m) return;
     var aqui=(m.id===CFG.actual);
     mostrar('<div class="gs-ficha">'
