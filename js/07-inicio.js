@@ -229,7 +229,7 @@ function renderInicio(){
     <h2 class="sec">🎬 Vídeo de la semana</h2>
     <div class="video">
       ${vidThumb?`<img class="thumb" src="https://img.youtube.com/vi/${vidThumb}/hqdefault.jpg" alt="" loading="lazy" onerror="this.remove()">`:''}
-      ${vid?`<a class="play" href="${vid}" target="_blank" rel="noopener">▶</a>`:'<div class="play">▶</div>'}
+      ${vid?`<a class="play" href="${vid}" target="_blank" rel="noopener" onclick="trackEvento('video_semana_click')">▶</a>`:'<div class="play">▶</div>'}
       <div class="cap">${vid?'Toca para ver el vídeo de esta semana':'Sin vídeo esta semana'}</div>
     </div>
 
