@@ -98,6 +98,7 @@ async function enviarInvitar(){
 
 // ====== COMPARTIR EVOLUCIÓN (post para redes) ======
 function abrirCompartir(){
+  trackEvento('compartir_progreso_abrir');
   abrirDetalle('Comparte tu evolución', `
     <div style="text-align:center">
       <canvas id="postCanvas" width="1080" height="1350" style="width:100%;max-width:300px;border-radius:16px;box-shadow:var(--shadow)"></canvas>
