@@ -83,6 +83,7 @@ function pintarDiario(){
 
 // ---------- Buscador (biblioteca unificada: tienda + genéricos) ----------
 function abrirDiarioBuscar(){
+  trackEvento('diario_intento');
   DIARIO_SEL=null; _aliRes=[];
   const tomas=Object.keys(TOMA_INFO).concat(['Otra']);
   const def=_diaTomaDefecto();
