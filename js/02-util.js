@@ -8,6 +8,14 @@ const TOMA_INFO={
   Almuerzo:['🍽️','Almuerzo'],Merienda:['🍎','Merienda'],Cena:['🌙','Cena'],AntesDormir:['🌛','Antes de dormir']};
 const num = v => (v===''||v==null)?null:parseFloat(String(v).replace(',','.'));
 const fmt = v => (v==null||v==='')?'—':v;
+// Analítica de uso (bajo demanda desde el panel, nunca automática). Fire-and-forget:
+// nunca debe bloquear ni romper un click real del cliente.
+function trackEvento(evento,detalle){
+  try{
+    if(!CLIENTE||!CLIENTE.id) return;
+    sb.from('eventos_uso').insert({cliente_id:CLIENTE.id,evento,detalle:detalle||null}).then(()=>{},()=>{});
+  }catch(e){}
+}
 function fechaCorta(d){ if(!d) return '—'; const x=new Date(d+'T00:00:00'); return x.toLocaleDateString('es-ES',{day:'numeric',month:'short'}); }
 function fechaLarga(d){ if(!d) return '—'; const x=new Date(d+'T00:00:00'); return x.toLocaleDateString('es-ES',{weekday:'short',day:'numeric',month:'short'}); }
 // Próxima consulta = próxima fecha (hoy o futura) que cae en el día de consulta del cliente (modelo semanal)
