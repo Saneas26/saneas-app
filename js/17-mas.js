@@ -1,6 +1,7 @@
 // SANEAS · js/17-mas.js · Pestaña Más: tienda, recetas y opinión
 // ====== MÁS: Tienda / Recetas / Pagos / Opinión ======
 function masTab(k,el){
+  trackEvento('mas_tab_click',{tab:k});
   ['tienda','recetas','pagos','opinion'].forEach(x=>document.getElementById('m-'+x).classList.toggle('hidden',x!==k));
   document.querySelectorAll('#s-mas .tabs button').forEach(b=>b.classList.remove('active'));el.classList.add('active');
   if(k==='tienda') abrirTienda();
