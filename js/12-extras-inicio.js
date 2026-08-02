@@ -1,5 +1,6 @@
 // SANEAS · js/12-extras-inicio.js · Qué decir, mapa de progreso, legado (100 días), reporte de voz y fase
 function queDecir(){
+  trackEvento('que_decir_click');
   var s = _semanasClienta();
   var h = '<div class="faqBody">'
     + '<div class="fqHero"><div class="fqHeroT">Alguien te habr\u00e1 <em>preguntado</em></div><div class="fqRaya"></div></div>'
