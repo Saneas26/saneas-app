@@ -64,7 +64,7 @@ function pintarCapitulo(){
 }
 // --- Misión de hoy: checklist diaria. Agua/dieta/entreno los marca el cliente
 // (localStorage, clave por día); pasos y datos de consulta se marcan solos.
-function _misionKey(){ try{ return 'saneas_mision_'+_hoyCanarias(); }catch(e){ return 'saneas_mision'; } }
+function _misionKey(){ try{ return 'saneas_mision_'+_hoyMadrid(); }catch(e){ return 'saneas_mision'; } }
 function _misionGet(){ try{ return JSON.parse(localStorage.getItem(_misionKey())||'{}'); }catch(e){ return {}; } }
 let MSN_PASOS_ABIERTO=false;   // el editor de pasos dentro de la misión (se abre tocando el ítem)
 function misionItems(){

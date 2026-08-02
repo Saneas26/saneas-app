@@ -92,7 +92,7 @@ async function guardarSeccion(sec){
 
     let error;
     if(REG_SEM){ ({error}=await sb.from('registros').update(row).eq('id',REG_SEM.id)); }
-    else { row.cliente_id=CLIENTE.id; row.fecha=_hoyCanarias(); row.semana=CLIENTE.semana||null;
+    else { row.cliente_id=CLIENTE.id; row.fecha=_hoyMadrid(); row.semana=CLIENTE.semana||null;
            ({error}=await sb.from('registros').insert(row)); }
     if(error) throw error;
 

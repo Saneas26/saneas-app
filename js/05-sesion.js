@@ -39,11 +39,13 @@ async function initPush(soloSiYaConcedido){ try{
 // ---- Reto de pasos (semanal: 61.600 = 8.800/día × 7; reinicia domingo 00:00) ----
 const META_DIA=8800, META_SEMANA=61600;
 let PASOS_HOY=0, PASOS_SEM=0;
-function _hoyCanarias(){ return new Date().toLocaleDateString('en-CA',{timeZone:'Atlantic/Canary'}); }
-function _inicioSemana(){ const d=new Date(_hoyCanarias()+'T12:00:00Z'); d.setUTCDate(d.getUTCDate()-d.getUTCDay()); return d.toISOString().slice(0,10); }
-async function cargarPasos(){ try{ if(!CLIENTE||!CLIENTE.id) return; const {data}=await sb.from('pasos').select('pasos,fecha').eq('cliente_id',CLIENTE.id).gte('fecha',_inicioSemana()); const hoy=_hoyCanarias(); PASOS_SEM=(data||[]).reduce((s,r)=>s+(+r.pasos||0),0); PASOS_HOY=(data||[]).filter(r=>r.fecha===hoy).reduce((s,r)=>s+(+r.pasos||0),0); pintarPasos(); }catch(e){ console.error('pasos',e); } }
+// El día lo marca Madrid, que es donde vive casi todo el mundo. Entre las
+// 00:00 y la 01:00 de Madrid esto ya NO cuenta como el día anterior.
+function _hoyMadrid(){ return new Date().toLocaleDateString('en-CA',{timeZone:'Europe/Madrid'}); }
+function _inicioSemana(){ const d=new Date(_hoyMadrid()+'T12:00:00Z'); d.setUTCDate(d.getUTCDate()-d.getUTCDay()); return d.toISOString().slice(0,10); }
+async function cargarPasos(){ try{ if(!CLIENTE||!CLIENTE.id) return; const {data}=await sb.from('pasos').select('pasos,fecha').eq('cliente_id',CLIENTE.id).gte('fecha',_inicioSemana()); const hoy=_hoyMadrid(); PASOS_SEM=(data||[]).reduce((s,r)=>s+(+r.pasos||0),0); PASOS_HOY=(data||[]).filter(r=>r.fecha===hoy).reduce((s,r)=>s+(+r.pasos||0),0); pintarPasos(); }catch(e){ console.error('pasos',e); } }
 function pintarPasos(){ if(typeof pintarMision==='function') pintarMision(); /* los pasos viven en la misión; el resto queda por si vuelve una tarjeta propia */ const el=document.getElementById('pasosTotal'); if(!el) return; el.textContent=PASOS_HOY.toLocaleString('es-ES'); const pct=Math.min(100,Math.round(PASOS_SEM/META_SEMANA*100)); const b=document.getElementById('pasosBar'); if(b) b.style.width=pct+'%'; const m=document.getElementById('pasosMsg'); if(m){ m.textContent = PASOS_SEM>=META_SEMANA ? '✅ ¡Reto de la semana conseguido! 🎉' : ('Te quedan '+(META_SEMANA-PASOS_SEM).toLocaleString('es-ES')+' pasos para esta semana 👟'); } }
-async function sumarPasos(){ const inp=document.getElementById('pasosInput'); if(!inp) return; const v=parseInt(inp.value,10); if(!v||v<=0){ inp.focus(); return; } const btn=inp.nextElementSibling; inp.disabled=true; if(btn) btn.disabled=true; try{ await sb.from('pasos').insert({cliente_id:CLIENTE.id, fecha:_hoyCanarias(), pasos:v}); PASOS_HOY+=v; PASOS_SEM+=v; inp.value=''; pintarPasos(); }catch(e){ alert('No se pudieron guardar los pasos, inténtalo de nuevo.'); } inp.disabled=false; if(btn) btn.disabled=false; inp.focus(); }
+async function sumarPasos(){ const inp=document.getElementById('pasosInput'); if(!inp) return; const v=parseInt(inp.value,10); if(!v||v<=0){ inp.focus(); return; } const btn=inp.nextElementSibling; inp.disabled=true; if(btn) btn.disabled=true; try{ await sb.from('pasos').insert({cliente_id:CLIENTE.id, fecha:_hoyMadrid(), pasos:v}); PASOS_HOY+=v; PASOS_SEM+=v; inp.value=''; pintarPasos(); }catch(e){ alert('No se pudieron guardar los pasos, inténtalo de nuevo.'); } inp.disabled=false; if(btn) btn.disabled=false; inp.focus(); }
 // ---- Tarjeta para activar las notificaciones (iOS exige un toque del usuario) ----
 function pintarPushCard(){
   const el=document.getElementById('pushCard'); if(!el) return;

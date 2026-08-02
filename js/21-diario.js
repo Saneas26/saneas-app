@@ -12,7 +12,7 @@ async function cargarDiario(){
   if(typeof CLIENTE==='undefined'||!CLIENTE||!CLIENTE.id) return;
   try{
     const {data,error}=await sb.from('diario_comidas').select('*')
-      .eq('cliente_id',CLIENTE.id).eq('fecha',_hoyCanarias()).order('creado_en');
+      .eq('cliente_id',CLIENTE.id).eq('fecha',_hoyMadrid()).order('creado_en');
     if(error){ DIARIO_ERROR=true; DIARIO_HOY=[]; }
     else { DIARIO_ERROR=false; DIARIO_HOY=data||[]; }
   }catch(e){ DIARIO_ERROR=true; DIARIO_HOY=[]; }
@@ -21,7 +21,7 @@ async function cargarDiario(){
 
 function _diaTomaDefecto(){
   try{
-    const h=(new Intl.DateTimeFormat('en-GB',{timeZone:'Atlantic/Canary',hour:'2-digit',hour12:false}).format(new Date()))|0;
+    const h=(new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/Madrid',hour:'2-digit',hour12:false}).format(new Date()))|0;
     if(h<11) return 'Desayuno';
     if(h<13) return 'MediaManana';
     if(h<16) return 'Almuerzo';
@@ -173,7 +173,7 @@ async function _insertarDiario(row){
   const toma=((document.getElementById('aliToma')||{}).value)||'Otra';
   try{
     const {error}=await sb.from('diario_comidas').insert(Object.assign({
-      cliente_id:CLIENTE.id, fecha:_hoyCanarias(), toma:toma },row));
+      cliente_id:CLIENTE.id, fecha:_hoyMadrid(), toma:toma },row));
     if(error) throw error;
     cerrarDetalle();
     try{ toast('Apuntado en tu diario 🥗'); }catch(e){}

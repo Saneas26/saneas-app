@@ -1,4 +1,4 @@
-// SANEAS · js/02-util.js · Estado global, fechas/horas (Canarias-Madrid) y formato
+// SANEAS · js/02-util.js · Estado global, fechas/horas (Madrid) y formato
 // ====== STATE ======
 let CLIENTE=null, ULTIMO=null, PRIMERO=null, DIETA=null, TOMAS_HOY=[], REG_NOMBRE=null, PENDING=null;
 const DIA_MAP={1:'1_Dia1',2:'2_Dia2',3:'3_Dia3',4:'4_Dia4',5:'5_Dia5',6:'6_Dia6',0:'7_Domingo'};
@@ -25,11 +25,13 @@ function fechaProximaConsulta(){
   }
   return stored;
 }
-// ---- Hora límite de consulta: 9:00 hora canaria (10:00 Madrid) ----
+// ---- Hora límite de consulta: 10:00 hora de Madrid, todo el año ----
+// Manda Madrid: ahí vive el 98% de los clientes. Antes esto mismo estaba
+// escrito como 9:00 de Canarias, que es el mismo instante.
 const DIA_EN_ES={monday:'lunes',tuesday:'martes',wednesday:'miercoles',thursday:'jueves',friday:'viernes',saturday:'sabado',sunday:'domingo'};
-function canariasMin(){ try{ const s=new Intl.DateTimeFormat('en-GB',{timeZone:'Atlantic/Canary',hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date()); const p=s.split(':'); return (+p[0])*60+(+p[1]); }catch(e){ const d=new Date(); return d.getHours()*60+d.getMinutes(); } }
-function deadlinePasado(){ return canariasMin() > 540; }   // 9:00 = 540 min
-function esDiaConsultaHoy(){ try{ const wd=new Intl.DateTimeFormat('en-US',{timeZone:'Atlantic/Canary',weekday:'long'}).format(new Date()).toLowerCase(); return (DIA_EN_ES[wd]||'')===((CLIENTE&&CLIENTE.dia_consulta)||'').toLowerCase().trim(); }catch(e){ return false; } }
+function madridMin(){ try{ const s=new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/Madrid',hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date()); const p=s.split(':'); return (+p[0])*60+(+p[1]); }catch(e){ const d=new Date(); return d.getHours()*60+d.getMinutes(); } }
+function deadlinePasado(){ return madridMin() > 600; }   // 10:00 Madrid = 600 min
+function esDiaConsultaHoy(){ try{ const wd=new Intl.DateTimeFormat('en-US',{timeZone:'Europe/Madrid',weekday:'long'}).format(new Date()).toLowerCase(); return (DIA_EN_ES[wd]||'')===((CLIENTE&&CLIENTE.dia_consulta)||'').toLowerCase().trim(); }catch(e){ return false; } }
 function consultaProcesada(){ const t=new Date(); t.setHours(0,0,0,0); const s=(CLIENTE&&CLIENTE.fecha_proxima_consulta)||null; if(!s) return false; const sd=new Date(String(s).slice(0,10)+'T00:00:00'); return !isNaN(sd)&&sd>t; }
 function consultaHoyPendiente(){ return esDiaConsultaHoy() && !consultaProcesada(); }
 // ¿Envió sus datos a tiempo para la consulta de hoy? (registro del ciclo actual y NO fuera de plazo)

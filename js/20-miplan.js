@@ -208,7 +208,7 @@ function genImgErr(im){
 function genRender(){
   if(!GEN_PLAN){genMsg('Tu plan aún no ha cargado.','err');return;}
   const p=GEN_PLAN, nom=GEN_NOM, uid=GEN_UID;
-  const fecha=new Date().toLocaleDateString('es-ES',{timeZone:'Atlantic/Canary'});
+  const fecha=new Date().toLocaleDateString('es-ES',{timeZone:'Europe/Madrid'});
   const AGUA=aguaDiariaTexto();   // el mismo litraje que ve en "Agua de hoy": si no hay peso, no se inventa
   const nd=p.dias.length;
   let g=`<div class="gi-grid" style="grid-template-columns:150px repeat(${nd},1fr)">`;

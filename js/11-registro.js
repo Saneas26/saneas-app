@@ -12,7 +12,7 @@ function ajustarPerimetros(){
 // cadera ideal (mujer) u hombros ideales (hombre) = cintura ideal ÷ índice.
 function canonBelleza(){
   const alt=Number(CLIENTE&&CLIENTE.altura)||null;
-  const ed=edadEn(_hoyCanarias());
+  const ed=edadEn(_hoyMadrid());
   if(!alt||ed==null) return null;
   const hombre=String(CLIENTE.genero||'').toLowerCase().startsWith('h');
   const f1 = hombre ? (ed<30?0.42:(ed<40?0.45:0.49)) : (ed<30?0.38:(ed<40?0.40:0.42));

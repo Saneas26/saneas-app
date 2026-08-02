@@ -160,7 +160,7 @@ const ACT_FACT={Sedentario:1.2,Ligero:1.375,Moderado:1.55,Regular:1.725,Intenso:
 function calcCalorias(){
   const alt=Number(CLIENTE.altura)||null;
   const peso=(ULTIMO&&ULTIMO.peso!=null)?Number(ULTIMO.peso):(CLIENTE.peso_inicial!=null?Number(CLIENTE.peso_inicial):null);
-  const ed=edadEn(_hoyCanarias());
+  const ed=edadEn(_hoyMadrid());
   if(!alt||!peso||ed==null) return null;
   const esMujer=String(CLIENTE.genero||'').toLowerCase().startsWith('m');
   const tmb=10*peso+6.25*alt-5*ed+(esMujer?-161:5);

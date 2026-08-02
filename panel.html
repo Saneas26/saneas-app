@@ -625,9 +625,9 @@ function salir(){localStorage.removeItem('panel_pw');location.reload();}
 // Recordatorio de Oscar: la primera vez que abre el panel cada dia, acordarse de
 // apagar el Bluetooth del telefono. Una web no puede apagarlo (no existe API para
 // eso en ningun navegador), asi que lo que si se puede es avisar. El dia se mide
-// en horario de Canarias y se guarda en localStorage: uno al dia y ya.
+// en horario de Madrid y se guarda en localStorage: uno al dia y ya.
 function avisoBluetooth(intentos){
-  var hoy=new Date().toLocaleDateString('es-ES',{timeZone:'Atlantic/Canary'});
+  var hoy=new Date().toLocaleDateString('es-ES',{timeZone:'Europe/Madrid'});
   if(localStorage.getItem('panel_bt_aviso')===hoy) return;
   // Si esta abierto el dialogo del codigo admin, esperamos a que lo cierre.
   var adm=el('adminlogin');
@@ -1215,14 +1215,14 @@ function pintarFicha(cli,regs){
   // El envío de verdad es `hora_envio`. `fecha` solo vale de reserva para los registros
   // antiguos migrados, que no tienen hora_envio.
   const _diaEnvio=r=>(r&&r.hora_envio)
-    ? new Date(r.hora_envio).toLocaleDateString('en-CA',{timeZone:'Atlantic/Canary'})
+    ? new Date(r.hora_envio).toLocaleDateString('en-CA',{timeZone:'Europe/Madrid'})
     : (r?r.fecha:null);
   const _enviadoSem=reales.some(r=>{const d=_diaEnvio(r);return d&&new Date(d+'T00:00:00')>=_lunesW;});
   let envioTxt,envioCol;
   if(!act){ envioTxt='sin envíos aún'; envioCol='var(--muted)'; }
   else { const _d=_diaEnvio(act); const fe=new Date(_d+'T00:00:00'); const dd=Math.round((_hoy0-fe)/86400000);
     const cuando=dd<=0?'hoy':dd===1?'ayer':'hace '+dd+' días';
-    const _he=act.hora_envio?(' a las '+new Date(act.hora_envio).toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit',timeZone:'Atlantic/Canary'})):'';
+    const _he=act.hora_envio?(' a las '+new Date(act.hora_envio).toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit',timeZone:'Europe/Madrid'})):'';
     envioTxt=_fmt(_d)+_he+' · '+cuando; envioCol=dd<=1?'#ffd54a':dd<=7?'#ffb46b':'#ff8a8a'; }
   // ¿El registro de esta semana llegó fuera de plazo? (después de las 9:00 h canaria)
   const _regSem=reales.find(r=>{const d=_diaEnvio(r);return d&&new Date(d+'T00:00:00')>=_lunesW;});
@@ -1543,15 +1543,16 @@ function abrirAlta(){
   // Primer día: por defecto hoy. Si el cliente empieza más adelante (lo normal
   // cuando lo das de alta un viernes y entra el lunes), se elige aquí y toda su
   // suscripción cuenta desde ese día, no desde hoy.
-  el('al_inicio').value=_hoyCanarias();
-  el('al_inicio').min=_hoyCanarias();
+  el('al_inicio').value=_hoyMadrid();
+  el('al_inicio').min=_hoyMadrid();
   el('al_forma').value='';
   _altaInicioHint();
   const m=el('altaMsg'); m.textContent='';m.className='';
   _feFormAlta();
   el('alta').classList.add('show'); el('al_nombre').focus();
 }
-function _hoyCanarias(){ return new Date().toLocaleDateString('en-CA',{timeZone:'Atlantic/Canary'}); }
+// Manda la hora de Madrid en todo el sistema, también aquí
+function _hoyMadrid(){ return new Date().toLocaleDateString('en-CA',{timeZone:'Europe/Madrid'}); }
 // Sumar días sobre una fecha ISO sin que el cambio de hora la mueva: se opera a
 // mediodía UTC, que nunca cae en el salto de las 2 de la madrugada.
 function _masDias(iso,n){
@@ -1569,7 +1570,7 @@ function _altaInicioHint(){
   const v=el('al_inicio').value, dia=el('al_dia').value;
   if(!v){ h.textContent=''; h.style.color='var(--muted)'; return; }
   const nd=_DIASEM[new Date(v+'T12:00:00Z').getUTCDay()];
-  let t = (v===_hoyCanarias()) ? 'Empieza hoy.' : ('Empieza el '+_fmtCita(v)+'.');
+  let t = (v===_hoyMadrid()) ? 'Empieza hoy.' : ('Empieza el '+_fmtCita(v)+'.');
   // Avisar, sin bloquear: el primer día debería caer en su día de consulta
   if(dia && norm(nd)!==norm(dia)){
     t += ' ⚠️ Ese día es '+nd+' y su consulta es en '+dia+'.';
@@ -1595,7 +1596,7 @@ async function crearAlta(){
   const nombre=el('al_nombre').value.trim(), apellido=el('al_apellido').value.trim();
   const email=el('al_email').value.trim(), telefono=el('al_tel').value.trim();
   const bono=el('al_bono').value, dia=el('al_dia').value, plaza=el('al_plaza').value, estilo_vida=el('al_actividad').value;
-  const inicio=el('al_inicio').value||_hoyCanarias(), forma=el('al_forma').value;
+  const inicio=el('al_inicio').value||_hoyMadrid(), forma=el('al_forma').value;
   const m=el('altaMsg');
   if(!nombre||!email||telefono.replace(/\D/g,'').length<9){m.className='err';m.textContent='Rellena nombre, email y un teléfono válido (9 dígitos).';return;}
   if(!forma){m.className='err';m.textContent='Elige la forma de cobro: el alta emite ya su factura.';return;}
@@ -1634,7 +1635,7 @@ async function crearAlta(){
 // No se llama a la accion "renovar" del edge function: el alta ya dejo la
 // renovacion en hoy+bono, y renovar encima sumaria un segundo mes.
 async function _altaArranqueYFactura(id, bono, inicio, forma, renovAlta, m){
-  const hoy=_hoyCanarias();
+  const hoy=_hoyMadrid();
   const dias=_difDias(hoy, inicio);
   // 1) Si empieza mas adelante, su suscripcion entera se corre esos mismos dias
   if(dias>0 && renovAlta){
@@ -2238,7 +2239,7 @@ async function confirmarRenovar(){ const m=el('renovMsg'); if(!esAdminActivo()){
   toast('Renovación aplicada');
   // Emitir la factura (1 factura = 1 renovación pagada). Si falla, la renovación NO se rompe.
   const desc=Math.max(0,Number(el('rn_desc').value)||0);
-  const hoy=new Date().toLocaleDateString('en-CA',{timeZone:'Atlantic/Canary'});
+  const hoy=new Date().toLocaleDateString('en-CA',{timeZone:'Europe/Madrid'});
   let fac=null; try{ fac=await rpc('crear_factura',{p_cliente_id:RENOV_SEL.id,p_bono:bono,p_fecha:hoy,p_descuento:desc}); }catch(e){}
   if(fac&&fac.ok){
     m.textContent+=` · Factura ${fac.numero} (${fac.total}€)`+(fac.datos_fiscales_completos?'':' — ⚠️ faltan datos fiscales del cliente');
@@ -2533,7 +2534,7 @@ function genImgErr(im){
 function genRender(){
   if(!GEN_CLI||!GEN_PLAN){genMsg('Elige cliente y plan primero.','err');return;}
   const p=GEN_PLAN, nom=`${GEN_CLI.nombre||''} ${GEN_CLI.apellido||''}`.trim(), uid=genUID(GEN_CLI);
-  const fecha=new Date().toLocaleDateString('es-ES',{timeZone:'Atlantic/Canary'});
+  const fecha=new Date().toLocaleDateString('es-ES',{timeZone:'Europe/Madrid'});
   const nd=p.dias.length;
   let g=`<div class="gi-grid" style="grid-template-columns:150px repeat(${nd},1fr)">`;
   g+=`<div class="gi-hcell gi-corner"></div>`;
