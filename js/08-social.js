@@ -179,6 +179,7 @@ async function _postBlob(){
   catch(e){ if(cv._conBadge!==false){ await dibujarPost(false); try{ return await new Promise(res=>cv.toBlob(b=>res(b),'image/png',0.95)); }catch(_){ return null; } } return null; }
 }
 async function compartirPost(){
+  trackEvento('compartir_progreso_accion',{accion:'compartir'});
   const b=await _postBlob(); if(!b){ alert('No se pudo generar la imagen.'); return; }
   const file=new File([b],'mi-evolucion-saneas.png',{type:'image/png'});
   const texto='Mi evolución con Saneas 💚 Nutrición para todos los bolsillos. saneas.es';
@@ -188,7 +189,7 @@ async function compartirPost(){
   // Sin compartir nativo: descarga
   descargarBlob(b);
 }
-async function descargarPost(){ const b=await _postBlob(); if(b) descargarBlob(b); }
+async function descargarPost(){ trackEvento('compartir_progreso_accion',{accion:'descargar'}); const b=await _postBlob(); if(b) descargarBlob(b); }
 function descargarBlob(b){ const u=URL.createObjectURL(b); const a=document.createElement('a'); a.href=u; a.download='mi-evolucion-saneas.png'; a.click(); setTimeout(()=>URL.revokeObjectURL(u),2000); }
 
 function pizarra(k,el){
