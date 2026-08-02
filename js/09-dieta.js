@@ -41,6 +41,7 @@ function selDia(d){DIA_SEL=d;renderDieta();}
 // ====== LISTA DE LA COMPRA (dieta actual + próxima) ======
 let COMPRA_DIETA=null, COMPRA_ITEMS=[], COMPRA_CHECKS={};
 function abrirCompra(dietaId){
+  trackEvento('lista_compra_click');
   COMPRA_DIETA=dietaId||CLIENTE.dieta_actual_id||null;
   document.querySelectorAll('.screen').forEach(s=>s.classList.add('hidden'));
   const c=document.getElementById('s-compra'); c.classList.remove('hidden'); c.scrollTop=0;
