@@ -87,6 +87,7 @@ function misionItems(){
   return it;
 }
 function misionTap(k){
+  trackEvento('mision_click',{tarea:k});
   const it=misionItems().find(x=>x.k===k); if(!it) return;
   if(it.manual){ const m=_misionGet(); m[k]=!m[k]; try{ localStorage.setItem(_misionKey(),JSON.stringify(m)); }catch(e){} pintarMision(); return; }
   if(k==='pasos'){ MSN_PASOS_ABIERTO=!MSN_PASOS_ABIERTO; pintarMision(); if(MSN_PASOS_ABIERTO){ const e=document.getElementById('pasosInput'); if(e) e.focus(); } return; }
