@@ -57,6 +57,7 @@ function hitoPeso(peso,o){
   return {meta:o.promedio,texto:'¡Enhorabuena! Estás en tu peso objetivo 🎉'};
 }
 function verObjetivos(){
+  trackEvento('objetivos_click');
   const o=calcObjetivos();
   if(!o){abrirDetalle('Tus objetivos','<div class="empty">Necesitamos tu altura para calcular tus objetivos.</div>');return;}
   const peso=ULTIMO?ULTIMO.peso:(CLIENTE.peso_inicial||null);
