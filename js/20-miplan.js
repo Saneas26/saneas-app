@@ -129,6 +129,7 @@ function genMsg(t,cls){const m=gel('gd_msg');if(!m)return;m.className=cls||'';m.
 function cerrarGen(){gel('gendieta').classList.remove('show');}
 
 async function abrirGen(){
+  trackEvento('plan_semanal_click');
   gel('gendieta').classList.add('show');
   if(GEN_PLAN){ genBotones(); return; }
   genMsg('Cargando tu plan…');
