@@ -600,6 +600,12 @@ async function enviarAviso(clienteId,nombre){
   }catch(e){ toast('Error al enviar el aviso'); }
 }
 function toast(m){const t=el('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200);}
+async function forzarRecarga(){
+  if(!confirm('¿Forzar que todos los clientes con la app abierta se recarguen ahora?'))return;
+  const {status,data}=await api('forzar_recarga');
+  if(status!==200||!data.ok){toast('Error: '+(data.error||'no se pudo forzar la recarga'));return;}
+  toast('✅ Recarga forzada — los clientes con la app abierta se actualizarán en unos minutos.');
+}
 
 // ---------- Login ----------
 el('pw').addEventListener('keydown',e=>{if(e.key==='Enter')entrar();});
