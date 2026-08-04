@@ -2709,8 +2709,8 @@ document.body.insertAdjacentHTML('beforeend',`
   <div id="in_body"><div id="in_msg">Cargando…</div></div>
 </div></div>`);
 
-(function(){const a=document.querySelector('header .alta-btn');
-  if(a)a.insertAdjacentHTML('beforebegin','<button class="hdr-btn" onclick="abrirIngresos()">📊 Ingresos</button>');})();
+(function(){const a=document.querySelector('header .hdr-btn[onclick="abrirScore()"]');
+  if(a)a.insertAdjacentHTML('afterend','<button class="hdr-btn" onclick="abrirIngresos()">📊 Ingresos</button>');})();
 
 const IN_MES=['','Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 let IN_DATOS=null;
