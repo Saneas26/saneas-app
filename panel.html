@@ -2386,8 +2386,8 @@ document.body.insertAdjacentHTML('beforeend',`
   </div>
 </div>`);
 
-(function(){const a=document.querySelector('header .alta-btn');
-  if(a)a.insertAdjacentHTML('beforebegin','<button class="hdr-btn" onclick="abrirGen()">🥗 Generador</button>');})();
+(function(){const a=document.querySelector('header .hdr-btn[onclick="abrirFacturas()"]');
+  if(a)a.insertAdjacentHTML('afterend','<button class="hdr-btn" onclick="abrirGen()">🥗 Generador</button>');})();
 
 // Las horas de ayuno las decide la DIETA, no la app (regla de Oscar, 17/07/2026):
 //   5 platos -> 12 h de ayuno · 4 o 3 platos -> 14 h
