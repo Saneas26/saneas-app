@@ -169,11 +169,16 @@ async function iniciarSesion(){
   renderInicio();
 }
 
+// Día de la semana en Madrid (0=domingo..6=sábado, igual que Date.getDay()) para
+// elegir el día de la dieta de hoy. NO usar new Date().getDay() (hora local del
+// dispositivo): un cliente con el móvil en otra zona vería el día equivocado.
+function _diaSemanaMadrid(){ return new Date(_hoyMadrid()+'T12:00:00Z').getUTCDay(); }
+
 async function cargarDieta(){
   TOMAS_HOY=[];DIETA=null;
   let dietaId=CLIENTE.dieta_actual_id;
   if(!dietaId){ // sin dieta asignada: elige una que tenga el día de hoy (evita caer en una de un solo día)
-    const hoyCod0=DIA_MAP[new Date().getDay()];
+    const hoyCod0=DIA_MAP[_diaSemanaMadrid()];
     const {data:dt}=await sb.from('dieta_tomas').select('dieta_id').eq('dia_semana',hoyCod0).limit(1);
     if(dt&&dt[0])dietaId=dt[0].dieta_id;
     if(!dietaId){const {data:d}=await sb.from('dietas').select('id').limit(1);if(d&&d[0])dietaId=d[0].id;}
@@ -181,7 +186,7 @@ async function cargarDieta(){
   if(!dietaId)return;
   const {data:dieta}=await sb.from('dietas').select('*').eq('id',dietaId).maybeSingle();
   DIETA=dieta;
-  const hoyCod=DIA_MAP[new Date().getDay()];
+  const hoyCod=DIA_MAP[_diaSemanaMadrid()];
   TOMAS_HOY=await tomasDe(dietaId,hoyCod);
   if(TOMAS_HOY.length===0) TOMAS_HOY=await tomasDe(dietaId,'1_Dia1'); // fallback demo
 }
