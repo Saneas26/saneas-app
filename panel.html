@@ -1050,7 +1050,7 @@ async function abrirFicha(id){
   await cargarDietas();
   const {status,data}=await api('ficha',{cliente_id:id});
   if(status!==200){el('ficha').innerHTML=`<div class="fh"><button class="x" onclick="cerrarFicha()">×</button><h3>Error</h3></div><div class="fbody"><p class="empty-msg">${data.error||''}</p></div>`;return;}
-  (FICHA_INVS=data.invitados||[], pintarFicha(data.cliente,data.registros||[]));
+  (FICHA_INVS=data.invitados||[], FICHA_MSGS=data.mensajes||[], pintarFicha(data.cliente,data.registros||[]));
   rpc('panel_avisos_cliente',{p_cliente:id}).then(res=>{
     const e=el('fAvisos'); if(!e) return;
     if(!res){ e.textContent='Avisos: sin datos (pega supabase/testigo_avisos.sql)'; return; }
