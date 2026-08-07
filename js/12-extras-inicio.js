@@ -8,6 +8,7 @@ function queDecir(){
   for(var i = 0; i < MSG_AMIGA.length; i++){
     h += '<div class="amCard"><div class="amTit">' + MSG_AMIGA[i].t + '</div>'
       + '<div class="amTxt">' + MSG_AMIGA[i].m.split("{S}").join(s).replace(" https://saneas.es","") + '</div>'
+      + (MSG_AMIGA[i].n ? '<div style="font-size:13px;color:var(--muted);margin-top:8px">&#8505; ' + MSG_AMIGA[i].n + '</div>' : '')
       + '<button class="amBtn" onclick="enviarAmiga(' + i + ')">Enviar por WhatsApp</button></div>';
   }
   h += '<div class="fqPie"><span class="e">&#8505;</span><span>Se abre WhatsApp con el texto puesto. Eliges t\u00fa a qui\u00e9n y puedes cambiar lo que quieras antes de enviarlo.</span></div>'
