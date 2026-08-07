@@ -1,8 +1,10 @@
 -- estadisticas_uso — informe de uso de la app bajo demanda (botón "Estadísticas de uso" del panel).
 -- NUNCA se llama automática ni programada: solo cuando Óscar pulsa el botón.
--- Lee eventos_uso (instrumentación en index.html/js/*.js vía trackEvento), saneas_frases (Tu legado)
--- y clientes.descuento_invitados (Saneamigos, mismo dato que ya usa abrirInvitar() en la app).
+-- Lee eventos_uso (instrumentación en index.html/js/*.js vía trackEvento), saneas_frases (Tu legado),
+-- clientes.descuento_invitados (Saneamigos, mismo dato que ya usa abrirInvitar() en la app),
+-- pruebas_gratis (semanas gratis de vuelvo.html) y telemetria_* (embudo de instalación).
 -- SECURITY DEFINER + secret (mismo patrón que crear_factura / panel_fijar_cita).
+-- v2 (07/08/2026): añade pruebas_gratis y embudo_instalacion.
 
 create or replace function public.estadisticas_uso(secret text)
 returns jsonb
@@ -17,6 +19,10 @@ declare
   v_legado_resp jsonb;
   v_saneamigos_total int;
   v_saneamigos_lista jsonb;
+  v_pg_total int;
+  v_pg_activas int;
+  v_pg_lista jsonb;
+  v_embudo jsonb;
 begin
   if secret is distinct from 'SANEAS_SYNC_2026' then
     return jsonb_build_object('ok', false, 'error', 'no autorizado');
@@ -76,12 +82,32 @@ begin
     where coalesce(descuento_invitados, 0) > 0
   ) w;
 
+  -- pruebas_gratis: semanas gratis activadas desde vuelvo.html
+  select count(*)::int into v_pg_total from pruebas_gratis;
+
+  select count(*)::int into v_pg_activas from pruebas_gratis where fecha_fin >= current_date;
+
+  select coalesce(jsonb_agg(p order by p.created_at desc), '[]'::jsonb) into v_pg_lista
+  from (
+    select nombre, email, tel9, fecha_inicio, fecha_fin, created_at
+    from pruebas_gratis
+  ) p;
+
+  -- embudo_instalacion: visitas a saneas.es → clic en "instalar" → app instalada (telemetría)
+  v_embudo := jsonb_build_object(
+    'visitas_web',       (select count(distinct dispositivo) from telemetria_aperturas where app = 'saneas_web'),
+    'pulsaron_instalar', (select count(distinct dispositivo) from telemetria_aperturas where app = 'saneas_instalar'),
+    'instalada',         (select count(*) from telemetria_dispositivos where app = 'saneas' and instalada)
+  );
+
   return jsonb_build_object(
     'ok', true,
     'por_evento', v_por_evento,
     'detalle_por_evento', v_detalle,
     'legado', jsonb_build_object('total_rellenado', v_legado_total, 'respuestas', v_legado_resp),
-    'saneamigos', jsonb_build_object('total', v_saneamigos_total, 'clientes', v_saneamigos_lista)
+    'saneamigos', jsonb_build_object('total', v_saneamigos_total, 'clientes', v_saneamigos_lista),
+    'pruebas_gratis', jsonb_build_object('total', v_pg_total, 'activas_ahora', v_pg_activas, 'lista', v_pg_lista),
+    'embudo_instalacion', v_embudo
   );
 end;
 $$;

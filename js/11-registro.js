@@ -115,7 +115,10 @@ var MSG_AMIGA = [
   { t: "Si te han preguntado",
     m: "Es Saneas, lo que te cont\u00e9. Te mandan la comida de la semana y cada semana hablas con \u00e9l y te lo va ajustando. Nada raro: ni batidos, ni pastillas, ni productos. Si quieres te cuento con calma. https://saneas.es" },
   { t: "Para alguien de confianza",
-    m: "Te lo digo a ti porque s\u00e9 que llevas tiempo d\u00e1ndole vueltas, no para meterte prisa. Yo llevo {S} semanas y lo que m\u00e1s me ha cambiado no es el peso, es dejar de empezar de cero cada lunes. Si alg\u00fan d\u00eda te apetece mirarlo, aqu\u00ed est\u00e1. https://saneas.es" }
+    m: "Te lo digo a ti porque s\u00e9 que llevas tiempo d\u00e1ndole vueltas, no para meterte prisa. Yo llevo {S} semanas y lo que m\u00e1s me ha cambiado no es el peso, es dejar de empezar de cero cada lunes. Si alg\u00fan d\u00eda te apetece mirarlo, aqu\u00ed est\u00e1. https://saneas.es" },
+  { t: "Para invitar a un amigo \ud83e\udd1d",
+    m: "Mira, yo esto lo llevo con \u00d3scar, el de Saneas, y la verdad es que me va muy bien. Si te animas a probarlo, a m\u00ed me hacen un peque\u00f1o descuento por invitarte \u2014 te lo digo por ser claro, pero te lo recomendar\u00eda igual sin eso. Si quieres te cuento c\u00f3mo funciona, sin compromiso.",
+    n: "Este mensaje es para envi\u00e1rselo a tu amigo en privado" }
 ];
 function _semanasClienta(){
   var s = (window.__PROG && window.__PROG.semanas) || (typeof CLIENTE !== "undefined" && CLIENTE && CLIENTE.semana) || null;
