@@ -125,6 +125,14 @@
       <p style="font-size:20px;font-weight:700;margin:4px 6px 2px">Registro semanal</p>
       <p style="font-size:14px;color:var(--muted);margin:0 6px 10px">Tus datos se guardan al instante, sin fallos de sincronización</p>
       <style>#s-registro .vidlink{display:inline-block;margin-top:6px;font-size:12px;font-weight:700;color:#0f8a9c;text-decoration:none}#s-registro .vidlink:active{opacity:.6}#s-registro .pctchk{display:flex;align-items:center;gap:5px;font-size:11.5px;color:var(--muted);margin-top:4px;font-weight:600}#s-registro .pctchk input{width:auto;margin:0;flex:none}</style>
+      <div class="card" id="chatCard" style="padding:14px 16px">
+        <div style="font-size:16px;font-weight:800;color:var(--dark);margin-bottom:8px">💬 Habla con Óscar</div>
+        <div id="chatMsgs" style="max-height:260px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;margin-bottom:10px;padding-right:2px"></div>
+        <div style="display:flex;gap:8px;align-items:flex-end">
+          <textarea id="chatInput" rows="2" onkeydown="chatKeydown(event)" placeholder="Cuéntame cómo te fue la semana…" style="flex:1;border:2px solid var(--light);border-radius:12px;padding:10px 12px;font-family:inherit;font-size:15px;color:var(--dark);resize:none"></textarea>
+          <button id="chatSendBtn" onclick="enviarMensajeChat()" style="flex:none;background:var(--teal);color:#fff;border:none;border-radius:12px;padding:12px 16px;font-family:inherit;font-weight:700;font-size:15px;cursor:pointer">➤</button>
+        </div>
+      </div>
       <div class="tabs">
         <button class="active" onclick="regTab('imp',this)">Impedancia</button>
         <button onclick="regTab('pli',this)">Plicometría</button>
@@ -238,5 +246,6 @@
 <script src="js/24-grupo-saneas.js?v=1.5"></script>
 <script src="js/23-grupo.js?v=1.6"></script>
 <script src="js/24-telemetria.js?v=1.0"></script>
+<script src="js/25-chat.js?v=1.0"></script>
 </body>
 </html>
