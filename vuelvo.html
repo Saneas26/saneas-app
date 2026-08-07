@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#1a2e35">
+<meta name="robots" content="noindex">
+<title>Vuelve una semana gratis · Saneas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Quicksand',sans-serif;background:linear-gradient(160deg,#3890a4,#1a2e35);
+    min-height:100vh;display:flex;flex-direction:column;align-items:center;
+    padding:32px 20px 40px;color:#fff}
+  .wrap{width:100%;max-width:440px}
+  .logo{font-weight:700;font-size:42px;text-align:center;letter-spacing:1px}
+  .logo span{color:#F5862E}
+  h1{font-size:28px;text-align:center;margin-top:18px;line-height:1.3}
+  .sub{font-size:19px;line-height:1.55;margin-top:14px;font-weight:500}
+  .card{background:#fff;color:#1a2e35;border-radius:22px;padding:24px 20px;margin-top:24px;
+    box-shadow:0 20px 50px rgba(0,0,0,.25)}
+  label{display:block;font-size:17px;font-weight:700;margin:14px 0 6px}
+  label small{display:block;font-weight:500;font-size:15px;color:#3a5a64;margin-top:2px}
+  input{width:100%;font-family:inherit;font-size:19px;font-weight:500;color:#1a2e35;
+    padding:14px 14px;border:2px solid #b8cdd4;border-radius:14px;background:#f6fafb}
+  input:focus{outline:none;border-color:#3890a4}
+  .btn{width:100%;margin-top:20px;padding:18px 16px;border:none;border-radius:16px;
+    background:#F5862E;color:#fff;font-family:inherit;font-weight:700;font-size:20px;cursor:pointer}
+  .btn:disabled{opacity:.6}
+  /* trampa para bots: un humano nunca ve este campo */
+  .hp{position:absolute;left:-5000px;top:-5000px;height:1px;width:1px;overflow:hidden}
+  .msg{margin-top:18px;border-radius:16px;padding:16px;font-size:18px;line-height:1.5;font-weight:500;display:none}
+  .msg.ok{display:block;background:#e7f6ec;color:#0d5c2b;border:2px solid #1d9a4e}
+  .msg.no{display:block;background:#fdeeee;color:#8a1f1f;border:2px solid #d66}
+  .msg.info{display:block;background:#eaf4f7;color:#1a4a58;border:2px solid #3890a4}
+  .msg a.cta{display:block;text-align:center;margin-top:12px;padding:14px;border-radius:12px;
+    background:#3890a4;color:#fff;font-weight:700;font-size:18px;text-decoration:none}
+  .msg a.wa{background:#0d7a33}
+  .pie{text-align:center;font-size:16px;line-height:1.5;margin-top:22px;font-weight:500}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="logo">Saneas<span>.</span></div>
+  <h1>¿Quieres volver?<br>Te regalo una semana</h1>
+  <p class="sub">Soy Óscar. Si en algún momento fuiste cliente de Saneas y te apetece
+  retomarlo, actívate tú mismo <b>7 días de acceso completo a la app</b>, gratis y sin
+  compromiso. No hace falta que me escribas ni que me des explicaciones: pruébala una
+  semana y decides.</p>
+
+  <div class="card">
+    <form id="f" autocomplete="on">
+      <label for="email">Tu email
+        <small>Con él entrarás en la app.</small></label>
+      <input id="email" type="email" inputmode="email" autocomplete="email" required>
+
+      <label for="tel">Tu teléfono
+        <small>El de siempre, el que yo tenía guardado.</small></label>
+      <input id="tel" type="tel" inputmode="tel" autocomplete="tel" required>
+
+      <div class="hp" aria-hidden="true">
+        <label for="web">Deja este campo vacío</label>
+        <input id="web" type="text" tabindex="-1" autocomplete="off">
+      </div>
+
+      <button class="btn" id="btn" type="submit">Activar mi semana gratis</button>
+    </form>
+    <div id="msg" class="msg"></div>
+  </div>
+
+  <p class="pie">Una semana entera, sin compromiso y sin tarjeta.<br>— Óscar</p>
+</div>
+
+<script>
+// ======= CONFIGURACION =======
+var FUNCION = 'https://uisrxztowgdpkxeuznfh.supabase.co/functions/v1/semana-gratis';
+var APP_URL = 'https://app.saneas.es';
+// Numero de WhatsApp de Oscar (formato internacional, sin +).
+// PENDIENTE DE CONFIRMAR por Oscar antes de difundir el enlace.
+var WA = '34689806987';
+// =============================
+
+function waLink(texto){
+  return 'https://wa.me/' + WA + '?text=' + encodeURIComponent(texto);
+}
+function fechaBonita(iso){
+  try{
+    var d = new Date(iso + 'T12:00:00');
+    return d.toLocaleDateString('es-ES', {weekday:'long', day:'numeric', month:'long'});
+  }catch(e){ return iso; }
+}
+function pinta(clase, html){
+  var m = document.getElementById('msg');
+  m.className = 'msg ' + clase;
+  m.innerHTML = html;
+  m.scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+
+document.getElementById('f').addEventListener('submit', async function(ev){
+  ev.preventDefault();
+  var email = document.getElementById('email').value.trim();
+  var tel = document.getElementById('tel').value.trim();
+  if(!email || !tel){ pinta('no','Rellena tu email y tu teléfono.'); return; }
+  if(tel.replace(/\D/g,'').length < 9){ pinta('no','Ese teléfono parece incompleto: escríbelo con sus 9 cifras.'); return; }
+  var btn = document.getElementById('btn');
+  btn.disabled = true; btn.textContent = 'Comprobando...';
+  try{
+    var r = await fetch(FUNCION, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({email:email, telefono:tel, hp:document.getElementById('web').value})
+    });
+    var d = await r.json();
+    if(d.ok && d.hasta){
+      pinta('ok','✅ <b>Listo.</b> Tienes acceso completo hasta el <b>' + fechaBonita(d.hasta) + '</b>.' +
+        '<br>Entra en la app con tu email y disfrútala 👇' +
+        '<a class="cta" href="' + APP_URL + '">Entrar en la app ›</a>');
+    } else if(d.ok){
+      // respuesta silenciosa (bots): al humano no le cambia nada
+      pinta('info','Hecho. Si tienes acceso, entra en la app con tu email.' +
+        '<a class="cta" href="' + APP_URL + '">Ir a la app ›</a>');
+    } else if(d.motivo === 'ya_probada'){
+      pinta('info','Tu semana gratis ya se usó una vez, y solo puedo regalarla una vez por persona. ' +
+        'Pero escríbeme y vemos juntos cómo retomarlo: seguro que hay manera.' +
+        '<a class="cta wa" href="' + waLink('Hola Óscar, quiero volver a Saneas. Mi semana gratis ya se usó, ¿lo vemos?') + '">💬 Escribir a Óscar ›</a>');
+    } else if(d.motivo === 'ya_activo'){
+      pinta('info','¡Buena noticia! Tu cuenta ya está activa: no te hace falta la semana gratis. ' +
+        'Entra en la app con normalidad.' +
+        '<a class="cta" href="' + APP_URL + '">Entrar en la app ›</a>');
+    } else if(d.motivo === 'no_encontrado'){
+      pinta('no','No te encuentro con esos datos. Prueba con otro email u otro teléfono que usaras conmigo, ' +
+        'o escríbeme y lo arreglamos en un momento.' +
+        '<a class="cta wa" href="' + waLink('Hola Óscar, quiero mi semana gratis de Saneas pero la web no me encuentra. Soy...') + '">💬 Escribir a Óscar ›</a>');
+    } else {
+      pinta('no','Algo ha fallado al comprobarlo. Inténtalo otra vez en un minuto, y si sigue igual escríbeme.' +
+        '<a class="cta wa" href="' + waLink('Hola Óscar, la web de la semana gratis me da error.') + '">💬 Escribir a Óscar ›</a>');
+    }
+  }catch(e){
+    pinta('no','No hay conexión ahora mismo. Comprueba tu internet e inténtalo de nuevo.');
+  }
+  btn.disabled = false; btn.textContent = 'Activar mi semana gratis';
+});
+</script>
+</body>
+</html>
