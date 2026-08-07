@@ -1081,7 +1081,7 @@ async function guardarActividad(id,val){
   const c=CLIENTES.find(x=>x.id===id); if(c)c.estilo_vida=val;
 }
 
-let FICHA_CLI=null, FICHA_REGS=[], FICHA_INVS=[];
+let FICHA_CLI=null, FICHA_REGS=[], FICHA_INVS=[], FICHA_MSGS=[];
 // ── Gráfico de peso de las últimas 10 semanas ──────────────────────────────
 // SVG a mano, sin librerías: el panel no carga nada de fuera. Recibe los
 // registros REALES (con peso), que vienen del más reciente al más antiguo.
