@@ -1196,6 +1196,33 @@ async function toggleGraficoCliente(){
   GRAF_VIS = !!r.visible; pintarGpBtn();
   toast(GRAF_VIS ? 'El cliente ya ve su gráfico de peso' : 'El cliente ya no ve su gráfico de peso');
 }
+// ── Chat privado con el cliente (tabla mensajes, RLS: el cliente solo ve lo suyo) ──
+function _chatHora(f){ try{ return new Date(f).toLocaleString('es-ES',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}); }catch(e){ return ''; } }
+function _chatBurbuja(m){
+  const suyo=m.remitente==='oscar';
+  return `<div style="align-self:${suyo?'flex-end':'flex-start'};max-width:82%;background:${suyo?'var(--teal)':'var(--soft)'};color:${suyo?'#fff':'var(--text)'};border-radius:12px;padding:8px 11px 6px;font-size:13.5px;line-height:1.4">`
+    +`<div style="white-space:pre-wrap;word-break:break-word">${esc(m.texto)}</div>`
+    +`<div style="font-size:10px;opacity:.7;margin-top:2px;text-align:right">${_chatHora(m.created_at)}</div></div>`;
+}
+function _chatHtml(msgs){
+  return (msgs&&msgs.length)
+    ? msgs.map(_chatBurbuja).join('')
+    : '<p class="empty-msg" style="padding:4px 0">Todavía no hay mensajes con este cliente.</p>';
+}
+async function enviarMensajePanel(id){
+  const inp=el('fChatInput'); if(!inp) return;
+  const texto=(inp.value||'').trim();
+  const errEl=el('fChatMsgErr'); if(errEl) errEl.textContent='';
+  if(!texto) return;
+  inp.disabled=true;
+  const {status,data}=await api('mensaje_enviar',{cliente_id:id,texto});
+  inp.disabled=false;
+  if(status!==200||!data.ok){ if(errEl) errEl.textContent=data.error||'No se pudo enviar el mensaje'; return; }
+  FICHA_MSGS=FICHA_MSGS.concat([{remitente:'oscar',texto,leido_cliente:false,leido_oscar:true,created_at:new Date().toISOString()}]);
+  const cont=el('fChatMsgs'); if(cont){ cont.innerHTML=_chatHtml(FICHA_MSGS); cont.scrollTop=cont.scrollHeight; }
+  inp.value=''; inp.focus();
+  const c=CLIENTES.find(x=>x.id===id); if(c) c.mensaje_no_leido=false;
+}
 function pintarFicha(cli,regs){
   FICHA_CLI=cli; FICHA_REGS=regs;
   const o=calcObjetivos(cli);
@@ -1350,6 +1377,15 @@ function pintarFicha(cli,regs){
     </div>
     <div style="padding:12px 22px 0"><div class="cp-row"><button class="cp-btn" onclick="consultaPasadaFicha('${cli.id}', '${(nom||'este cliente').replace(/'/g,'')}')">✅ Consulta pasada (+7 días)</button><button class="cp-btn" style="background:var(--orange)" onclick="abrirCambiarPlaza('${cli.id}')">🔄 Cambiar día / plaza</button></div><div id="fCita" style="margin-top:8px;font-size:14px;font-weight:700"></div></div>
     <div class="fbody">
+      <div class="sec" id="fChatSec">
+        <h4>\ud83d\udcac Chat con ${nom||'el cliente'}</h4>
+        <div id="fChatMsgs" style="max-height:280px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;margin-bottom:10px;padding-right:2px">${_chatHtml(FICHA_MSGS)}</div>
+        <div style="display:flex;gap:8px;align-items:flex-end">
+          <textarea id="fChatInput" rows="2" placeholder="Escribe tu respuesta\u2026" style="flex:1;border:2px solid var(--line);border-radius:10px;padding:9px 11px;font-family:inherit;font-size:14px;color:var(--text);resize:none"></textarea>
+          <button class="cp-btn" style="width:auto;padding:11px 18px" onclick="enviarMensajePanel('${cli.id}')">Enviar</button>
+        </div>
+        <div id="fChatMsgErr" style="font-size:12.5px;color:var(--bad);margin-top:6px"></div>
+      </div>
       <div class="sec" id="fe-wrap"><h4>\ud83d\udccb Ficha de entrada</h4><p class="vacio">Cargando\u2026</p></div>
       ${graficoPeso(reales, o)}
       <div class="kpis">${kpis}</div>
